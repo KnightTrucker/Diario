@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Diario Autista</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body { margin:0; font-family:Arial; background:#121212; color:#fff; }
+.overlay { background:rgba(0,0,0,0.75); min-height:100vh; padding:20px; }
+.header-bar { display:flex; align-items:center; gap:20px; margin-bottom:20px; }
+.header-bar img { height:60px; border-radius:6px; }
+.tabs { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+.tab-btn { padding:10px 15px; background:#1e1e1e; border:none; color:#fff; border-radius:6px; cursor:pointer; }
+.tab-btn.active { background:#2196f3; }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+input, select { width:100%; padding:8px; margin:5px 0 10px; background:#1e1e1e; border:1px solid #555; color:#fff; border-radius:4px; }
+button.primary { background:#2196f3; border:none; padding:8px 12px; border-radius:4px; color:#fff; cursor:pointer; }
+button.secondary { background:#607d8b; border:none; padding:6px 10px; border-radius:4px; color:#fff; cursor:pointer; }
+button.danger { background:#f44336; border:none; padding:6px 10px; border-radius:4px; color:#fff; cursor:pointer; }
+table { width:100%; border-collapse:collapse; margin-top:10px; }
+th, td { border:1px solid #444; padding:6px; }
+th { background:#1e1e1e; }
+tr:nth-child(even) { background:#181818; }
+tr:nth-child(odd) { background:#202020; }
+.row { display:flex; gap:20px; flex-wrap:wrap; }
+.col { flex:1 1 300px; }
+canvas { background:#1e1e1e; border-radius:6px; margin-top:15px; }
+</style>
+<style>
+.graph-fullscreen {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #000;
+    z-index: 99999;
+}
+</style>
+
+
+<style id="modern-ui-v5">
+:root{
+  --bg:#050b13; --panel:#071522; --panel2:#0b1b2a; --line:#23445f;
+  --text:#f4f8ff; --muted:#9fb0c2; --blue:#0b79ff; --blue2:#174de8;
+  --green:#12c94b; --purple:#8b35ff; --orange:#f08000; --red:#e52a35;
+  --cyan:#12d9ea; --radius:16px;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{background:radial-gradient(circle at top,#0a1c2e 0,#050b13 38%,#02060b 100%);color:var(--text);font-family:Inter,Arial,sans-serif}
+.overlay{max-width:1280px;margin:auto;min-height:100vh;padding:18px;background:transparent}
+.header-bar{background:linear-gradient(180deg,rgba(10,31,50,.95),rgba(5,18,30,.95));border:1px solid var(--line);border-radius:18px;padding:14px 18px;margin-bottom:14px;box-shadow:0 12px 30px rgba(0,0,0,.25)}
+.header-bar h1{font-size:clamp(22px,3vw,34px);margin:0;letter-spacing:.3px}.header-bar img{height:56px;border-radius:12px;box-shadow:0 0 20px rgba(11,121,255,.25)}
+.tabs{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin:0 0 16px;padding:0}
+.tab-btn{min-height:82px;padding:10px 8px!important;background:linear-gradient(180deg,#0b1724,#07111b)!important;border:1px solid #31516d!important;color:#fff!important;border-radius:15px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;font-weight:700;font-size:15px;transition:.18s ease;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+.tab-btn .tab-icon{font-size:28px;line-height:1;filter:drop-shadow(0 0 8px currentColor)}
+.tab-btn:hover{transform:translateY(-1px);border-color:#4f82a7!important}.tab-btn.active{background:linear-gradient(145deg,#0b82ff,#123ec8)!important;border-color:#16a7ff!important;box-shadow:0 0 0 1px rgba(45,172,255,.28),0 0 24px rgba(0,121,255,.35)}
+.tab-content{background:linear-gradient(180deg,rgba(6,20,33,.96),rgba(3,13,22,.96));border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 16px 36px rgba(0,0,0,.28)}
+.tab-content h2{margin:0 0 16px;font-size:24px;display:flex;align-items:center;gap:10px}.tab-content h3{margin:20px 0 10px;font-size:19px;color:#eef7ff;border-top:1px solid rgba(63,112,145,.35);padding-top:16px}
+#tab-giornaliero h2::before{content:'📅'}#tab-carichi h2::before{content:'🚚'}#tab-riassunto h2::before{content:'📊'}#tab-impexp h2::before{content:'☁️'}#tab-viaggi h2::before{content:'📍'}
+form{background:linear-gradient(180deg,rgba(9,28,44,.88),rgba(5,19,31,.88));border:1px solid rgba(52,100,134,.7);padding:16px;border-radius:15px;margin-bottom:16px}
+.row{gap:16px}.col{min-width:260px}
+label{display:block;color:#d7e6f4;font-weight:650;margin-top:4px;font-size:14px}
+input,select{background:#0a1722!important;color:#fff!important;border:1px solid #40576c!important;border-radius:10px!important;padding:12px 12px!important;margin:6px 0 12px!important;min-height:44px;outline:none;transition:.18s}
+input:focus,select:focus{border-color:#0b91ff!important;box-shadow:0 0 0 3px rgba(11,145,255,.16)}
+button.primary,button.secondary,button.danger{border-radius:10px!important;font-weight:750;min-height:42px;transition:.16s;padding:9px 14px!important}
+button.primary{background:linear-gradient(135deg,#087fff,#1446dc)!important;box-shadow:0 8px 18px rgba(0,102,255,.2)}button.primary:hover{filter:brightness(1.1)}
+button.secondary{background:linear-gradient(135deg,#20364a,#314b60)!important}button.danger{background:linear-gradient(135deg,#d52132,#a91425)!important}
+#btn-add-giornaliero,#btn-add-carico,#btn-calcola-riassunto{font-size:16px;padding:12px 18px!important}
+.table-wrap{width:100%;overflow-x:auto;border:1px solid rgba(56,95,122,.65);border-radius:13px;background:#06131e}
+table{min-width:760px;margin:0;border-collapse:separate;border-spacing:0;background:transparent}th,td{border:0!important;border-bottom:1px solid rgba(56,85,106,.45)!important;padding:10px 9px!important;text-align:left;font-size:13px;white-space:nowrap}th{background:#0b1c2b!important;color:#d8e8f7;position:sticky;top:0;z-index:1}tr:nth-child(even),tr:nth-child(odd){background:transparent!important}tbody tr:nth-child(even){background:rgba(20,48,69,.24)!important}tbody tr:hover{background:rgba(16,95,150,.2)!important}
+#tab-impexp>button#btn-export-json{width:100%;font-size:16px;margin:8px 0 14px;padding:14px!important;background:linear-gradient(135deg,#057cf6,#1746d7)!important}
+#tab-impexp>div{background:linear-gradient(145deg,rgba(6,56,35,.55),rgba(5,26,22,.8));border:1px solid rgba(31,190,83,.55);border-radius:14px;padding:14px!important}
+#btn-import-json{background:linear-gradient(135deg,#16a43d,#087428)!important;color:#fff}
+#summary-output{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0 20px}
+.summary-card{min-height:132px;border:1px solid #2d4a61;border-radius:15px;background:linear-gradient(145deg,#0b1b29,#07131f);padding:15px;display:flex;align-items:center;gap:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+.summary-icon{width:64px;height:64px;flex:0 0 64px;border-radius:13px;display:grid;place-items:center;font-size:29px;font-weight:900;border:1px solid rgba(255,255,255,.12);box-shadow:0 0 18px rgba(0,0,0,.25)}
+.summary-card:nth-child(1) .summary-icon,.summary-card:nth-child(2) .summary-icon,.summary-card:nth-child(3) .summary-icon{background:linear-gradient(145deg,#1838e8,#073ca1)}
+.summary-card:nth-child(4) .summary-icon,.summary-card:nth-child(5) .summary-icon{background:linear-gradient(145deg,#0eaf3d,#08762a)}
+.summary-card:nth-child(6) .summary-icon,.summary-card:nth-child(7) .summary-icon{background:linear-gradient(145deg,#ff8c00,#a44b00)}
+.summary-card:nth-child(8) .summary-icon{background:linear-gradient(145deg,#8f38db,#49117b)}
+.summary-card:nth-child(9) .summary-icon{background:linear-gradient(145deg,#f0343d,#a70f1e)}
+.summary-label{font-size:14px;color:#d9e5ef;line-height:1.25}.summary-value{font-size:28px;font-weight:850;margin-top:6px;letter-spacing:.2px}.summary-unit{font-size:13px;color:var(--muted);margin-top:4px}
+#tab-riassunto .row{background:linear-gradient(180deg,rgba(9,28,44,.88),rgba(5,19,31,.88));border:1px solid rgba(52,100,134,.7);padding:14px;border-radius:15px;margin-bottom:10px}
+#btn-calcola-riassunto{width:100%;margin-bottom:4px}
+canvas{background:linear-gradient(180deg,#0b1924,#07121c)!important;border:1px solid rgba(48,78,98,.7);border-radius:14px!important;padding:10px;margin-top:10px!important;max-width:100%}
+.app-footer{margin:24px 0 6px;display:flex;align-items:center;justify-content:center;gap:14px;color:#c6d1dc;font-size:15px}.app-footer::before,.app-footer::after{content:'';height:1px;max-width:240px;flex:1;background:linear-gradient(90deg,transparent,#1684e9)}.app-footer::after{background:linear-gradient(90deg,#1684e9,transparent)}.signature{font-style:italic;font-size:26px;color:#1495ff;letter-spacing:.4px;text-shadow:0 0 12px rgba(20,149,255,.35)}.signature b{font-style:normal;font-size:20px;letter-spacing:1px}
+#popup-viaggi{backdrop-filter:blur(5px)}#popup-viaggi>div{background:linear-gradient(180deg,#0c2030,#07131e)!important;border:1px solid #31516c;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+
+#tab-stipendi h2::before{content:'💶'}#tab-ricerca h2::before{content:'🔎'}
+#form-stipendi .row{align-items:end}
+#btn-add-stipendio,#btn-search{font-size:16px;padding:12px 18px!important}
+.search-panel{background:linear-gradient(180deg,rgba(9,28,44,.88),rgba(5,19,31,.88));border:1px solid rgba(52,100,134,.7);padding:16px;border-radius:15px;margin-bottom:16px}
+.search-panel .row{margin:0}.search-panel .col{min-width:260px}
+.search-summary{color:#b8c9d8;margin:6px 0 12px;padding:10px 12px;background:#081722;border:1px solid rgba(55,94,122,.65);border-radius:10px}
+#search-results .empty-result{padding:24px;text-align:center;color:#9fb0c2;border:1px dashed #34556e;border-radius:12px;background:rgba(7,23,35,.55)}
+.money-positive{font-weight:800;color:#67e58c}
+.note-cell{white-space:normal;min-width:180px;max-width:340px}
+@media(max-width:820px){.overlay{padding:10px}.header-bar{padding:10px 12px}.header-bar img{height:46px}.header-bar h1{font-size:23px}.tabs{display:flex;overflow-x:auto;gap:8px;padding-bottom:4px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab-btn{flex:0 0 118px;min-height:76px;font-size:12px}.tab-btn .tab-icon{font-size:24px}.tab-content{padding:13px;border-radius:15px}.tab-content h2{font-size:21px}.row{display:block}.col{min-width:0}#summary-output{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.summary-card{min-height:116px;padding:11px;gap:10px}.summary-icon{width:48px;height:48px;flex-basis:48px;font-size:23px}.summary-value{font-size:23px}.summary-label{font-size:12.5px}.summary-unit{font-size:12px}table{min-width:700px}th,td{font-size:12px;padding:9px 8px!important}.app-footer{font-size:13px;gap:8px}.signature{font-size:21px}.signature b{font-size:17px}}
+@media(max-width:430px){#summary-output{grid-template-columns:1fr 1fr}.summary-card{display:block}.summary-icon{margin-bottom:8px}.summary-value{font-size:22px}.tab-btn{flex-basis:105px}.header-bar{gap:10px}.header-bar h1{font-size:20px}}
+
+/* === V2: Dashboard, filtri, statistiche e report === */
+.dashboard-grid,.stats-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0 18px}
+.dash-card,.stat-card{background:linear-gradient(145deg,#0b1d2d,#07131f);border:1px solid #31516d;border-radius:15px;padding:15px;box-shadow:0 8px 22px rgba(0,0,0,.22)}
+.dash-label,.stat-label{color:#aebdca;font-size:13px}.dash-value,.stat-value{font-size:25px;font-weight:800;margin-top:6px;color:#fff}.dash-unit{font-size:12px;color:#8ea2b3;margin-top:3px}
+.filter-bar{display:flex;gap:10px;align-items:end;flex-wrap:wrap;background:#081827;border:1px solid #294a64;border-radius:13px;padding:12px;margin:12px 0}.filter-bar>div{flex:1 1 150px}.filter-bar button{margin-bottom:10px}
+.action-row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.action-row button{flex:1 1 180px}
+#tab-dashboard h2::before{content:'🏠'}
+@media(max-width:820px){.dashboard-grid,.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){.dashboard-grid,.stats-grid{grid-template-columns:1fr}}
+@media print{.tabs,.header-bar,.filter-bar,.action-row,.app-footer,button{display:none!important}.tab-content{display:block!important;border:0!important;box-shadow:none!important}body,.overlay,.tab-content{background:#fff!important;color:#000!important}table,th,td{color:#000!important;border-color:#777!important}}
+
+.money-card{position:relative;cursor:pointer;user-select:none}
+.money-card .dash-value.money-hidden{filter:blur(9px);opacity:.7}
+.money-lock-hint{margin-top:7px;font-size:12px;color:#8fb8d8}
+.money-card.unlocked .money-lock-hint{display:none}
+
+
+/* === V7: intestazioni tabelle fisse + evidenziazioni === */
+table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 8;
+    background: #102335 !important;
+    box-shadow: 0 2px 0 rgba(255,255,255,.08);
+}
+.value-alert {
+    color: #ff5252 !important;
+    font-weight: 800 !important;
+}
+.summary-alert {
+    border-color: #ff5252 !important;
+    box-shadow: 0 0 0 1px rgba(255,82,82,.35), 0 8px 22px rgba(0,0,0,.22) !important;
+}
+.summary-alert .summary-value,
+.summary-alert .summary-label,
+.summary-alert .summary-unit {
+    color: #ff5252 !important;
+}
+
+</style>
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#07131f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="./icon-192.png">
+</head>
+
+<body>
+<div class="overlay">
+
+<div class="header-bar">
+    <img src="data:image/png;base64,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">
+    <h1>Diario Autista</h1>
+</div>
+
+<div class="tabs">
+    <button class="tab-btn" data-tab="tab-dashboard"><span class="tab-icon">🏠</span><span>Home</span></button>
+    <button class="tab-btn active" data-tab="tab-giornaliero"><span class="tab-icon">📅</span><span>Giornaliero</span></button>
+    <button class="tab-btn" data-tab="tab-carichi"><span class="tab-icon">🚚</span><span>Carichi/Scarichi</span></button>
+    <button class="tab-btn" data-tab="tab-riassunto"><span class="tab-icon">📊</span><span>Riassunto</span></button>
+    
+    <button class="tab-btn" data-tab="tab-viaggi"><span class="tab-icon">📍</span><span>Viaggi</span></button>
+    <button class="tab-btn" data-tab="tab-stipendi"><span class="tab-icon">💶</span><span>Stipendi</span></button>
+    <button class="tab-btn" data-tab="tab-ricerca"><span class="tab-icon">🔎</span><span>Ricerca</span></button>
+    <button class="tab-btn" data-tab="tab-impexp"><span class="tab-icon">☁️</span><span>Import/Export</span></button>
+</div>
+
+
+<!-- TAB DASHBOARD -->
+<div id="tab-dashboard" class="tab-content">
+  <h2>Dashboard</h2>
+  <div class="filter-bar"><div><label>Mese</label><input type="month" id="dash-month"></div><button class="primary" id="btn-dashboard">Aggiorna</button></div>
+  <div id="dashboard-output" class="dashboard-grid"></div>
+</div>
+
+<!-- TAB GIORNALIERO -->
+<div id="tab-giornaliero" class="tab-content active">
+    <h2>Giornaliero</h2>
+
+    <form id="form-giornaliero">
+        <div class="row">
+
+            <div class="col">
+                <label>Data</label>
+                <input type="date" id="g_data">
+
+                <label>Trattore</label>
+                <input type="text" id="g_trattore" list="lista-trattori" autocomplete="off">
+                <datalist id="lista-trattori"></datalist>
+
+                <label>Semirimorchio</label>
+                <input type="text" id="g_semirimorchio" list="lista-semirimorchi" autocomplete="off">
+                <datalist id="lista-semirimorchi"></datalist>
+
+                <label>Km percorsi</label>
+                <input type="number" id="g_km">
+
+                <label>Ora apertura</label>
+                <input type="time" id="g_ora_apertura">
+
+                <label>Ora chiusura</label>
+                <input type="time" id="g_ora_chiusura">
+            </div>
+
+            <div class="col">
+                <label>Ore guida (hh:mm)</label>
+                <input type="time" id="g_ore_guida">
+
+                <label>Luogo sosta</label>
+                <input type="text" id="g_luogo_sosta" list="lista-luoghi-sosta" autocomplete="off">
+                <datalist id="lista-luoghi-sosta"></datalist>
+
+                <label>Pausa (hh:mm)</label>
+                <input type="text" id="g_pausa_ore" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="es. 36:00">
+
+                <label>Tipo pausa</label>
+                <select id="g_pausa_tipo">
+                    <option value="GIORNALIERA">GIORNALIERA</option>
+                    <option value="SETTIMANALE">SETTIMANALE</option>
+                </select>
+
+                <label>Note</label>
+                <input type="text" id="g_note" placeholder="Inserisci eventuali note">
+            </div>
+
+        </div>
+
+        <button type="button" class="primary" id="btn-add-giornaliero">Salva giornata</button>
+    </form>
+
+    <h3>Elenco giornaliero</h3><div class="filter-bar"><div><label>Da data</label><input type="date" id="fg-da"></div><div><label>A data</label><input type="date" id="fg-a"></div><button class="secondary" onclick="applyTableFilter('table-giornaliero','fg-da','fg-a')">Filtra</button><button class="secondary" onclick="clearTableFilter('table-giornaliero','fg-da','fg-a')">Tutto</button></div>
+
+    <table id="table-giornaliero">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Trattore</th>
+                <th>Semirimorchio</th>
+                <th>Apertura</th>
+                <th>Chiusura</th>
+                <th>Impegno</th>
+                <th>Km</th>
+                <th>Ore guida</th>
+                <th>Luogo sosta</th>
+                <th>Pausa</th>
+                <th>Note</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<!-- TAB CARICHI / SCARICHI -->
+<div id="tab-carichi" class="tab-content">
+    <h2>Carichi / Scarichi</h2>
+
+    <form id="form-carichi">
+        <div class="row">
+
+            <div class="col">
+                <label>Data</label>
+                <input type="date" id="c_data">
+
+                <label>Operazione</label>
+                <select id="c_operazione">
+                    <option value="CARICO">CARICO</option>
+                    <option value="SCARICO">SCARICO</option>
+                </select>
+
+                <label>Luogo</label>
+                <input type="text" id="c_luogo" list="lista-luoghi-carichi" autocomplete="off">
+                <datalist id="lista-luoghi-carichi"></datalist>
+            </div>
+
+            <div class="col">
+                <label>Cliente</label>
+                <input type="text" id="c_cliente" list="lista-clienti-carichi" autocomplete="off">
+                <datalist id="lista-clienti-carichi"></datalist>
+
+                <label>Semirimorchio</label>
+                <input type="text" id="c_semirimorchio" list="lista-semirimorchi-carichi" autocomplete="off">
+                <datalist id="lista-semirimorchi-carichi"></datalist>
+
+                <label>Peso (kg)</label>
+                <input type="number" id="c_peso">
+            </div>
+
+        </div>
+
+        <button type="button" class="primary" id="btn-add-carico">Salva operazione</button>
+    </form>
+
+    <h3>Statistiche clienti / luoghi</h3><div id="client-stats" class="stats-grid"></div><h3>Elenco carichi / scarichi</h3><div class="filter-bar"><div><label>Da data</label><input type="date" id="fc-da"></div><div><label>A data</label><input type="date" id="fc-a"></div><button class="secondary" onclick="applyTableFilter('table-carichi','fc-da','fc-a')">Filtra</button><button class="secondary" onclick="clearTableFilter('table-carichi','fc-da','fc-a')">Tutto</button></div>
+
+    <table id="table-carichi">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Operazione</th>
+                <th>Luogo</th>
+                <th>Cliente</th>
+                <th>Semirimorchio</th>
+                <th>Peso</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<!-- TAB RIASSUNTO -->
+<div id="tab-riassunto" class="tab-content">
+    <h2>Riassunto</h2>
+
+    <div class="row">
+        <div class="col">
+            <label>Tipo riassunto</label>
+            <select id="r_tipo">
+                <option value="giornaliero">Giornaliero</option>
+                <option value="settimanale">Settimanale</option>
+                <option value="mensile">Mensile</option>
+            </select>
+        </div>
+
+        <div class="col">
+            <label>Data di riferimento</label>
+            <input type="date" id="r_data">
+        </div>
+    </div>
+
+    <button class="primary" id="btn-calcola-riassunto">Calcola riassunto</button>
+
+    <h3>Risultati</h3>
+    <div id="summary-output"></div>
+
+    <div class="action-row"><button class="primary" id="btn-report-pdf">🖨️ Esporta report / PDF</button></div><h3>Grafici</h3>
+    <canvas id="graficoKm" height="120"></canvas>
+    <canvas id="graficoOre" height="120"></canvas>
+    <canvas id="graficoPeso" height="120"></canvas>
+   <canvas id="graficoImpegno" height="120"></canvas>
+</div>
+
+<!-- TAB IMPORT / EXPORT -->
+<div id="tab-impexp" class="tab-content">
+    <h2>Import / Export JSON</h2>
+
+    <button class="primary" id="btn-export-json">Backup completo</button>
+
+    <div style="margin-top:15px;">
+        <input type="file" id="file-import-json" accept=".json">
+        <button class="secondary" id="btn-import-json">Importa DIARIO.json</button>
+    </div>
+</div>
+
+<!-- TAB VIAGGI -->
+<div id="tab-viaggi" class="tab-content">
+    <h2>Viaggi</h2>
+
+    <button class="primary" id="btn-export-csv">Esporta CSV</button>
+
+    <div class="filter-bar"><div><label>Da data carico</label><input type="date" id="fv-da"></div><div><label>A data carico</label><input type="date" id="fv-a"></div><button class="secondary" onclick="applyTableFilter('table-viaggi','fv-da','fv-a')">Filtra</button><button class="secondary" onclick="clearTableFilter('table-viaggi','fv-da','fv-a')">Tutto</button></div><table id="table-viaggi">
+        <thead>
+            <tr>
+                <th>Data Carico</th>
+                <th>Cliente Carico</th>
+                <th>Luogo Carico</th>
+
+                <th>Data Scarico</th>
+                <th>Cliente Scarico</th>
+                <th>Luogo Scarico</th>
+
+                <th>Semirimorchio</th>
+                <th>Peso</th>
+
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<!-- TAB STIPENDI -->
+<div id="tab-stipendi" class="tab-content"><div style="margin-bottom:12px;color:#8fb8d8;font-size:13px;">🔐 Area protetta con PIN personale protetto da hash.</div>
+    <h2>Stipendi</h2>
+    <form id="form-stipendi">
+        <div class="row">
+            <div class="col">
+                <label>Mese di riferimento</label>
+                <input type="month" id="s_mese_riferimento">
+            </div>
+            <div class="col">
+                <label>Data effettiva di ricezione</label>
+                <input type="date" id="s_data_ricezione">
+            </div>
+            <div class="col">
+                <label>Importo (€)</label>
+                <input type="number" id="s_importo" step="0.01">
+            </div>
+            <div class="col">
+                <label>Causale</label>
+                <select id="s_causale">
+                    <option value="STIPENDIO">STIPENDIO</option>
+                    <option value="TREDICESIMA">TREDICESIMA</option>
+                    <option value="QUATTORDICESIMA">QUATTORDICESIMA</option>
+                    <option value="RIMBORSI">RIMBORSI</option>
+                    <option value="ACCONTI">ACCONTI</option>
+                </select>
+            </div>
+        </div>
+        <button type="button" class="primary" id="btn-add-stipendio">Salva voce</button>
+    </form>
+
+<h3>Riepilogo stipendi e competenze</h3><div id="salary-stats" class="stats-grid"></div><div class="filter-bar"><div><label>Da mese</label><input type="month" id="fs-da"></div><div><label>A mese</label><input type="month" id="fs-a"></div><button class="secondary" onclick="filterStipendi()">Filtra</button><button class="secondary" onclick="clearStipendiFilter()">Tutto</button></div>
+    <table id="table-stipendi">
+        <thead>
+            <tr>
+                <th>Mese riferimento</th>
+                <th>Data ricezione</th>
+                <th>Importo</th>
+                <th>Causale</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<!-- TAB RICERCA -->
+<div id="tab-ricerca" class="tab-content">
+    <h2>Ricerca</h2>
+
+    <div class="search-panel">
+        <div class="row">
+            <div class="col">
+                <label>Cerca nel tab</label>
+                <select id="search-tab"><option value="tutto">Tutto il diario</option>
+                    <option value="giornaliero">Giornaliero</option>
+                    <option value="carichi">Carichi / Scarichi</option>
+                    <option value="viaggi">Viaggi</option>
+                    <option value="stipendi">Stipendi</option>
+                </select>
+            </div>
+            <div class="col">
+                <label>Testo da cercare</label>
+                <input type="search" id="search-string" placeholder="Scrivi una parola, una data, un luogo, un importo...">
+            </div>
+        </div>
+        <button type="button" class="primary" id="btn-search">Cerca</button>
+    </div>
+
+    <h3>Risultati ricerca</h3>
+    <div id="search-summary" class="search-summary">Inserisci una stringa e premi Cerca.</div>
+    <div id="search-results"></div>
+</div>
+
+<!-- POPUP ABBINAMENTO SCARICO -->
+<div id="popup-viaggi"
+     style="display:none; position:fixed; inset:0;
+            background:rgba(0,0,0,0.8); padding:12px; z-index:9999;
+            overflow-y:auto; -webkit-overflow-scrolling:touch;">
+
+    <div style="background:#1e1e1e; padding:20px; border-radius:10px; max-width:600px;
+                width:100%; margin:12px auto; max-height:calc(100vh - 48px);
+                overflow-y:auto; -webkit-overflow-scrolling:touch;">
+        <h3 style="position:sticky; top:0; z-index:12; background:#1e1e1e; padding:6px 0 10px; margin-top:0;">
+            Seleziona uno scarico
+        </h3>
+
+        <div style="overflow-x:auto;">
+            <table id="popup-table-scarichi" style="width:100%; margin-top:15px;">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Cliente</th>
+                        <th>Luogo</th>
+                        <th>Seleziona</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <button class="secondary" id="popup-annulla" style="position:sticky; bottom:0; z-index:12; margin-top:12px;">
+            Annulla
+        </button>
+    </div>
+</div>
+
+<script>
+/* ============================================================
+   RIFERIMENTI FORM
+   ============================================================ */
+const form_giornaliero = document.getElementById("form-giornaliero");
+const form_carichi = document.getElementById("form-carichi");
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+
+function formatDateIT(dateStr) {
+    if (!dateStr) return "";
+    const [yyyy, mm, dd] = dateStr.split("-");
+    return `${dd}/${mm}/${yyyy}`;
+}
+
+function formatMonthIT(monthStr) {
+    if (!monthStr) return "";
+    const [yyyy, mm] = monthStr.split("-");
+    const mesi = ["","Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+    return `${mesi[Number(mm)] || mm} ${yyyy}`;
+}
+
+function oreToMinuti(str) {
+    if (!str || typeof str !== "string" || !str.includes(":")) return 0;
+    const parti = str.split(":");
+    if (parti.length < 2) return 0;
+    const h = Number(parti[0]);
+    const m = Number(parti[1]);
+    if (!Number.isFinite(h) || !Number.isFinite(m) || h < 0 || m < 0 || m > 59) return 0;
+    return h * 60 + m;
+}
+
+function minutiToOre(min) {
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+}
+
+function calcolaIntervallo(start, end) {
+    if (!start || !end) return "";
+    const m1 = oreToMinuti(start);
+    const m2 = oreToMinuti(end);
+    let diff = m2 - m1;
+    if (diff < 0) diff += 1440;
+    return minutiToOre(diff);
+}
+
+/* ============================================================
+   STRUTTURA DATI
+   ============================================================ */
+
+let DIARIO = {
+    giornaliero: [],
+    carichi_scarichi: [],
+    viaggi: [],
+    security: {
+        pinSalt: "",
+        pinHash: ""
+    },
+    stipendi: []
+};
+
+/* ============================================================
+   LOCAL STORAGE
+   ============================================================ */
+
+function saveToLocalStorage() {
+    localStorage.setItem("DIARIO_DATA", JSON.stringify(DIARIO));
+    setTimeout(()=>{ if(document.getElementById("salary-stats")) renderSalaryStats(); if(document.getElementById("client-stats")) renderClientStats(); if(document.getElementById("dashboard-output")) renderDashboard(); },0);
+}
+
+function loadFromLocalStorage() {
+    const data = localStorage.getItem("DIARIO_DATA");
+    if (data) DIARIO = JSON.parse(data);
+    if (!DIARIO.giornaliero) DIARIO.giornaliero = [];
+    if (!DIARIO.carichi_scarichi) DIARIO.carichi_scarichi = [];
+    if (!DIARIO.viaggi) DIARIO.viaggi = [];
+    if (!Array.isArray(DIARIO.stipendi)) DIARIO.stipendi = [];
+    if (!DIARIO.security || typeof DIARIO.security !== "object") DIARIO.security = { pinSalt:"", pinHash:"" };
+
+    DIARIO.giornaliero.forEach(r => {
+        if (r && r.pausa) {
+            r.note = mergeWeeklyRestNote(r.note || "", r.pausa.ore, r.pausa.tipo);
+        }
+    });
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function formatEuro(value) {
+    const n = Number(value) || 0;
+    return n.toLocaleString("it-IT", {style:"currency", currency:"EUR"});
+}
+
+function aggiornaSuggerimentiGiornaliero() {
+    const campi = [
+        { id: "lista-trattori", valori: DIARIO.giornaliero.map(r => r.trattore) },
+        { id: "lista-semirimorchi", valori: DIARIO.giornaliero.map(r => r.semirimorchio) },
+        { id: "lista-luoghi-sosta", valori: DIARIO.giornaliero.map(r => r.luogo_sosta) }
+    ];
+
+    campi.forEach(campo => {
+        const lista = document.getElementById(campo.id);
+        if (!lista) return;
+
+        const valoriUnici = [...new Set(
+            campo.valori
+                .map(v => (v || "").trim())
+                .filter(Boolean)
+        )].sort((a, b) => a.localeCompare(b, "it"));
+
+        lista.innerHTML = valoriUnici
+            .map(v => `<option value="${v.replace(/&/g, "&amp;").replace(/"/g, "&quot;")}"></option>`)
+            .join("");
+    });
+}
+
+/* ============================================================
+   TAB SWITCHING
+   ============================================================ */
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(btn.dataset.tab).classList.add("active");
+    });
+});
+
+
+/* ============================================================
+   V7 — REGOLE TEMPI DI GUIDA / IMPEGNO / RIPOSO
+   ============================================================ */
+function isGuidaOverLimit(v) {
+    const m = oreToMinuti(v);
+    return m > 9 * 60;
+}
+
+function isImpegnoOverLimit(v) {
+    const m = oreToMinuti(v);
+    return m > 13 * 60;
+}
+
+function isPausaGiornalieraUnderLimit(rec) {
+    if (!rec || !rec.pausa) return false;
+    if ((rec.pausa.tipo || "").toUpperCase() !== "GIORNALIERA") return false;
+    const m = oreToMinuti(rec.pausa.ore);
+    return m > 0 && m < 11 * 60;
+}
+
+function weeklyRestNote(pausaOre, tipoPausa) {
+    if ((tipoPausa || "").toUpperCase() !== "SETTIMANALE") return "";
+    const minuti = oreToMinuti(pausaOre);
+    if (minuti <= 0) return "";
+
+    const standard = 45 * 60;
+    if (minuti < standard) {
+        return `Recuperare ${minutiToOre(standard - minuti)} ore`;
+    }
+    if (minuti > standard) {
+        return `${minutiToOre(minuti - standard)} ore compensate`;
+    }
+    return "";
+}
+
+function mergeWeeklyRestNote(noteEsistenti, pausaOre, tipoPausa) {
+    const auto = weeklyRestNote(pausaOre, tipoPausa);
+    let note = (noteEsistenti || "").trim();
+
+    // Rimuove eventuale vecchia nota automatica già generata
+    note = note
+        .replace(/(?:^|\s*\|\s*)Recuperare\s+\d{1,3}:\d{2}\s+ore/gi, "")
+        .replace(/(?:^|\s*\|\s*)\d{1,3}:\d{2}\s+ore compensate/gi, "")
+        .replace(/^\s*\|\s*|\s*\|\s*$/g, "")
+        .trim();
+
+    if (!auto) return note;
+    return note ? `${note} | ${auto}` : auto;
+}
+
+/* ============================================================
+   GIORNALIERO — RENDER TABELLA
+   ============================================================ */
+
+function renderGiornalieroTable() {
+    const tbody = document.querySelector("#table-giornaliero tbody");
+    tbody.innerHTML = "";
+
+    DIARIO.giornaliero.sort((a,b) => b.data.localeCompare(a.data));
+
+    DIARIO.giornaliero.forEach((rec, index) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${formatDateIT(rec.data)}</td>
+            <td>${rec.trattore}</td>
+            <td>${rec.semirimorchio}</td>
+            <td>${rec.ora_apertura}</td>
+            <td>${rec.ora_chiusura}</td>
+            <td class="${isImpegnoOverLimit(rec.impegno) ? 'value-alert' : ''}">${rec.impegno}</td>
+            <td>${rec.km}</td>
+            <td class="${isGuidaOverLimit(rec.ore_guida) ? 'value-alert' : ''}">${rec.ore_guida}</td>
+            <td>${rec.luogo_sosta}</td>
+            <td class="${isPausaGiornalieraUnderLimit(rec) ? 'value-alert' : ''}">${rec.pausa.ore} (${rec.pausa.tipo})</td>
+            <td class="note-cell">${escapeHtml(rec.note || "")}</td>
+            <td>
+                <button class="secondary" onclick="editG(${index})">Modifica</button>
+                <button class="danger" onclick="delG(${index})">Cancella</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+/* ============================================================
+   GIORNALIERO — AGGIUNTA RECORD
+   ============================================================ */
+
+document.getElementById("btn-add-giornaliero").addEventListener("click", () => {
+
+    const rec = {
+        data: g_data.value,
+        trattore: g_trattore.value,
+        semirimorchio: g_semirimorchio.value,
+        km: g_km.value,
+        ora_apertura: g_ora_apertura.value,
+        ora_chiusura: g_ora_chiusura.value,
+        impegno: calcolaIntervallo(g_ora_apertura.value, g_ora_chiusura.value),
+        ore_guida: g_ore_guida.value,
+        luogo_sosta: g_luogo_sosta.value,
+        note: g_note.value,
+        pausa: {
+            ore: g_pausa_ore.value,
+            tipo: g_pausa_tipo.value
+        }
+    };
+
+    rec.note = mergeWeeklyRestNote(rec.note || "", rec.pausa.ore, rec.pausa.tipo);
+
+    DIARIO.giornaliero.push(rec);
+    saveToLocalStorage();
+    renderGiornalieroTable();
+    aggiornaSuggerimentiGiornaliero();
+    form_giornaliero.reset();
+});
+
+/* ============================================================
+   GIORNALIERO — MODIFICA RECORD
+   ============================================================ */
+
+function editG(i) {
+    const r = DIARIO.giornaliero[i];
+
+    g_data.value = r.data;
+    g_trattore.value = r.trattore;
+    g_semirimorchio.value = r.semirimorchio;
+    g_km.value = r.km;
+    g_ora_apertura.value = r.ora_apertura;
+    g_ora_chiusura.value = r.ora_chiusura;
+    g_ore_guida.value = r.ore_guida;
+    g_luogo_sosta.value = r.luogo_sosta;
+    g_note.value = r.note || "";
+    g_pausa_ore.value = r.pausa.ore;
+    g_pausa_tipo.value = r.pausa.tipo;
+
+    DIARIO.giornaliero.splice(i,1);
+    saveToLocalStorage();
+    renderGiornalieroTable();
+    aggiornaSuggerimentiGiornaliero();
+}
+
+/* ============================================================
+   GIORNALIERO — CANCELLA RECORD
+   ============================================================ */
+
+function delG(i) {
+    DIARIO.giornaliero.splice(i,1);
+    saveToLocalStorage();
+    renderGiornalieroTable();
+    aggiornaSuggerimentiGiornaliero();
+}
+
+
+/* ============================================================
+   CARICHI / SCARICHI — MEMORIA CLIENTI E LUOGHI
+   ============================================================ */
+function aggiornaSuggerimentiCarichi() {
+    const listaClienti = document.getElementById("lista-clienti-carichi");
+    const listaLuoghi = document.getElementById("lista-luoghi-carichi");
+    const listaSemirimorchi = document.getElementById("lista-semirimorchi-carichi");
+    if (!listaClienti || !listaLuoghi || !listaSemirimorchi) return;
+
+    const clienti = [...new Set(
+        (DIARIO.carichi_scarichi || [])
+            .map(r => (r.cliente || "").trim())
+            .filter(Boolean)
+    )].sort((a,b) => a.localeCompare(b, "it", {sensitivity:"base"}));
+
+    const luoghi = [...new Set(
+        (DIARIO.carichi_scarichi || [])
+            .map(r => (r.luogo || "").trim())
+            .filter(Boolean)
+    )].sort((a,b) => a.localeCompare(b, "it", {sensitivity:"base"}));
+
+    const semirimorchi = [...new Set(
+        (DIARIO.carichi_scarichi || [])
+            .map(r => (r.semirimorchio || "").trim())
+            .filter(Boolean)
+    )].sort((a,b) => a.localeCompare(b, "it", {sensitivity:"base"}));
+
+    listaClienti.innerHTML = clienti
+        .map(v => `<option value="${escapeHtml(v)}"></option>`)
+        .join("");
+
+    listaLuoghi.innerHTML = luoghi
+        .map(v => `<option value="${escapeHtml(v)}"></option>`)
+        .join("");
+
+    listaSemirimorchi.innerHTML = semirimorchi
+        .map(v => `<option value="${escapeHtml(v)}"></option>`)
+        .join("");
+}
+
+/* ============================================================
+   CARICHI / SCARICHI — RENDER TABELLA
+   ============================================================ */
+
+function renderCarichiTable() {
+    const tbody = document.querySelector("#table-carichi tbody");
+    tbody.innerHTML = "";
+
+    DIARIO.carichi_scarichi.sort((a,b) => b.data.localeCompare(a.data));
+
+    DIARIO.carichi_scarichi.forEach((rec, index) => {
+        const colore = rec.operazione === "CARICO" ? "#4caf50" : "#f44336";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${formatDateIT(rec.data)}</td>
+            <td style="color:${colore}; font-weight:bold;">${rec.operazione}</td>
+            <td>${rec.luogo}</td>
+            <td>${rec.cliente}</td>
+            <td>${rec.semirimorchio}</td>
+            <td>${rec.peso}</td>
+            <td>
+                <button class="secondary" onclick="editC(${index})">Modifica</button>
+                <button class="danger" onclick="delC(${index})">Cancella</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+/* ============================================================
+   CARICHI / SCARICHI — AGGIUNTA RECORD
+   ============================================================ */
+
+document.getElementById("btn-add-carico").addEventListener("click", () => {
+
+    const rec = {
+        data: c_data.value,
+        operazione: c_operazione.value,
+        luogo: c_luogo.value,
+        cliente: c_cliente.value,
+        semirimorchio: c_semirimorchio.value,
+        peso: c_peso.value
+    };
+
+    DIARIO.carichi_scarichi.push(rec);
+
+    const esisteGia = DIARIO.viaggi.some(v =>
+        v.carico.data === rec.data &&
+        v.carico.cliente === rec.cliente &&
+        v.carico.luogo === rec.luogo &&
+        v.carico.semirimorchio === rec.semirimorchio &&
+        v.carico.peso === rec.peso
+    );
+
+    if (rec.operazione === "CARICO" && !esisteGia) {
+        DIARIO.viaggi.push({
+            carico: rec,
+            scarico: null
+        });
+    }
+
+    saveToLocalStorage();
+    renderCarichiTable();
+    renderViaggiTable();
+    aggiornaSuggerimentiCarichi();
+    form_carichi.reset();
+});
+
+/* ============================================================
+   CARICHI / SCARICHI — MODIFICA RECORD
+   ============================================================ */
+
+function editC(i) {
+    const r = DIARIO.carichi_scarichi[i];
+
+    c_data.value = r.data;
+    c_operazione.value = r.operazione;
+    c_luogo.value = r.luogo;
+    c_cliente.value = r.cliente;
+    c_semirimorchio.value = r.semirimorchio;
+    c_peso.value = r.peso;
+
+    DIARIO.carichi_scarichi.splice(i,1);
+    saveToLocalStorage();
+    renderCarichiTable();
+    aggiornaSuggerimentiCarichi();
+}
+
+/* ============================================================
+   CARICHI / SCARICHI — CANCELLA RECORD
+   ============================================================ */
+
+function delC(i) {
+    DIARIO.carichi_scarichi.splice(i,1);
+    saveToLocalStorage();
+    renderCarichiTable();
+    aggiornaSuggerimentiCarichi();
+}
+
+/* ============================================================
+   RIASSUNTO — RIFERIMENTI DOM
+   ============================================================ */
+
+const summary_output = document.getElementById("summary-output");
+const graficoKm = document.getElementById("graficoKm");
+const graficoOre = document.getElementById("graficoOre");
+const graficoPeso = document.getElementById("graficoPeso");
+const graficoImpegno = document.getElementById("graficoImpegno");  // <— QUI
+let chartKm = null;
+let chartOre = null;
+let chartPeso = null;
+let chartImpegno = null;  // <— QUI
+
+/* ============================================================
+   RIASSUNTO — CALCOLO
+   ============================================================ */
+
+document.getElementById("btn-calcola-riassunto").addEventListener("click", () => {
+
+    const tipo = r_tipo.value;
+    const dataRef = r_data.value;
+
+    if (!dataRef) {
+        alert("Inserisci una data di riferimento.");
+        return;
+    }
+
+    let lista = [];
+
+    if (tipo === "giornaliero") {
+        lista = DIARIO.giornaliero.filter(r => r.data === dataRef);
+    }
+
+    if (tipo === "settimanale") {
+        const ref = new Date(dataRef);
+        const start = new Date(ref);
+        start.setDate(ref.getDate() - ref.getDay());
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+
+        lista = DIARIO.giornaliero.filter(r => {
+            const d = new Date(r.data);
+            return d >= start && d <= end;
+        });
+    }
+
+    if (tipo === "mensile") {
+        const [yyyy, mm] = dataRef.split("-");
+        lista = DIARIO.giornaliero.filter(r => r.data.startsWith(`${yyyy}-${mm}`));
+    }
+
+    let totKm = 0;
+    let totOreGuida = 0;
+    let totImpegno = 0;
+    let totPausa = 0;
+    let totKg = 0;
+
+    lista.forEach(r => {
+        const kmVal = Number(r.km) || 0;
+        const oreGuidaVal = r.ore_guida && r.ore_guida.includes(":") ? oreToMinuti(r.ore_guida) : 0;
+        const impegnoVal = r.impegno && r.impegno.includes(":") ? oreToMinuti(r.impegno) : 0;
+        const pausaVal = r.pausa && r.pausa.ore && r.pausa.ore.includes(":") ? oreToMinuti(r.pausa.ore) : 0;
+
+        // SOMMA KG DEI CARICHI
+        const kgVal = DIARIO.carichi_scarichi
+            .filter(c => c.data === r.data && c.operazione === "CARICO")
+            .reduce((sum, c) => sum + (Number(c.peso) || 0), 0);
+
+        totKm += kmVal;
+        totOreGuida += oreGuidaVal;
+        totImpegno += impegnoVal;
+        totPausa += pausaVal;
+        totKg += kgVal;
+    });
+
+    const giorniLavorati = new Set(lista.map(r => r.data).filter(Boolean)).size;
+    const mediaKm = giorniLavorati ? (totKm / giorniLavorati).toFixed(1) : "0.0";
+    const mediaOreGuida = giorniLavorati ? Math.round(totOreGuida / giorniLavorati) : 0;
+    const mediaImpegno = giorniLavorati ? Math.round(totImpegno / giorniLavorati) : 0;
+
+    
+    const giorniGuidati = new Set(lista.filter(r => (Number(r.km) || 0) > 0).map(r => r.data)).size;
+    const alertGuida = lista.some(r => isGuidaOverLimit(r.ore_guida));
+    const alertImpegno = lista.some(r => isImpegnoOverLimit(r.impegno));
+    const alertPausa = lista.some(r => isPausaGiornalieraUnderLimit(r));
+summary_output.innerHTML = `
+    <div class="summary-card"><div class="summary-icon">📅</div><div><div class="summary-label">Giorni guidati</div><div class="summary-value">${giorniGuidati}</div><div class="summary-unit">giorni</div></div></div>
+    <div class="summary-card"><div class="summary-icon">🛣️</div><div><div class="summary-label">Totale Km</div><div class="summary-value">${totKm}</div><div class="summary-unit">km</div></div></div>
+    <div class="summary-card"><div class="summary-icon">◴</div><div><div class="summary-label">Media Km/giorno</div><div class="summary-value">${mediaKm}</div><div class="summary-unit">km</div></div></div>
+    <div class="summary-card"><div class="summary-icon">◉</div><div><div class="summary-label">Totale ore guida</div><div class="summary-value">${minutiToOre(totOreGuida)}</div><div class="summary-unit">ore</div></div></div>
+    <div class="summary-card"><div class="summary-icon">⏱</div><div><div class="summary-label">Media ore guida/giorno</div><div class="summary-value">${minutiToOre(mediaOreGuida)}</div><div class="summary-unit">ore</div></div></div>
+    <div class="summary-card"><div class="summary-icon">💼</div><div><div class="summary-label">Totale impegno</div><div class="summary-value">${minutiToOre(totImpegno)}</div><div class="summary-unit">ore</div></div></div>
+    <div class="summary-card"><div class="summary-icon">⏲</div><div><div class="summary-label">Media impegno/giorno</div><div class="summary-value">${minutiToOre(mediaImpegno)}</div><div class="summary-unit">ore</div></div></div>
+    <div class="summary-card"><div class="summary-icon">☕</div><div><div class="summary-label">Totale pause</div><div class="summary-value">${minutiToOre(totPausa)}</div><div class="summary-unit">ore</div></div></div>
+    <div class="summary-card"><div class="summary-icon">KG</div><div><div class="summary-label">Totale Kg caricati</div><div class="summary-value">${Number(totKg).toLocaleString("it-IT")}</div><div class="summary-unit">kg</div></div></div>
+`;
+
+    renderGrafici(lista);
+});
+
+/* ============================================================
+   RIASSUNTO — GRAFICI
+   ============================================================ */
+
+function renderGrafici(lista) {
+
+    const km = lista.map(r => r.km);
+    const ore = lista.map(r => oreToMinuti(r.ore_guida));
+    const peso = DIARIO.carichi_scarichi.map(r => r.peso);
+
+    const labelsGiorni = lista.map(r => formatDateIT(r.data));
+    const labelsCarichi = DIARIO.carichi_scarichi.map(r => formatDateIT(r.data));
+
+    if (chartKm) chartKm.destroy();
+    if (chartOre) chartOre.destroy();
+    if (chartPeso) chartPeso.destroy();
+    if (chartImpegno) chartImpegno.destroy();   // <— AGGIUNTO
+
+    // --- Grafico KM ---
+    chartKm = new Chart(graficoKm, {
+        type: "bar",
+        data: {
+            labels: labelsGiorni,
+            datasets: [{
+                label: "Km percorsi",
+                data: km,
+                backgroundColor: "#2196f3"
+            }]
+        }
+    });
+
+    // --- Grafico ORE GUIDA ---
+    chartOre = new Chart(graficoOre, {
+        type: "line",
+        data: {
+            labels: labelsGiorni,
+            datasets: [{
+                label: "Ore guida (minuti)",
+                data: ore,
+                borderColor: "#4caf50"
+            }]
+        }
+    });
+
+    // --- Grafico PESO ---
+    chartPeso = new Chart(graficoPeso, {
+        type: "bar",
+        data: {
+            labels: labelsCarichi,
+            datasets: [{
+                label: "Peso (kg)",
+                data: peso,
+                backgroundColor: "#f44336"
+            }]
+        }
+    });
+
+    // --- Grafico IMPEGNO (MINUTI) ---
+    const impegnoMin = lista.map(r =>
+        r.impegno && r.impegno.includes(":") ? oreToMinuti(r.impegno) : 0
+    );
+
+    chartImpegno = new Chart(graficoImpegno, {
+        type: "line",
+        data: {
+            labels: labelsGiorni,
+            datasets: [{
+                label: "Impegno (minuti)",
+                data: impegnoMin,
+                borderColor: "#ff9800"
+            }]
+        }
+    });
+}
+/* ============================================================
+   VIAGGI — RENDER TABELLA
+   ============================================================ */
+
+function renderViaggiTable() {
+    const tbody = document.querySelector("#table-viaggi tbody");
+    tbody.innerHTML = "";
+
+    DIARIO.viaggi.sort((a,b) => b.carico.data.localeCompare(a.carico.data));
+
+    DIARIO.viaggi.forEach((v, index) => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${formatDateIT(v.carico.data)}</td>
+            <td>${v.carico.cliente || ""}</td>
+            <td>${v.carico.luogo || ""}</td>
+
+            <td>${v.scarico ? formatDateIT(v.scarico.data) : "-"}</td>
+            <td>${v.scarico ? v.scarico.cliente : "-"}</td>
+            <td>${v.scarico ? v.scarico.luogo : "-"}</td>
+
+            <td>${v.carico.semirimorchio}</td>
+            <td>${v.carico.peso}</td>
+
+            <td>
+                <button class="primary" onclick="popupAbbina(${index})">Abbina</button>
+                ${v.scarico ? `<button class="secondary" onclick="popupModifica(${index})">Modifica</button>` : ""}
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+/* ============================================================
+   VIAGGI — POPUP ABBINAMENTO
+   ============================================================ */
+
+function popupAbbina(indexViaggio) {
+    const scarichiDisponibili = DIARIO.carichi_scarichi.filter(s => s.operazione === "SCARICO");
+    mostraPopupScarichi(scarichiDisponibili, indexViaggio);
+}
+
+/* ============================================================
+   VIAGGI — POPUP MODIFICA (entro 5 giorni)
+   ============================================================ */
+
+function popupModifica(indexViaggio) {
+    const viaggio = DIARIO.viaggi[indexViaggio];
+    const dataCarico = new Date(viaggio.carico.data);
+
+    const scarichiCompatibili = DIARIO.carichi_scarichi.filter(s => {
+        if (s.operazione !== "SCARICO") return false;
+
+        const dScarico = new Date(s.data);
+        const diff = (dScarico - dataCarico) / (1000 * 60 * 60 * 24);
+
+        return diff >= 0 && diff <= 5;
+    });
+
+    mostraPopupScarichi(scarichiCompatibili, indexViaggio);
+}
+
+/* ============================================================
+   VIAGGI — MOSTRA POPUP
+   ============================================================ */
+
+function mostraPopupScarichi(lista, indexViaggio) {
+    const popup = document.getElementById("popup-viaggi");
+    const tbody = document.querySelector("#popup-table-scarichi tbody");
+
+    popup.style.display = "block";
+    tbody.innerHTML = "";
+
+    lista.forEach(s => {
+        const idxScarico = DIARIO.carichi_scarichi.indexOf(s);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${formatDateIT(s.data)}</td>
+            <td>${s.cliente}</td>
+            <td>${s.luogo}</td>
+            <td><button class="primary" onclick="selezionaScarico(${indexViaggio}, ${idxScarico})">Seleziona</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById("popup-annulla").onclick = () => {
+        popup.style.display = "none";
+    };
+}
+
+/* ============================================================
+   VIAGGI — SELEZIONA SCARICO
+   ============================================================ */
+
+function selezionaScarico(indexViaggio, indexScarico) {
+    const scarico = DIARIO.carichi_scarichi[indexScarico];
+    DIARIO.viaggi[indexViaggio].scarico = scarico;
+
+    saveToLocalStorage();
+    renderViaggiTable();
+
+    document.getElementById("popup-viaggi").style.display = "none";
+}
+
+/* ============================================================
+   VIAGGI — EXPORT CSV
+   ============================================================ */
+
+document.getElementById("btn-export-csv").addEventListener("click", () => {
+
+    let csv = "Data Carico;Cliente Carico;Luogo Carico;Data Scarico;Cliente Scarico;Luogo Scarico;Semirimorchio;Peso\n";
+
+    DIARIO.viaggi.forEach(v => {
+        csv += [
+            v.carico.data,
+            v.carico.cliente,
+            v.carico.luogo,
+            v.scarico ? v.scarico.data : "",
+            v.scarico ? v.scarico.cliente : "",
+            v.scarico ? v.scarico.luogo : "",
+            v.carico.semirimorchio,
+            v.carico.peso
+        ].join(";") + "\n";
+    });
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "viaggi.csv";
+    a.click();
+
+    URL.revokeObjectURL(url);
+});
+
+/* ============================================================
+   STIPENDI
+   ============================================================ */
+
+function renderStipendiTable() {
+    const tbody = document.querySelector("#table-stipendi tbody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    DIARIO.stipendi = Array.isArray(DIARIO.stipendi) ? DIARIO.stipendi : [];
+
+    // Compatibilità con vecchi dati: se esiste solo "data", la usiamo anche per ordinare
+    DIARIO.stipendi.sort((a,b) => {
+        const da = a.data_ricezione || a.data || "";
+        const db = b.data_ricezione || b.data || "";
+        return db.localeCompare(da);
+    });
+
+    DIARIO.stipendi.forEach((rec, index) => {
+        const mese = rec.mese_riferimento || (rec.data ? rec.data.slice(0,7) : "");
+        const dataRic = rec.data_ricezione || rec.data || "";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${formatMonthIT(mese)}</td>
+            <td>${formatDateIT(dataRic)}</td>
+            <td>${formatEuro(Number(rec.importo) || 0)}</td>
+            <td>${escapeHtml(rec.causale || "")}</td>
+            <td>
+                <button class="secondary" onclick="editStipendio(${index})">Modifica</button> <button class="danger" onclick="delStipendio(${index})">Cancella</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+let stipendioEditIndex = null;
+
+document.getElementById("btn-add-stipendio").addEventListener("click", () => {
+    const mese = document.getElementById("s_mese_riferimento").value;
+    const dataRicezione = document.getElementById("s_data_ricezione").value;
+    const importo = document.getElementById("s_importo").value;
+    const causale = document.getElementById("s_causale").value;
+
+    if (!mese || !dataRicezione || !importo || !causale) {
+        alert("Compila tutti i campi.");
+        return;
+    }
+
+    const nuovoRecord = {
+        mese_riferimento: mese,
+        data_ricezione: dataRicezione,
+        importo: importo,
+        causale: causale
+    };
+
+    if (stipendioEditIndex !== null) {
+        DIARIO.stipendi[stipendioEditIndex] = nuovoRecord;
+        stipendioEditIndex = null;
+        document.getElementById("btn-add-stipendio").textContent = "Salva voce";
+    } else {
+        DIARIO.stipendi.push(nuovoRecord);
+    }
+
+    saveToLocalStorage();
+    renderStipendiTable();
+    renderSalaryStats();
+    renderDashboard();
+    document.getElementById("form-stipendi").reset();
+});
+
+function editStipendio(i) {
+    const r = DIARIO.stipendi[i];
+    if (!r) return;
+
+    document.getElementById("s_mese_riferimento").value =
+        r.mese_riferimento || (r.data ? r.data.slice(0,7) : "");
+    document.getElementById("s_data_ricezione").value =
+        r.data_ricezione || r.data || "";
+    document.getElementById("s_importo").value = r.importo ?? "";
+    document.getElementById("s_causale").value =
+        (r.causale || "STIPENDIO").toUpperCase();
+
+    stipendioEditIndex = i;
+    document.getElementById("btn-add-stipendio").textContent = "Salva modifiche";
+
+    document.getElementById("s_mese_riferimento").scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+    });
+}
+
+function delStipendio(i) {
+    if (!confirm("Cancellare questa voce stipendio?")) return;
+    DIARIO.stipendi.splice(i,1);
+
+    if (stipendioEditIndex === i) {
+        stipendioEditIndex = null;
+        document.getElementById("form-stipendi").reset();
+        document.getElementById("btn-add-stipendio").textContent = "Salva voce";
+    } else if (stipendioEditIndex !== null && i < stipendioEditIndex) {
+        stipendioEditIndex--;
+    }
+
+    saveToLocalStorage();
+    renderStipendiTable();
+    renderSalaryStats();
+    renderDashboard();
+}
+
+/* ============================================================
+   RICERCA
+   ============================================================ */
+
+function containsQuery(values, q) {
+    return values.some(v => String(v ?? "").toLowerCase().includes(q));
+}
+
+function renderSearchResults() {
+    const area = document.getElementById("search-results");
+    const summary = document.getElementById("search-summary");
+    const tipo = document.getElementById("search-tab").value;
+    const raw = document.getElementById("search-string").value.trim();
+    const q = raw.toLowerCase();
+
+    if (!raw) {
+        summary.textContent = "Inserisci una stringa da cercare.";
+        area.innerHTML = '<div class="empty-result">Nessuna ricerca eseguita.</div>';
+        return;
+    }
+
+    let rows = [];
+    let headers = [];
+
+    if (tipo === "giornaliero") {
+        rows = DIARIO.giornaliero.filter(r => containsQuery([
+            r.data, formatDateIT(r.data), r.trattore, r.semirimorchio, r.km,
+            r.ora_apertura, r.ora_chiusura, r.impegno, r.ore_guida,
+            r.luogo_sosta, r.pausa?.ore, r.pausa?.tipo, r.note
+        ], q));
+        headers = ["Data","Trattore","Semirimorchio","Km","Guida","Impegno","Luogo sosta","Pausa","Note"];
+        area.innerHTML = buildSearchTable(headers, rows.map(r => [
+            formatDateIT(r.data), r.trattore, r.semirimorchio, r.km, r.ore_guida, r.impegno,
+            r.luogo_sosta, `${r.pausa?.ore || ""} ${r.pausa?.tipo || ""}`, r.note || ""
+        ]));
+    } else if (tipo === "carichi") {
+        rows = DIARIO.carichi_scarichi.filter(r => containsQuery([
+            r.data, formatDateIT(r.data), r.operazione, r.luogo, r.cliente, r.semirimorchio, r.peso
+        ], q));
+        headers = ["Data","Operazione","Luogo","Cliente","Semirimorchio","Peso"];
+        area.innerHTML = buildSearchTable(headers, rows.map(r => [
+            formatDateIT(r.data), r.operazione, r.luogo, r.cliente, r.semirimorchio, r.peso
+        ]));
+    } else if (tipo === "viaggi") {
+        rows = DIARIO.viaggi.filter(v => containsQuery([
+            v.carico?.data, formatDateIT(v.carico?.data), v.carico?.cliente, v.carico?.luogo,
+            v.carico?.semirimorchio, v.carico?.peso, v.scarico?.data, formatDateIT(v.scarico?.data),
+            v.scarico?.cliente, v.scarico?.luogo
+        ], q));
+        headers = ["Data carico","Cliente carico","Luogo carico","Data scarico","Cliente scarico","Luogo scarico","Semirimorchio","Peso"];
+        area.innerHTML = buildSearchTable(headers, rows.map(v => [
+            formatDateIT(v.carico?.data), v.carico?.cliente, v.carico?.luogo,
+            v.scarico ? formatDateIT(v.scarico.data) : "-", v.scarico?.cliente || "-", v.scarico?.luogo || "-",
+            v.carico?.semirimorchio, v.carico?.peso
+        ]));
+    } else if (tipo === "stipendi") {
+        rows = DIARIO.stipendi.filter(r => containsQuery([
+            r.data, formatDateIT(r.data), r.causale, r.importo, formatEuro(r.importo)
+        ], q));
+        headers = ["Data","Causale","Importo"];
+        area.innerHTML = buildSearchTable(headers, rows.map(r => [
+            formatDateIT(r.data), r.causale, formatEuro(r.importo)
+        ]));
+    }
+
+    const nomeTab = document.getElementById("search-tab").selectedOptions[0].textContent;
+    summary.textContent = `${rows.length} risultato/i in ${nomeTab} per “${raw}”.`;
+    if (!rows.length) area.innerHTML = '<div class="empty-result">Nessun risultato trovato.</div>';
+    preparaGraficaTabelle();
+}
+
+function buildSearchTable(headers, rows) {
+    if (!rows.length) return "";
+    return `<table class="search-table"><thead><tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead><tbody>${rows.map(row => `<tr>${row.map(v => `<td>${escapeHtml(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+
+document.getElementById("btn-search").addEventListener("click", renderSearchResults);
+document.getElementById("search-string").addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        renderSearchResults();
+    }
+});
+
+/* ============================================================
+   IMPORT / EXPORT JSON
+   ============================================================ */
+
+document.getElementById("btn-export-json").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(DIARIO, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    const now=new Date(); const ds=String(now.getDate()).padStart(2,"0")+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+now.getFullYear(); a.download = `DIARIO_BACKUP_${ds}.json`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+});
+
+document.getElementById("btn-import-json").addEventListener("click", () => {
+    const file = document.getElementById("file-import-json").files[0];
+    if (!file) {
+        alert("Seleziona un file JSON.");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        try {
+            const parsed = JSON.parse(e.target.result);
+            if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.giornaliero) || !Array.isArray(parsed.carichi_scarichi)) throw new Error("Struttura non valida");
+            if (!confirm("Il backup è valido. Importarlo e sostituire i dati attuali?")) return;
+            DIARIO = parsed;
+            if (Array.isArray(DIARIO.giornaliero)) {
+                DIARIO.giornaliero.forEach(r => {
+                    if (r && r.pausa) {
+                        r.note = mergeWeeklyRestNote(r.note || "", r.pausa.ore, r.pausa.tipo);
+                    }
+                });
+            }
+
+            if (!DIARIO.security || typeof DIARIO.security !== "object") {
+                DIARIO.security = { pinSalt: "", pinHash: "" };
+            }
+            if (!DIARIO.viaggi) DIARIO.viaggi = [];
+            if (!DIARIO.stipendi) DIARIO.stipendi = [];
+            saveToLocalStorage();
+            renderGiornalieroTable();
+            renderCarichiTable();
+            renderViaggiTable();
+            renderStipendiTable();
+            aggiornaSuggerimentiCarichi();
+            alert("Importazione completata.");
+            aggiornaSuggerimentiGiornaliero();
+        } catch {
+            alert("Errore nel file JSON.");
+        }
+    };
+    reader.readAsText(file);
+});
+
+
+/* ============================================================
+   V2 — DASHBOARD, FILTRI, STATISTICHE, RICERCA GLOBALE, REPORT
+   ============================================================ */
+function inRange(date, da, a){ if(!date) return false; return (!da || date>=da) && (!a || date<=a); }
+function applyTableFilter(tableId, daId, aId){
+  const da=document.getElementById(daId).value, a=document.getElementById(aId).value;
+  document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr=>{
+    const txt=tr.cells[0]?.textContent.trim()||''; const p=txt.split('/'); const iso=p.length===3?`${p[2]}-${p[1]}-${p[0]}`:'';
+    tr.style.display=inRange(iso,da,a)?'':'none';
+  });
+}
+function clearTableFilter(tableId,daId,aId){document.getElementById(daId).value='';document.getElementById(aId).value='';document.querySelectorAll(`#${tableId} tbody tr`).forEach(r=>r.style.display='');}
+function card(label,value,unit=''){return `<div class="dash-card"><div class="dash-label">${label}</div><div class="dash-value">${value}</div><div class="dash-unit">${unit}</div></div>`;}
+
+
+function renderDashboard(){
+ const el=document.getElementById('dash-month'); let ym=el.value; if(!ym){const d=new Date();ym=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;el.value=ym;}
+ const g=DIARIO.giornaliero.filter(r=>(r.data||'').startsWith(ym)); const days=new Set(g.filter(r=>(Number(r.km)||0)>0).map(r=>r.data)).size;
+ const km=g.reduce((s,r)=>s+(Number(r.km)||0),0), guida=g.reduce((s,r)=>s+oreToMinuti(r.ore_guida),0), imp=g.reduce((s,r)=>s+oreToMinuti(r.impegno),0);
+ const kg=DIARIO.carichi_scarichi.filter(r=>(r.data||'').startsWith(ym)&&r.operazione==='CARICO').reduce((s,r)=>s+(Number(r.peso)||0),0);
+ const sal=(DIARIO.stipendi||[]).filter(r=>((r.mese_riferimento||r.data||'').startsWith(ym))).reduce((s,r)=>s+(Number(r.importo)||0),0);
+ document.getElementById('dashboard-output').innerHTML=[card('Giorni guidati',days,'giorni'),card('Km del mese',km.toLocaleString('it-IT'),'km'),card('Ore guida',minutiToOre(guida),'ore'),card('Impegno',minutiToOre(imp),'ore'),card('Kg trasportati',kg.toLocaleString('it-IT'),'kg'),moneyCard('Competenze mese',formatEuro(sal),'')].join('');
+}
+
+function filterStipendi(){
+    const da=document.getElementById("fs-da").value;
+    const a=document.getElementById("fs-a").value;
+    const tbody=document.querySelector("#table-stipendi tbody");
+    tbody.innerHTML="";
+    (DIARIO.stipendi||[])
+      .filter(r=>{
+          const m=r.mese_riferimento || (r.data ? r.data.slice(0,7) : "");
+          return (!da || m>=da) && (!a || m<=a);
+      })
+      .sort((x,y)=>(y.data_ricezione||y.data||"").localeCompare(x.data_ricezione||x.data||""))
+      .forEach((rec,index)=>{
+          const mese=rec.mese_riferimento || (rec.data ? rec.data.slice(0,7) : "");
+          const dataRic=rec.data_ricezione || rec.data || "";
+          const realIndex=DIARIO.stipendi.indexOf(rec);
+          const tr=document.createElement("tr");
+          tr.innerHTML=`<td>${formatMonthIT(mese)}</td><td>${formatDateIT(dataRic)}</td><td>${formatEuro(Number(rec.importo)||0)}</td><td>${escapeHtml(rec.causale||"")}</td><td><button class="secondary" onclick="editStipendio(${realIndex})">Modifica</button> <button class="danger" onclick="delStipendio(${realIndex})">Cancella</button></td>`;
+          tbody.appendChild(tr);
+      });
+}
+function clearStipendiFilter(){
+    document.getElementById("fs-da").value="";
+    document.getElementById("fs-a").value="";
+    renderStipendiTable();
+}
+
+function renderSalaryStats(){
+ const y=new Date().getFullYear().toString();
+ const arr=(DIARIO.stipendi||[]).filter(r=>((r.mese_riferimento||r.data||"").slice(0,4)===y));
+ const sum=(pred)=>arr.filter(pred).reduce((s,r)=>s+(Number(r.importo)||0),0);
+ const norm=x=>(x||'').toUpperCase();
+ const totale=sum(()=>true), mesi=new Set(arr.map(r=>(r.mese_riferimento||r.data||'').slice(0,7)).filter(Boolean)).size;
+ const el=document.getElementById('salary-stats'); if(!el) return;
+ el.innerHTML=[
+   card('Totale anno',formatEuro(totale),y),
+   card('Media mensile',formatEuro(mesi?totale/mesi:0),mesi+' mesi'),
+   card('Tredicesima',formatEuro(sum(r=>norm(r.causale)==='TREDICESIMA'))),
+   card('Quattordicesima',formatEuro(sum(r=>norm(r.causale)==='QUATTORDICESIMA'))),
+   card('Stipendi',formatEuro(sum(r=>norm(r.causale)==='STIPENDIO'))),
+   card('Rimborsi',formatEuro(sum(r=>norm(r.causale)==='RIMBORSI'))),
+   card('Acconti',formatEuro(sum(r=>norm(r.causale)==='ACCONTI')))
+ ].join('');
+}
+function renderClientStats(){
+ const cs=DIARIO.carichi_scarichi; const count={}; const kg={};
+ cs.forEach(r=>{const k=(r.cliente||r.luogo||'Non specificato').trim();count[k]=(count[k]||0)+1;if(r.operazione==='CARICO')kg[k]=(kg[k]||0)+(Number(r.peso)||0)});
+ const top=Object.entries(count).sort((a,b)=>b[1]-a[1]).slice(0,3);
+ document.getElementById('client-stats').innerHTML=top.length?top.map(([k,n])=>card(escapeHtml(k),n+' operazioni',(kg[k]||0).toLocaleString('it-IT')+' kg caricati')).join(''):card('Nessun dato','—','');
+}
+function buildGlobalSearch(raw){
+ const q=raw.toLowerCase(), blocks=[];
+ const groups=[['Giornaliero',DIARIO.giornaliero,r=>[r.data,r.trattore,r.semirimorchio,r.luogo_sosta,r.note,r.km,r.ore_guida]],['Carichi / Scarichi',DIARIO.carichi_scarichi,r=>[r.data,r.operazione,r.luogo,r.cliente,r.semirimorchio,r.peso]],['Stipendi',DIARIO.stipendi,r=>[r.mese_riferimento,r.data_ricezione,r.data,r.causale,r.importo]],['Viaggi',DIARIO.viaggi,v=>[v.carico?.data,v.carico?.cliente,v.carico?.luogo,v.scarico?.data,v.scarico?.cliente,v.scarico?.luogo]]];
+ let total=0; groups.forEach(([name,arr,get])=>{const found=arr.filter(r=>containsQuery(get(r),q)); total+=found.length;if(found.length)blocks.push(`<div class="stat-card"><b>${name}</b><div>${found.length} risultato/i</div><div style="margin-top:8px;color:#b9c8d4">${found.slice(0,8).map(r=>escapeHtml(get(r).filter(Boolean).join(' · '))).join('<br>')}</div></div>`)}); return {total,html:blocks.join('')};
+}
+const oldSearch=renderSearchResults; renderSearchResults=function(){if(document.getElementById('search-tab').value!=='tutto')return oldSearch();const raw=document.getElementById('search-string').value.trim(),area=document.getElementById('search-results'),summary=document.getElementById('search-summary');if(!raw){summary.textContent='Inserisci una stringa da cercare.';area.innerHTML='';return}const r=buildGlobalSearch(raw);summary.textContent=`${r.total} risultato/i in tutto il diario per “${raw}”.`;area.innerHTML=r.html||'<div class="empty-result">Nessun risultato trovato.</div>';};
+function exportReport(){
+ const tipo=r_tipo.value, data=r_data.value;if(!data){alert('Seleziona prima la data di riferimento e calcola il riassunto.');return} if(!summary_output.innerHTML.trim()){alert('Calcola prima il riassunto.');return}
+ const w=window.open('','_blank'); if(!w){alert('Il browser ha bloccato la finestra del report.');return}
+ w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Report Diario Autista</title><style>body{font-family:Arial;padding:28px;color:#111}h1{margin-bottom:4px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.summary-card{border:1px solid #bbb;border-radius:10px;padding:12px}.summary-icon{font-size:22px}.summary-value{font-size:22px;font-weight:bold}.summary-label,.summary-unit{font-size:12px;color:#555}.foot{margin-top:30px;text-align:center;color:#555}</style></head><body><h1>Diario Autista</h1><p>Report ${escapeHtml(tipo)} — ${escapeHtml(formatDateIT(data))}</p><div class="cards">${summary_output.innerHTML}</div><div class="foot">powered by Andrea ZOLLET</div><script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script><script>
+if ("serviceWorker" in navigator) {
+ window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(console.error));
+}
+</script>
+</body></html>`);w.document.close();
+}
+document.getElementById('btn-dashboard').addEventListener('click',renderDashboard);document.getElementById('btn-report-pdf').addEventListener('click',exportReport);
+
+
+
+/* ============================================================
+   SICUREZZA PIN PERSONALE
+   - Il PIN non viene mai salvato in chiaro.
+   - Nel JSON vengono salvati solo salt + hash SHA-256.
+   - Il PIN protegge sia Stipendi sia i valori economici Home.
+   ============================================================ */
+
+let securitySessionUnlocked = false;
+let stipendiUnlocked = false;
+let homeMoneyUnlocked = false;
+
+function randomSaltHex(byteLength = 16) {
+    const arr = new Uint8Array(byteLength);
+    if (window.crypto && window.crypto.getRandomValues) {
+        window.crypto.getRandomValues(arr);
+    } else {
+        for (let i = 0; i < arr.length; i++) {
+            arr[i] = Math.floor(Math.random() * 256);
+        }
+    }
+    return Array.from(arr, b => b.toString(16).padStart(2, "0")).join("");
+}
+
+/* SHA-256 sincrono in puro JavaScript: funziona anche con file HTML locali. */
+function sha256(ascii) {
+    function rightRotate(value, amount) {
+        return (value >>> amount) | (value << (32 - amount));
+    }
+
+    const maxWord = Math.pow(2, 32);
+    let result = "";
+    const words = [];
+    const asciiBitLength = ascii.length * 8;
+
+    let hash = sha256.h = sha256.h || [];
+    let k = sha256.k = sha256.k || [];
+    let primeCounter = k.length;
+    const isComposite = {};
+
+    for (let candidate = 2; primeCounter < 64; candidate++) {
+        if (!isComposite[candidate]) {
+            for (let i = 0; i < 313; i += candidate) {
+                isComposite[i] = candidate;
+            }
+            hash[primeCounter] = (Math.pow(candidate, 0.5) * maxWord) | 0;
+            k[primeCounter++] = (Math.pow(candidate, 1 / 3) * maxWord) | 0;
+        }
+    }
+
+    ascii += "\x80";
+    while (ascii.length % 64 - 56) ascii += "\x00";
+
+    for (let i = 0; i < ascii.length; i++) {
+        const j = ascii.charCodeAt(i);
+        if (j >> 8) return "";
+        words[i >> 2] |= j << ((3 - i) % 4) * 8;
+    }
+
+    words[words.length] = ((asciiBitLength / maxWord) | 0);
+    words[words.length] = (asciiBitLength);
+
+    for (let j = 0; j < words.length;) {
+        const w = words.slice(j, j += 16);
+        const oldHash = hash.slice(0);
+        hash = hash.slice(0, 8);
+
+        for (let i = 0; i < 64; i++) {
+            const w15 = w[i - 15], w2 = w[i - 2];
+            const a = hash[0], e = hash[4];
+
+            const temp1 = hash[7]
+                + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+                + ((e & hash[5]) ^ ((~e) & hash[6]))
+                + k[i]
+                + (w[i] = (i < 16) ? w[i] : (
+                    w[i - 16]
+                    + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3))
+                    + w[i - 7]
+                    + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+                ) | 0);
+
+            const temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
+                + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+
+            hash = [(temp1 + temp2) | 0].concat(hash);
+            hash[4] = (hash[4] + temp1) | 0;
+            hash.pop();
+        }
+
+        for (let i = 0; i < 8; i++) {
+            hash[i] = (hash[i] + oldHash[i]) | 0;
+        }
+    }
+
+    for (let i = 0; i < 8; i++) {
+        for (let j = 3; j + 1; j--) {
+            const b = (hash[i] >> (j * 8)) & 255;
+            result += ((b < 16) ? "0" : "") + b.toString(16);
+        }
+    }
+    return result;
+}
+
+function hashPin(pin, salt) {
+    return sha256(`${salt}|${pin}|DIARIO_AUTISTA`);
+}
+
+function pinIsConfigured() {
+    return !!(DIARIO.security && DIARIO.security.pinSalt && DIARIO.security.pinHash);
+}
+
+function createPersonalPin() {
+    const pin1 = prompt("Crea un PIN personale di almeno 6 cifre:");
+    if (pin1 === null) return false;
+
+    if (!/^\d{6,12}$/.test(pin1)) {
+        alert("Il PIN deve contenere da 6 a 12 cifre.");
+        return false;
+    }
+
+    const pin2 = prompt("Conferma il nuovo PIN:");
+    if (pin2 === null) return false;
+
+    if (pin1 !== pin2) {
+        alert("I due PIN non coincidono.");
+        return false;
+    }
+
+    const salt = randomSaltHex(16);
+    const pinHash = hashPin(pin1, salt);
+
+    DIARIO.security = {
+        pinSalt: salt,
+        pinHash: pinHash
+    };
+
+    saveToLocalStorage();
+    alert("PIN personale creato correttamente.");
+    return true;
+}
+
+function verifyPersonalPin() {
+    if (securitySessionUnlocked) return true;
+
+    if (!pinIsConfigured()) {
+        const created = createPersonalPin();
+        if (!created) return false;
+        securitySessionUnlocked = true;
+        stipendiUnlocked = true;
+        homeMoneyUnlocked = true;
+        return true;
+    }
+
+    const pin = prompt("Inserisci il PIN personale:");
+    if (pin === null) return false;
+
+    const testHash = hashPin(pin, DIARIO.security.pinSalt);
+
+    if (testHash !== DIARIO.security.pinHash) {
+        alert("PIN errato.");
+        return false;
+    }
+
+    securitySessionUnlocked = true;
+    stipendiUnlocked = true;
+    homeMoneyUnlocked = true;
+    return true;
+}
+
+function unlockHomeMoney() {
+    if (!verifyPersonalPin()) return;
+    homeMoneyUnlocked = true;
+    renderDashboard();
+}
+
+function moneyCard(label, value, unit='') {
+    const isVisible = homeMoneyUnlocked && securitySessionUnlocked;
+    const hiddenClass = isVisible ? '' : ' money-hidden';
+    const hint = isVisible ? '' : '<div class="money-lock-hint">🔒 Tocca per visualizzare</div>';
+
+    return `<div class="dash-card money-card ${isVisible ? 'unlocked' : ''}" onclick="unlockHomeMoney()">
+        <div class="dash-label">${label}</div>
+        <div class="dash-value${hiddenClass}">${isVisible ? value : '••••••'}</div>
+        <div class="dash-unit">${unit}</div>
+        ${hint}
+    </div>`;
+}
+
+/* Intercetta l'accesso al tab Stipendi prima del normale cambio-tab. */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    if (btn.dataset.tab === 'tab-stipendi') {
+        btn.addEventListener('click', function(ev) {
+            if (stipendiUnlocked && securitySessionUnlocked) return;
+
+            ev.stopImmediatePropagation();
+
+            if (!verifyPersonalPin()) return;
+
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+            btn.classList.add("active");
+            document.getElementById("tab-stipendi").classList.add("active");
+            renderStipendiTable();
+            renderSalaryStats();
+        }, true);
+    }
+});
+
+
+/* V10 — Peso automatico a zero per SCARICO */
+function aggiornaPesoScarico() {
+    const op = document.getElementById("c_operazione");
+    const peso = document.getElementById("c_peso");
+    if (!op || !peso) return;
+    if ((op.value || "").toUpperCase() === "SCARICO") {
+        peso.value = "0";
+    }
+}
+document.getElementById("c_operazione")?.addEventListener("change", aggiornaPesoScarico);
+
+/* ============================================================
+   INIT APP
+   ============================================================ */
+
+
+function preparaGraficaTabelle() {
+    document.querySelectorAll("table").forEach(table => {
+        if (table.parentElement && table.parentElement.classList.contains("table-wrap")) return;
+        const wrap = document.createElement("div");
+        wrap.className = "table-wrap";
+        table.parentNode.insertBefore(wrap, table);
+        wrap.appendChild(table);
+    });
+}
+
+function initApp() {
+    loadFromLocalStorage();
+    if (!DIARIO.viaggi) DIARIO.viaggi = [];
+    if (!DIARIO.stipendi) DIARIO.stipendi = [];
+    renderGiornalieroTable();
+    renderCarichiTable();
+    renderViaggiTable();
+    renderStipendiTable();
+    renderSalaryStats();
+    renderClientStats();
+    renderDashboard();
+    aggiornaSuggerimentiGiornaliero();
+    preparaGraficaTabelle();
+    aggiornaSuggerimentiCarichi();
+}
+
+initApp();
+
+function enableFullscreenGraph(canvas) {
+    let isFull = false;
+
+    canvas.addEventListener("dblclick", () => {
+        if (!isFull) {
+            canvas.classList.add("graph-fullscreen");
+            isFull = true;
+        } else {
+            canvas.classList.remove("graph-fullscreen");
+            isFull = false;
+        }
+    });
+}
+
+enableFullscreenGraph(graficoKm);
+enableFullscreenGraph(graficoOre);
+enableFullscreenGraph(graficoPeso);
+enableFullscreenGraph(graficoImpegno);
+
+</script>
+
+<div class="app-footer"><span>powered by</span><span class="signature">Andrea <b>ZOLLET</b></span></div>
+
+</div> <!-- fine overlay -->
+</body>
+</html>
