@@ -146,10 +146,12 @@ table thead th {
 
 </style>
 
+
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#07131f">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="./icon-192.png">
 </head>
 
@@ -1575,12 +1577,7 @@ const oldSearch=renderSearchResults; renderSearchResults=function(){if(document.
 function exportReport(){
  const tipo=r_tipo.value, data=r_data.value;if(!data){alert('Seleziona prima la data di riferimento e calcola il riassunto.');return} if(!summary_output.innerHTML.trim()){alert('Calcola prima il riassunto.');return}
  const w=window.open('','_blank'); if(!w){alert('Il browser ha bloccato la finestra del report.');return}
- w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Report Diario Autista</title><style>body{font-family:Arial;padding:28px;color:#111}h1{margin-bottom:4px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.summary-card{border:1px solid #bbb;border-radius:10px;padding:12px}.summary-icon{font-size:22px}.summary-value{font-size:22px;font-weight:bold}.summary-label,.summary-unit{font-size:12px;color:#555}.foot{margin-top:30px;text-align:center;color:#555}</style></head><body><h1>Diario Autista</h1><p>Report ${escapeHtml(tipo)} — ${escapeHtml(formatDateIT(data))}</p><div class="cards">${summary_output.innerHTML}</div><div class="foot">powered by Andrea ZOLLET</div><script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script><script>
-if ("serviceWorker" in navigator) {
- window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(console.error));
-}
-</script>
-</body></html>`);w.document.close();
+ w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Report Diario Autista</title><style>body{font-family:Arial;padding:28px;color:#111}h1{margin-bottom:4px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.summary-card{border:1px solid #bbb;border-radius:10px;padding:12px}.summary-icon{font-size:22px}.summary-value{font-size:22px;font-weight:bold}.summary-label,.summary-unit{font-size:12px;color:#555}.foot{margin-top:30px;text-align:center;color:#555}</style></head><body><h1>Diario Autista</h1><p>Report ${escapeHtml(tipo)} — ${escapeHtml(formatDateIT(data))}</p><div class="cards">${summary_output.innerHTML}</div><div class="foot">powered by Andrea ZOLLET</div><script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script></body></html>`);w.document.close();
 }
 document.getElementById('btn-dashboard').addEventListener('click',renderDashboard);document.getElementById('btn-report-pdf').addEventListener('click',exportReport);
 
@@ -1863,5 +1860,14 @@ enableFullscreenGraph(graficoImpegno);
 <div class="app-footer"><span>powered by</span><span class="signature">Andrea <b>ZOLLET</b></span></div>
 
 </div> <!-- fine overlay -->
+
+<script id="pwa-service-worker-registration">
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./service-worker.js")
+      .catch(function (err) { console.error("Service Worker:", err); });
+  });
+}
+</script>
 </body>
 </html>
