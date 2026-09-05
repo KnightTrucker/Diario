@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "database_version": "2026.09.05-1800Z",
+  "database_version": "2026.09.05-1827Z",
   "year": 2026,
   "verified_at": "2026-09-05",
   "timezone": "Europe/Paris",
@@ -38836,7 +38836,7 @@
       "source": "CH_ASTRA"
     }
   ],
-  "checked_at": "2026-09-05T18:00:52Z",
+  "checked_at": "2026-09-05T18:27:11Z",
   "years_available": [
     2026,
     2027
@@ -38844,43 +38844,44 @@
   "coverage_through": "2027-12-31",
   "source_status": {
     "IT-2026": {
-      "checked_at": "2026-09-05T18:00:52Z",
-      "status": "offline_generation",
-      "url": null
+      "checked_at": "2026-09-05T18:26:53Z",
+      "status": "error",
+      "url": "https://www.mit.gov.it/comunicazione/news/mezzi-pesanti-calendario-2026-dei-divieti-di-circolazione-stradale",
+      "error": "solo 0 righe calendario estratte"
     },
     "IT-2027": {
-      "checked_at": "2026-09-05T18:00:52Z",
-      "status": "offline_generation",
+      "checked_at": "2026-09-05T18:27:07Z",
+      "status": "not_found",
       "url": null
     },
     "FR-2026": {
-      "checked_at": "2026-09-05T18:00:52Z",
-      "status": "offline_generation",
+      "checked_at": "2026-09-05T18:27:10Z",
+      "status": "not_found",
       "url": null
     },
     "FR-2027": {
-      "checked_at": "2026-09-05T18:00:52Z",
-      "status": "offline_generation",
+      "checked_at": "2026-09-05T18:27:10Z",
+      "status": "not_found",
       "url": null
     },
     "AT-2026": {
-      "checked_at": "2026-09-05T18:00:52Z",
-      "status": "offline_generation",
+      "checked_at": "2026-09-05T18:27:10Z",
+      "status": "not_found",
       "url": null
     },
     "AT-2027": {
-      "checked_at": "2026-09-05T18:00:52Z",
-      "status": "offline_generation",
+      "checked_at": "2026-09-05T18:27:10Z",
+      "status": "not_found",
       "url": null
     },
     "ES-2026": {
-      "checked_at": "2026-09-05T18:00:52Z",
-      "status": "offline_generation",
+      "checked_at": "2026-09-05T18:27:10Z",
+      "status": "not_found",
       "url": null
     },
     "ES-2027": {
-      "checked_at": "2026-09-05T18:00:52Z",
-      "status": "offline_generation",
+      "checked_at": "2026-09-05T18:27:10Z",
+      "status": "not_found",
       "url": null
     }
   },
