@@ -1,4 +1,4 @@
-const CACHE_NAME = "diario-autista-v21-multidevice";
+const CACHE_NAME = "diario-autista-v23-hgv-auto-multiyear";
 const PRECACHE = [
   "./",
   "./index.html",
@@ -6,13 +6,17 @@ const PRECACHE = [
   "./icon-192.png",
   "./icon-512.png"
 ];
+const HGV_DB = "./hgv_europe.json";
 
 self.addEventListener("install", event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(PRECACHE))
-      .then(() => self.skipWaiting())
-  );
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll(PRECACHE);
+    // Il database HGV e' utile offline, ma non deve impedire l'installazione
+    // della PWA se GitHub Pages lo sta ancora propagando.
+    try { await cache.add(HGV_DB); } catch (_) {}
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener("activate", event => {
@@ -28,39 +32,43 @@ self.addEventListener("activate", event => {
 });
 
 self.addEventListener("message", event => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
-async function networkFirstNavigation(request) {
+async function networkFirst(request, fallbackKey) {
   const cache = await caches.open(CACHE_NAME);
   try {
     const response = await fetch(request, { cache: "no-store" });
     if (response && response.ok) {
-      await cache.put("./index.html", response.clone());
+      await cache.put(fallbackKey || request, response.clone());
     }
     return response;
   } catch (err) {
-    return (await cache.match("./index.html")) || (await cache.match("./")) || Response.error();
+    return (await cache.match(fallbackKey || request)) || Response.error();
   }
 }
 
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
-
   const url = new URL(event.request.url);
 
-  // Le API Google/Drive e le librerie esterne non vengono intercettate.
+  // Google Drive e librerie esterne restano fuori dal service worker.
   if (url.origin !== self.location.origin) return;
 
-  // L'HTML deve cercare SEMPRE prima la versione GitHub piu recente.
+  // HTML: sempre rete prima, cache solo come fallback offline.
   if (event.request.mode === "navigate" || url.pathname.endsWith("/index.html")) {
-    event.respondWith(networkFirstNavigation(event.request));
+    event.respondWith(networkFirst(event.request, "./index.html"));
     return;
   }
 
-  // Manifest e icone: cache con aggiornamento in background.
+  // Database HGV: sempre rete prima. Il ?t=... del pulsante Aggiorna
+  // non crea infinite copie: salviamo sempre nella chiave canonica.
+  if (url.pathname.endsWith("/hgv_europe.json")) {
+    event.respondWith(networkFirst(event.request, HGV_DB));
+    return;
+  }
+
+  // Manifest e icone: cache-first con aggiornamento in background.
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(event.request);
@@ -75,7 +83,6 @@ self.addEventListener("fetch", event => {
       event.waitUntil(network);
       return cached;
     }
-
     return (await network) || Response.error();
   })());
 });

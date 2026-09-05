@@ -1,0 +1,36 @@
+DIARIO AUTISTA — HGV EUROPA AUTOMATICO v23
+
+CARICAMENTO UNA SOLA VOLTA NEL REPOSITORY KnightTrucker/Diario:
+
+RADICE REPOSITORY:
+- index.html
+- manifest.json
+- service-worker.js
+- hgv_europe.json
+- hgv_auto_update.py
+
+WORKFLOW:
+- .github/workflows/update-hgv.yml
+
+Le icone icon-192.png e icon-512.png gia presenti NON vanno cancellate.
+
+DOPO IL CARICAMENTO:
+GitHub Actions controlla le fonti ogni domenica e, da ottobre a gennaio,
+fa anche un controllo aggiuntivo ogni 2 giorni.
+Il database mantiene lo storico e prepara sempre anno corrente + anno successivo.
+
+Il pulsante "Aggiorna informazioni" nel Diario scarica l'ultimo hgv_europe.json
+pubblicato dal workflow.
+
+SICUREZZA DATI:
+Se un calendario annuale ufficiale non e ancora pubblicato o un parser non riesce
+ad interpretarlo, il sistema conserva i dati verificati esistenti e segnala la
+copertura come in attesa/in monitoraggio. Non inventa date annuali.
+
+
+ANTI-DISATTIVAZIONE GITHUB ACTIONS
+----------------------------------
+Il workflow aggiorna .github/hgv-heartbeat.txt una volta al mese.
+Anche se hgv_europe.json non cambia, viene quindi creato un piccolo commit
+periodico per mantenere attività nel repository pubblico e ridurre il rischio
+di disattivazione automatica dei workflow pianificati dopo 60 giorni.
