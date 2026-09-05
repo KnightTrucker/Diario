@@ -59,7 +59,7 @@ body{background:radial-gradient(circle at top,#0a1c2e 0,#050b13 38%,#02060b 100%
 .overlay{max-width:1280px;margin:auto;min-height:100vh;padding:18px;background:transparent}
 .header-bar{background:linear-gradient(180deg,rgba(10,31,50,.95),rgba(5,18,30,.95));border:1px solid var(--line);border-radius:18px;padding:14px 18px;margin-bottom:14px;box-shadow:0 12px 30px rgba(0,0,0,.25)}
 .header-bar h1{font-size:clamp(22px,3vw,34px);margin:0;letter-spacing:.3px}.header-bar img{height:56px;border-radius:12px;box-shadow:0 0 20px rgba(11,121,255,.25)}
-.tabs{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin:0 0 16px;padding:0}
+.tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:10px;margin:0 0 16px;padding:0}
 .tab-btn{min-height:82px;padding:10px 8px!important;background:linear-gradient(180deg,#0b1724,#07111b)!important;border:1px solid #31516d!important;color:#fff!important;border-radius:15px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;font-weight:700;font-size:15px;transition:.18s ease;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
 .tab-btn .tab-icon{font-size:28px;line-height:1;filter:drop-shadow(0 0 8px currentColor)}
 .tab-btn:hover{transform:translateY(-1px);border-color:#4f82a7!important}.tab-btn.active{background:linear-gradient(145deg,#0b82ff,#123ec8)!important;border-color:#16a7ff!important;box-shadow:0 0 0 1px rgba(45,172,255,.28),0 0 24px rgba(0,121,255,.35)}
@@ -185,14 +185,43 @@ table thead th {
 </style>
 
 
-<!-- PWA v21: manifest, tema e icone -->
-<link rel="manifest" href="./manifest.json?v=21">
+<!-- PWA v22: manifest, tema e icone -->
+<link rel="manifest" href="./manifest.json?v=22">
 <meta name="theme-color" content="#07131f">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Diario">
 <link rel="apple-touch-icon" href="./icon-192.png">
+
+
+<style id="date-weekday-holidays-v22">
+.table-date-holiday { color:#ff3b45 !important; font-weight:800; }
+</style>
+
+
+<style id="hgv-europe-v22">
+#tab-hgv h2::before{content:'🚫'}
+.hgv-intro{margin:-4px 0 14px;color:#b8c9d8;line-height:1.45;font-size:13px}
+.hgv-toolbar{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:10px;align-items:end;background:linear-gradient(180deg,rgba(9,28,44,.88),rgba(5,19,31,.88));border:1px solid rgba(52,100,134,.7);border-radius:15px;padding:14px;margin-bottom:12px}
+.hgv-toolbar .hgv-refresh-wrap{display:flex;align-items:end}.hgv-toolbar #btn-hgv-refresh{width:100%;min-height:46px}
+.hgv-db-status{padding:10px 12px;border:1px solid #31516d;border-radius:11px;background:#081722;color:#c3d4e2;font-size:12.5px;line-height:1.45;margin-bottom:12px}
+.hgv-disclaimer{padding:10px 12px;border-left:4px solid #f0a000;border-radius:10px;background:rgba(240,128,0,.08);color:#e6cfad;font-size:12.5px;line-height:1.45;margin-bottom:14px}
+.hgv-counts{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px}.hgv-count{padding:6px 10px;border-radius:999px;border:1px solid #31516d;background:#0a1722;font-size:12px;font-weight:750}.hgv-count.active{border-color:#f03b45;color:#ff8a91}.hgv-count.soon24{border-color:#ff8c00;color:#ffb657}.hgv-count.soon7{border-color:#d5b720;color:#f6de62}
+.hgv-list{display:grid;gap:10px}.hgv-event{position:relative;border:1px solid #31516d;border-radius:14px;background:linear-gradient(145deg,#0b1d2d,#07131f);padding:13px 14px;box-shadow:0 8px 20px rgba(0,0,0,.18)}
+.hgv-event.is-active{border:2px solid #f03b45;background:linear-gradient(145deg,rgba(91,16,23,.78),#160b11);box-shadow:0 0 22px rgba(240,59,69,.16)}
+.hgv-event.is-soon24{border-color:#ff8c00;background:linear-gradient(145deg,rgba(82,47,4,.60),#101114)}
+.hgv-event.is-soon7{border-color:#cbb21b;background:linear-gradient(145deg,rgba(72,63,8,.48),#0b151c)}
+.hgv-event.is-past{opacity:.48}
+.hgv-top{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}.hgv-country-name{font-size:14px;font-weight:850}.hgv-title{font-size:16px;font-weight:850;margin-top:3px;line-height:1.25}.hgv-when{text-align:right;font-weight:800;font-size:13px;white-space:nowrap}.hgv-relative{font-size:11px;margin-top:4px;color:#9fb0c2}.hgv-event.is-active .hgv-relative{color:#ff9aa0;font-weight:850}.hgv-event.is-soon24 .hgv-relative{color:#ffc071;font-weight:850}.hgv-event.is-soon7 .hgv-relative{color:#f2dc67;font-weight:850}
+.hgv-badges{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0 7px}.hgv-badge{display:inline-flex;padding:4px 7px;border-radius:7px;background:#102638;border:1px solid #294d68;color:#c9deee;font-size:11px;font-weight:750}.hgv-badge.state{background:#13212b}.hgv-event.is-active .hgv-badge.state{background:#7b151e;border-color:#f03b45;color:#fff}.hgv-event.is-soon24 .hgv-badge.state{background:#6a3a00;border-color:#ff8c00;color:#fff}.hgv-event.is-soon7 .hgv-badge.state{background:#584d05;border-color:#cbb21b;color:#fff}
+.hgv-detail{font-size:12.5px;line-height:1.48;color:#c1d0dc}.hgv-detail b{color:#f0f7fd}.hgv-source{display:inline-block;margin-top:8px;color:#54a9ff;text-decoration:none;font-size:12px;font-weight:750}.hgv-source:hover{text-decoration:underline}
+.hgv-empty{padding:20px;border:1px dashed #34556e;border-radius:12px;text-align:center;color:#9fb0c2;background:rgba(7,23,35,.55)}
+.hgv-holidays{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:9px}.hgv-holiday{border:1px solid #31516d;background:#081722;border-radius:11px;padding:10px 11px}.hgv-holiday-date{font-weight:850}.hgv-holiday-name{font-size:13px;margin-top:3px}.hgv-holiday-scope{font-size:11px;color:#9fb0c2;margin-top:3px}
+.hgv-country-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}.hgv-country-card{border:1px solid #31516d;border-radius:13px;background:linear-gradient(145deg,#0b1d2d,#07131f);padding:12px}.hgv-country-card b{font-size:15px}.hgv-country-card p{font-size:12.5px;line-height:1.45;color:#b9c9d5;margin:6px 0}.hgv-country-card .hgv-source{margin-right:9px}
+.hgv-show-all-note{font-size:12px;color:#9fb0c2;margin:-4px 0 10px}
+@media(max-width:760px){.hgv-toolbar{grid-template-columns:1fr}.hgv-top{display:block}.hgv-when{text-align:left;margin-top:8px;white-space:normal}.hgv-event{padding:12px}.hgv-holidays{grid-template-columns:1fr}}
+</style>
 
 </head>
 
@@ -209,6 +238,7 @@ table thead th {
     <button class="tab-btn active" data-tab="tab-giornaliero"><span class="tab-icon">📅</span><span>Giornaliero</span></button>
     <button class="tab-btn" data-tab="tab-carichi"><span class="tab-icon">🚚</span><span>Carichi/Scarichi</span></button>
     <button class="tab-btn" data-tab="tab-riassunto"><span class="tab-icon">📊</span><span>Riassunto</span></button>
+    <button class="tab-btn" data-tab="tab-hgv"><span class="tab-icon">🚫</span><span>Divieti HGV</span></button>
     
     <button class="tab-btn" data-tab="tab-viaggi"><span class="tab-icon">📍</span><span>Viaggi</span></button>
     <button class="tab-btn" data-tab="tab-stipendi"><span class="tab-icon">💶</span><span>Stipendi</span></button>
@@ -404,6 +434,55 @@ table thead th {
    <canvas id="graficoImpegno" height="120"></canvas>
 </div>
 
+
+<!-- TAB DIVIETI HGV EUROPA -->
+<div id="tab-hgv" class="tab-content">
+    <h2>Divieti HGV Europa</h2>
+    <div class="hgv-intro">
+        Calendario di pianificazione per Italia, Francia, Austria, Germania, Svizzera, Belgio, Lussemburgo, Spagna e Olanda.
+        La lista principale mostra <b>tutti i divieti</b> del periodo selezionato; quelli più vicini vengono evidenziati automaticamente. Il database è multi-anno e il workflow GitHub prepara anche l’anno successivo appena le fonti ufficiali lo consentono.
+    </div>
+
+    <div class="hgv-toolbar">
+        <div>
+            <label for="hgv-country">Paese</label>
+            <select id="hgv-country">
+                <option value="ALL">Tutti i Paesi</option>
+                <option value="IT">🇮🇹 Italia</option><option value="FR">🇫🇷 Francia</option><option value="AT">🇦🇹 Austria</option>
+                <option value="DE">🇩🇪 Germania</option><option value="CH">🇨🇭 Svizzera</option><option value="BE">🇧🇪 Belgio</option>
+                <option value="LU">🇱🇺 Lussemburgo</option><option value="ES">🇪🇸 Spagna</option><option value="NL">🇳🇱 Olanda</option>
+            </select>
+        </div>
+        <div>
+            <label for="hgv-time-filter">Periodo</label>
+            <select id="hgv-time-filter">
+                <option value="future">Da adesso in poi</option>
+                <option value="all">Tutti gli anni disponibili</option>
+            </select>
+        </div>
+        <div class="hgv-refresh-wrap">
+            <button type="button" class="primary" id="btn-hgv-refresh">🔄 Aggiorna informazioni</button>
+        </div>
+    </div>
+
+    <div id="hgv-db-status" class="hgv-db-status">Database divieti: caricamento…</div>
+    <div id="hgv-disclaimer" class="hgv-disclaimer">Le informazioni servono alla pianificazione e non sostituiscono i provvedimenti ufficiali.</div>
+    <div id="hgv-counts" class="hgv-counts"></div>
+
+    <h3>Prossimi / in corso</h3>
+    <div id="hgv-next" class="hgv-list"></div>
+
+    <h3>Tutti i divieti</h3>
+    <div class="hgv-show-all-note">Nessun limite al numero di avvisi: la lista contiene tutti gli eventi del periodo e del Paese selezionati.</div>
+    <div id="hgv-events" class="hgv-list"></div>
+
+    <h3>Festività</h3>
+    <div id="hgv-holidays" class="hgv-holidays"></div>
+
+    <h3>Paesi e fonti</h3>
+    <div id="hgv-country-info" class="hgv-country-info"></div>
+</div>
+
 <!-- TAB IMPORT / EXPORT -->
 <div id="tab-impexp" class="tab-content">
     <h2>Import / Export JSON</h2>
@@ -594,6 +673,75 @@ function formatDateIT(dateStr) {
     if (!dateStr) return "";
     const [yyyy, mm, dd] = dateStr.split("-");
     return `${dd}/${mm}/${yyyy}`;
+}
+
+/* Data per le liste: GIO. 05/09/2026 + festività nazionali italiane */
+function easterSundayIT(year) {
+    // Algoritmo gregoriano di Meeus/Jones/Butcher.
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31);
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(year, month - 1, day, 12, 0, 0);
+}
+
+function italianNationalHolidayName(dateStr) {
+    if (!dateStr) return "";
+    const parts = dateStr.split("-").map(Number);
+    if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return "";
+    const [year, month, day] = parts;
+    const md = `${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+    const fixed = {
+        "01-01":"Capodanno",
+        "01-06":"Epifania",
+        "04-25":"Festa della Liberazione",
+        "05-01":"Festa dei Lavoratori",
+        "06-02":"Festa della Repubblica",
+        "08-15":"Ferragosto",
+        "11-01":"Ognissanti",
+        "12-08":"Immacolata Concezione",
+        "12-25":"Natale",
+        "12-26":"Santo Stefano"
+    };
+    if (fixed[md]) return fixed[md];
+
+    const easter = easterSundayIT(year);
+    const easterMonday = new Date(easter);
+    easterMonday.setDate(easterMonday.getDate() + 1);
+    if (easterMonday.getFullYear() === year &&
+        easterMonday.getMonth() + 1 === month &&
+        easterMonday.getDate() === day) return "Lunedì dell'Angelo";
+    return "";
+}
+
+function tableDateInfo(dateStr) {
+    if (!dateStr) return { text:"", red:false, holiday:"" };
+    const [yyyy, mm, dd] = dateStr.split("-").map(Number);
+    if (![yyyy, mm, dd].every(Number.isFinite)) return { text:escapeHtml(dateStr), red:false, holiday:"" };
+    const d = new Date(yyyy, mm - 1, dd, 12, 0, 0);
+    const giorni = ["DOM.","LUN.","MAR.","MER.","GIO.","VEN.","SAB."];
+    const holiday = italianNationalHolidayName(dateStr);
+    const red = d.getDay() === 0 || !!holiday;
+    const text = `${giorni[d.getDay()]} ${String(dd).padStart(2,"0")}/${String(mm).padStart(2,"0")}/${yyyy}`;
+    return { text, red, holiday };
+}
+
+function formatTableDateIT(dateStr) {
+    const info = tableDateInfo(dateStr);
+    if (!info.text) return "";
+    const cls = info.red ? ' class="table-date-holiday"' : "";
+    const title = info.holiday ? ` title="${escapeHtml(info.holiday)}"` : "";
+    return `<span${cls}${title}>${escapeHtml(info.text)}</span>`;
 }
 
 function formatMonthIT(monthStr) {
@@ -883,7 +1031,7 @@ function renderGiornalieroTable() {
     DIARIO.giornaliero.forEach((rec, index) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td>${formatDateIT(rec.data)}</td>
+            <td>${formatTableDateIT(rec.data)}</td>
             <td>${rec.trattore}</td>
             <td>${rec.semirimorchio}</td>
             <td>${rec.ora_apertura}</td>
@@ -1039,7 +1187,7 @@ function renderCarichiTable() {
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td>${formatDateIT(rec.data)}</td>
+            <td>${formatTableDateIT(rec.data)}</td>
             <td style="color:${colore}; font-weight:bold;">${rec.operazione}</td>
             <td>${rec.luogo}</td>
             <td>${rec.cliente}</td>
@@ -1306,11 +1454,11 @@ function renderViaggiTable() {
         const tr = document.createElement("tr");
 
         tr.innerHTML = `
-            <td>${formatDateIT(v.carico.data)}</td>
+            <td>${formatTableDateIT(v.carico.data)}</td>
             <td>${v.carico.cliente || ""}</td>
             <td>${v.carico.luogo || ""}</td>
 
-            <td>${v.scarico ? formatDateIT(v.scarico.data) : "-"}</td>
+            <td>${v.scarico ? formatTableDateIT(v.scarico.data) : "-"}</td>
             <td>${v.scarico ? v.scarico.cliente : "-"}</td>
             <td>${v.scarico ? v.scarico.luogo : "-"}</td>
 
@@ -1669,6 +1817,7 @@ function setDriveStatus(message, type="") {
     const el = document.getElementById("drive-status");
     if (el) { el.textContent = message; el.className = "drive-status" + (type ? " " + type : ""); }
     updateDriveSyncMeta();
+    initHgvModule();
 }
 
 function setDriveConnectedUI(connected) {
@@ -2596,6 +2745,130 @@ function restoreTrash(id){
 }
 function deleteTrashForever(id){if(!confirm("Eliminare definitivamente questo elemento? Questa operazione non è annullabile."))return;const i=DIARIO.cestino.findIndex(x=>x.trashId===id);if(i>=0){const x=DIARIO.cestino[i],r=x.record||{};if(r.id)addSyncTombstone(x.type,r.id,x.deletedAt||syncNow(),true);(x.linkedViaggi||[]).forEach(v=>v?.id&&addSyncTombstone("viaggio",v.id,x.deletedAt||syncNow(),true));DIARIO.cestino.splice(i,1);saveToLocalStorage();renderTrash();}}
 
+
+/* ============================================================
+   DIVIETI HGV EUROPA — DATABASE ESTERNO MULTI-ANNO AGGIORNABILE (PWA v23)
+   ============================================================ */
+const HGV_DB_URL = "./hgv_europe.json";
+const HGV_STORAGE_KEY = "DIARIO_HGV_EUROPE_DB_V3";
+const HGV_FETCHED_KEY = "DIARIO_HGV_EUROPE_FETCHED_AT";
+let HGV_DB = null;
+
+function hgvEscape(v){ return escapeHtml(v ?? ""); }
+function hgvSafeUrl(v){ try{ const u=new URL(String(v||""),location.href); return (u.protocol==="https:"||u.protocol==="http:")?u.href:"#"; }catch(_){return "#";} }
+function hgvDate(iso){ const d=new Date(iso); return Number.isNaN(d.getTime())?null:d; }
+function hgvDateLabel(d){ if(!d)return "—"; const w=["DOM.","LUN.","MAR.","MER.","GIO.","VEN.","SAB."][d.getDay()]; return `${w} ${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`; }
+function hgvTimeLabel(d){ return d?`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`:"—"; }
+function hgvWindowLabel(e){
+  const a=hgvDate(e.start_at), b=hgvDate(e.end_at); if(!a||!b)return "—";
+  const same=a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+  return same?`${hgvDateLabel(a)} · ${hgvTimeLabel(a)}–${hgvTimeLabel(b)}`:`${hgvDateLabel(a)} ${hgvTimeLabel(a)} → ${hgvDateLabel(b)} ${hgvTimeLabel(b)}`;
+}
+function hgvState(e,now=Date.now()){
+  const a=Date.parse(e.start_at),b=Date.parse(e.end_at); if(!Number.isFinite(a)||!Number.isFinite(b))return {key:"future",label:"PROGRAMMATO",delta:Infinity};
+  if(now>=a&&now<b)return {key:"active",label:"🔴 IN CORSO",delta:0};
+  if(b<=now)return {key:"past",label:"CONCLUSO",delta:a-now};
+  const delta=a-now;
+  if(delta<=86400000)return {key:"soon24",label:"🟠 ENTRO 24 ORE",delta};
+  if(delta<=7*86400000)return {key:"soon7",label:"🟡 ENTRO 7 GIORNI",delta};
+  return {key:"future",label:"PROGRAMMATO",delta};
+}
+function hgvRelative(e){
+  const st=hgvState(e); const now=Date.now(); const a=Date.parse(e.start_at), b=Date.parse(e.end_at);
+  const human=ms=>{ const min=Math.max(0,Math.round(ms/60000)); if(min<60)return `${min} min`; const h=Math.floor(min/60),m=min%60;if(h<48)return `${h}h${m?` ${m}m`:""}`;const d=Math.floor(h/24),rh=h%24;return `${d}g${rh?` ${rh}h`:""}`;};
+  if(st.key==="active")return `Termina tra ${human(b-now)}`;
+  if(st.key==="past")return "Concluso";
+  return `Inizia tra ${human(a-now)}`;
+}
+function hgvKindLabel(k){ return ({ban:"Divieto",holiday:"Festivo",seasonal:"Stagionale",regional:"Regionale",night:"Notturno",permanent:"Permanente",info:"Informazione"})[k]||k||"Divieto"; }
+function hgvSourceLink(sourceKey,label="Fonte ufficiale"){
+  const src=HGV_DB?.sources?.[sourceKey]; if(!src)return ""; const url=hgvSafeUrl(src.url); if(url==="#")return "";
+  return `<a class="hgv-source" href="${hgvEscape(url)}" target="_blank" rel="noopener noreferrer">🔗 ${hgvEscape(label||src.label)}</a>`;
+}
+function hgvEventCard(e){
+  const c=HGV_DB?.countries?.[e.country]||{name:e.country,flag:""}; const st=hgvState(e);
+  return `<div class="hgv-event is-${st.key}">
+    <div class="hgv-top"><div><div class="hgv-country-name">${hgvEscape(c.flag)} ${hgvEscape(c.name)}</div><div class="hgv-title">${hgvEscape(e.title)}</div></div>
+    <div class="hgv-when">${hgvEscape(hgvWindowLabel(e))}<div class="hgv-relative">${hgvEscape(hgvRelative(e))}</div></div></div>
+    <div class="hgv-badges"><span class="hgv-badge state">${hgvEscape(st.label)}</span><span class="hgv-badge">${hgvEscape(hgvKindLabel(e.kind))}</span>${e.threshold?`<span class="hgv-badge">${hgvEscape(e.threshold)}</span>`:""}</div>
+    <div class="hgv-detail"><b>Ambito:</b> ${hgvEscape(e.scope||"—")}${e.notes?`<br><b>Note:</b> ${hgvEscape(e.notes)}`:""}</div>
+    ${hgvSourceLink(e.source)}
+  </div>`;
+}
+function hgvEventOverlapsYear(e,year){
+  const a=hgvDate(e.start_at),b=hgvDate(e.end_at); if(!a||!b)return false;
+  const ys=new Date(Number(year),0,1).getTime(), ye=new Date(Number(year)+1,0,1).getTime();
+  return b.getTime()>ys && a.getTime()<ye;
+}
+function hgvSelectedEvents(){
+  if(!HGV_DB)return []; const country=document.getElementById("hgv-country")?.value||"ALL"; const tf=document.getElementById("hgv-time-filter")?.value||"future"; const now=Date.now();
+  return (HGV_DB.events||[]).filter(e=>{
+    if(e.kind==="info"||(country!=="ALL"&&e.country!==country))return false;
+    if(tf==="future")return Date.parse(e.end_at)>now;
+    if(tf.startsWith("year:"))return hgvEventOverlapsYear(e,tf.slice(5));
+    return true;
+  }).sort((a,b)=>a.start_at.localeCompare(b.start_at));
+}
+function renderHgvEvents(){
+  const all=hgvSelectedEvents(), box=document.getElementById("hgv-events"), next=document.getElementById("hgv-next"), counts=document.getElementById("hgv-counts"); if(!box||!next||!counts)return;
+  const stateCounts={active:0,soon24:0,soon7:0}; all.forEach(e=>{const k=hgvState(e).key;if(k in stateCounts)stateCounts[k]++;});
+  counts.innerHTML=`<span class="hgv-count">${all.length} avvisi visualizzati</span><span class="hgv-count active">${stateCounts.active} in corso</span><span class="hgv-count soon24">${stateCounts.soon24} entro 24h</span><span class="hgv-count soon7">${stateCounts.soon7} entro 7g</span>`;
+  box.innerHTML=all.length?all.map(hgvEventCard).join(""):'<div class="hgv-empty">Nessun divieto nel periodo selezionato.</div>';
+  const now=Date.now(); const upcoming=all.filter(e=>Date.parse(e.end_at)>now).sort((a,b)=>{const sa=hgvState(a),sb=hgvState(b);const rank={active:0,soon24:1,soon7:2,future:3,past:4};return (rank[sa.key]-rank[sb.key])||a.start_at.localeCompare(b.start_at)}).slice(0,12);
+  next.innerHTML=upcoming.length?upcoming.map(hgvEventCard).join(""):'<div class="hgv-empty">Nessun blocco futuro disponibile.</div>';
+}
+function renderHgvHolidays(){
+  const box=document.getElementById("hgv-holidays"); if(!box||!HGV_DB)return; const country=document.getElementById("hgv-country")?.value||"ALL"; const tf=document.getElementById("hgv-time-filter")?.value||"future"; const today=new Date(); today.setHours(0,0,0,0); let rows=[];
+  Object.entries(HGV_DB.holidays||{}).forEach(([cc,arr])=>{if(country!=="ALL"&&cc!==country)return;(arr||[]).forEach(h=>{const d=new Date(`${h.date}T00:00:00`);if(tf==="future"&&d<today)return;if(tf.startsWith("year:")&&String(d.getFullYear())!==tf.slice(5))return;rows.push({cc,h,d});});});
+  rows.sort((a,b)=>a.h.date.localeCompare(b.h.date)||a.cc.localeCompare(b.cc));
+  box.innerHTML=rows.length?rows.map(({cc,h,d})=>{const c=HGV_DB.countries[cc]||{};return `<div class="hgv-holiday"><div class="hgv-holiday-date">${hgvEscape(c.flag||"")} ${hgvEscape(hgvDateLabel(d))}</div><div class="hgv-holiday-name">${hgvEscape(h.name)}</div><div class="hgv-holiday-scope">${hgvEscape(h.scope||"")}</div>${hgvSourceLink(h.source,"Fonte")}</div>`;}).join(""):'<div class="hgv-empty">Nessuna festività nel periodo selezionato.</div>';
+}
+function hgvCoverageLabel(status){
+  return ({verified_annual:"✅ Calendario annuale acquisito",verified_base:"✅ Regole strutturali verificate",base_rules_pending_specials:"🟡 Regole generali presenti · speciali annuali in monitoraggio",pending_annual:"🟠 Calendario annuale in attesa",no_general_ban:"ℹ️ Nessun divieto nazionale generale"})[status]||status||"—";
+}
+function hgvSelectedCoverageYear(){
+  const tf=document.getElementById("hgv-time-filter")?.value||"future";
+  if(tf.startsWith("year:"))return tf.slice(5);
+  const nowY=String(new Date().getFullYear()); if(HGV_DB?.coverage?.[nowY])return nowY;
+  const ys=(HGV_DB?.years_available||[]).map(String);return ys[ys.length-1]||nowY;
+}
+function renderHgvCountries(){
+  const box=document.getElementById("hgv-country-info"); if(!box||!HGV_DB)return; const country=document.getElementById("hgv-country")?.value||"ALL", cy=hgvSelectedCoverageYear();
+  const entries=Object.entries(HGV_DB.countries||{}).filter(([cc])=>country==="ALL"||cc===country);
+  box.innerHTML=entries.map(([cc,c])=>{const cov=HGV_DB.coverage?.[cy]?.[cc];return `<div class="hgv-country-card"><b>${hgvEscape(c.flag)} ${hgvEscape(c.name)}</b><p>${hgvEscape(c.summary||"")}</p>${cov?`<p><b>${hgvEscape(cy)}:</b> ${hgvEscape(hgvCoverageLabel(cov.status))}<br><small>${hgvEscape(cov.note||"")}</small></p>`:""}${(c.source_keys||[]).map(k=>hgvSourceLink(k,HGV_DB.sources?.[k]?.label||"Fonte")).join("")}</div>`}).join("");
+}
+function renderHgvStatus(extra=""){
+  const el=document.getElementById("hgv-db-status"),disc=document.getElementById("hgv-disclaimer"); if(!el)return; const fetched=localStorage.getItem(HGV_FETCHED_KEY); const dbv=HGV_DB?.database_version||"—", verified=HGV_DB?.verified_at||"—", checked=HGV_DB?.checked_at||"—", through=HGV_DB?.coverage_through||"—";
+  el.innerHTML=`<b>Database:</b> ${hgvEscape(dbv)} · <b>controllato:</b> ${hgvEscape(checked)} · <b>copertura fino al:</b> ${hgvEscape(through)}${fetched?` · <b>scaricato:</b> ${hgvEscape(new Date(fetched).toLocaleString("it-IT"))}`:""}${extra?`<br>${hgvEscape(extra)}`:""}`;
+  if(disc&&HGV_DB?.disclaimer)disc.textContent=HGV_DB.disclaimer;
+}
+function syncHgvYearOptions(){
+  const sel=document.getElementById("hgv-time-filter");if(!sel||!HGV_DB)return;const old=sel.value;
+  [...sel.querySelectorAll('option[data-hgv-year]')].forEach(o=>o.remove());
+  (HGV_DB.years_available||[]).slice().sort((a,b)=>a-b).forEach(y=>{const o=document.createElement('option');o.value=`year:${y}`;o.dataset.hgvYear=String(y);o.textContent=`Intero ${y}`;sel.appendChild(o);});
+  if([...sel.options].some(o=>o.value===old))sel.value=old;
+}
+function renderHgv(){ if(!HGV_DB)return;syncHgvYearOptions();renderHgvStatus();renderHgvEvents();renderHgvHolidays();renderHgvCountries(); }
+function hgvValidateDb(db){ return !!(db&&db.schema_version>=2&&db.countries&&db.sources&&Array.isArray(db.events)&&db.holidays); }
+async function refreshHgvDatabase(showMessage=true){
+  const btn=document.getElementById("btn-hgv-refresh"); if(btn){btn.disabled=true;btn.textContent="⏳ Aggiornamento…";}
+  try{
+    const oldYears=(HGV_DB?.years_available||[]).map(Number);
+    const r=await fetch(`${HGV_DB_URL}?t=${Date.now()}`,{cache:"no-store"}); if(!r.ok)throw new Error(`HTTP ${r.status}`); const db=await r.json(); if(!hgvValidateDb(db))throw new Error("database non valido");
+    const newYears=(db.years_available||[]).map(Number), added=newYears.filter(y=>!oldYears.includes(y));
+    HGV_DB=db; localStorage.setItem(HGV_STORAGE_KEY,JSON.stringify(db));localStorage.setItem(HGV_FETCHED_KEY,new Date().toISOString());renderHgv();if(showMessage)renderHgvStatus(added.length?`🆕 Nuovo anno disponibile: ${added.join(", ")}. Database aggiornato dal repository.`:"Aggiornamento completato dal repository.");
+  }catch(err){renderHgvStatus(`Aggiornamento non riuscito: ${err.message}. Uso l’ultima copia disponibile sul dispositivo.`);if(!HGV_DB&&showMessage)alert("Impossibile scaricare il database HGV e non c'è ancora una copia locale.");}
+  finally{if(btn){btn.disabled=false;btn.textContent="🔄 Aggiorna informazioni";}}
+}
+function initHgvModule(){
+  try{const raw=localStorage.getItem(HGV_STORAGE_KEY);if(raw){const db=JSON.parse(raw);if(hgvValidateDb(db))HGV_DB=db;}}catch(_){localStorage.removeItem(HGV_STORAGE_KEY);}
+  if(HGV_DB)renderHgv(); else renderHgvStatus("Nessuna copia locale: scarico il database dal repository…");
+  document.getElementById("btn-hgv-refresh")?.addEventListener("click",()=>refreshHgvDatabase(true));
+  document.getElementById("hgv-country")?.addEventListener("change",renderHgv);
+  document.getElementById("hgv-time-filter")?.addEventListener("change",renderHgv);
+  refreshHgvDatabase(false);
+}
+
 /* ============================================================
    INIT APP
    ============================================================ */
@@ -2658,7 +2931,7 @@ enableFullscreenGraph(graficoImpegno);
 
 </div> <!-- fine overlay -->
 
-<script id="pwa-v21-registration">
+<script id="pwa-v22-registration">
 (() => {
   if (!("serviceWorker" in navigator)) return;
   let reloadingForUpdate = false;
@@ -2669,7 +2942,7 @@ enableFullscreenGraph(graficoImpegno);
   });
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("./service-worker.js?v=21", {
+      const registration = await navigator.serviceWorker.register("./service-worker.js?v=22", {
         scope: "./",
         updateViaCache: "none"
       });
