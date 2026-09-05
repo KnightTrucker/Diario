@@ -1817,7 +1817,6 @@ function setDriveStatus(message, type="") {
     const el = document.getElementById("drive-status");
     if (el) { el.textContent = message; el.className = "drive-status" + (type ? " " + type : ""); }
     updateDriveSyncMeta();
-    initHgvModule();
 }
 
 function setDriveConnectedUI(connected) {
@@ -2753,6 +2752,7 @@ const HGV_DB_URL = "./hgv_europe.json";
 const HGV_STORAGE_KEY = "DIARIO_HGV_EUROPE_DB_V3";
 const HGV_FETCHED_KEY = "DIARIO_HGV_EUROPE_FETCHED_AT";
 let HGV_DB = null;
+let HGV_INITIALIZED = false;
 
 function hgvEscape(v){ return escapeHtml(v ?? ""); }
 function hgvSafeUrl(v){ try{ const u=new URL(String(v||""),location.href); return (u.protocol==="https:"||u.protocol==="http:")?u.href:"#"; }catch(_){return "#";} }
@@ -2851,16 +2851,34 @@ function syncHgvYearOptions(){
 function renderHgv(){ if(!HGV_DB)return;syncHgvYearOptions();renderHgvStatus();renderHgvEvents();renderHgvHolidays();renderHgvCountries(); }
 function hgvValidateDb(db){ return !!(db&&db.schema_version>=2&&db.countries&&db.sources&&Array.isArray(db.events)&&db.holidays); }
 async function refreshHgvDatabase(showMessage=true){
-  const btn=document.getElementById("btn-hgv-refresh"); if(btn){btn.disabled=true;btn.textContent="⏳ Aggiornamento…";}
+  const btn=document.getElementById("btn-hgv-refresh");
+  if(btn){btn.disabled=true;btn.textContent="⏳ Aggiornamento…";}
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),20000);
   try{
     const oldYears=(HGV_DB?.years_available||[]).map(Number);
-    const r=await fetch(`${HGV_DB_URL}?t=${Date.now()}`,{cache:"no-store"}); if(!r.ok)throw new Error(`HTTP ${r.status}`); const db=await r.json(); if(!hgvValidateDb(db))throw new Error("database non valido");
+    const r=await fetch(`${HGV_DB_URL}?t=${Date.now()}`,{cache:"no-store",signal:controller.signal});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    const db=await r.json();
+    if(!hgvValidateDb(db))throw new Error("database non valido");
     const newYears=(db.years_available||[]).map(Number), added=newYears.filter(y=>!oldYears.includes(y));
-    HGV_DB=db; localStorage.setItem(HGV_STORAGE_KEY,JSON.stringify(db));localStorage.setItem(HGV_FETCHED_KEY,new Date().toISOString());renderHgv();if(showMessage)renderHgvStatus(added.length?`🆕 Nuovo anno disponibile: ${added.join(", ")}. Database aggiornato dal repository.`:"Aggiornamento completato dal repository.");
-  }catch(err){renderHgvStatus(`Aggiornamento non riuscito: ${err.message}. Uso l’ultima copia disponibile sul dispositivo.`);if(!HGV_DB&&showMessage)alert("Impossibile scaricare il database HGV e non c'è ancora una copia locale.");}
-  finally{if(btn){btn.disabled=false;btn.textContent="🔄 Aggiorna informazioni";}}
+    HGV_DB=db;
+    localStorage.setItem(HGV_STORAGE_KEY,JSON.stringify(db));
+    localStorage.setItem(HGV_FETCHED_KEY,new Date().toISOString());
+    renderHgv();
+    if(showMessage)renderHgvStatus(added.length?`🆕 Nuovo anno disponibile: ${added.join(", ")}. Database aggiornato dal repository.`:"Aggiornamento completato dal repository.");
+  }catch(err){
+    const motivo=err?.name==="AbortError" ? "timeout di rete (20 s)" : (err?.message||"errore sconosciuto");
+    renderHgvStatus(`Aggiornamento non riuscito: ${motivo}. ${HGV_DB?"Uso l’ultima copia disponibile sul dispositivo.":"Nessuna copia locale disponibile."}`);
+    if(!HGV_DB&&showMessage)alert("Impossibile scaricare il database HGV. Controlla la connessione e riprova.");
+  } finally {
+    clearTimeout(timeout);
+    if(btn){btn.disabled=false;btn.textContent="🔄 Aggiorna informazioni";}
+  }
 }
 function initHgvModule(){
+  if(HGV_INITIALIZED)return;
+  HGV_INITIALIZED=true;
   try{const raw=localStorage.getItem(HGV_STORAGE_KEY);if(raw){const db=JSON.parse(raw);if(hgvValidateDb(db))HGV_DB=db;}}catch(_){localStorage.removeItem(HGV_STORAGE_KEY);}
   if(HGV_DB)renderHgv(); else renderHgvStatus("Nessuna copia locale: scarico il database dal repository…");
   document.getElementById("btn-hgv-refresh")?.addEventListener("click",()=>refreshHgvDatabase(true));
@@ -2902,6 +2920,7 @@ function initApp() {
     updateTripLinkUI();
     renderTrash();
     updateDriveSyncMeta();
+    initHgvModule();
 }
 
 initApp();
