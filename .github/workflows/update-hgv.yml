@@ -1,1 +1,73 @@
+name: Aggiorna Divieti HGV Europa
 
+on:
+  schedule:
+    # Tutto l'anno: controllo ogni domenica.
+    - cron: '17 3 * * 0'
+    # Ottobre, novembre, dicembre e gennaio: controllo aggiuntivo ogni 2 giorni.
+    - cron: '47 3 */2 10-12,1 *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-hgv-europe
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Dipendenze parser fonti ufficiali
+        run: pip install requests beautifulsoup4 pypdf
+
+      - name: Controlla fonti e aggiorna anno corrente + successivo
+        run: python hgv_auto_update.py
+
+      - name: Verifica database
+        run: python -m json.tool hgv_europe.json >/dev/null
+
+      - name: Heartbeat mensile anti-disattivazione
+        shell: bash
+        run: |
+          HEARTBEAT=".github/hgv-heartbeat.txt"
+          CURRENT_MONTH="$(date -u +'%Y-%m')"
+          LAST_MONTH="$(sed -n 's/^month=//p' "$HEARTBEAT" 2>/dev/null | head -n 1 || true)"
+
+          if [ "$CURRENT_MONTH" != "$LAST_MONTH" ]; then
+            {
+              echo "month=$CURRENT_MONTH"
+              echo "updated_at=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+              echo "purpose=keep scheduled HGV updater repository activity below GitHub 60-day inactivity limit"
+            } > "$HEARTBEAT"
+            echo "Heartbeat aggiornato per $CURRENT_MONTH"
+          else
+            echo "Heartbeat mensile già presente per $CURRENT_MONTH"
+          fi
+
+      - name: Pubblica aggiornamento automatico
+        run: |
+          git config user.name "KnightTrucker HGV Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add hgv_europe.json .github/hgv-heartbeat.txt
+
+          if git diff --cached --quiet; then
+            echo "Nessuna modifica da pubblicare"
+            exit 0
+          fi
+
+          git commit -m "Auto-update HGV Europe $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
