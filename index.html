@@ -7,6 +7,8 @@
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Google Identity Services: autorizzazione Google Drive -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
 body { margin:0; font-family:Arial; background:#121212; color:#fff; }
@@ -30,16 +32,6 @@ tr:nth-child(odd) { background:#202020; }
 .row { display:flex; gap:20px; flex-wrap:wrap; }
 .col { flex:1 1 300px; }
 canvas { background:#1e1e1e; border-radius:6px; margin-top:15px; }
-
-/* === V17 Google Drive sync === */
-.drive-panel{margin-top:18px;padding:16px;border:1px solid #31516c;border-radius:14px;background:linear-gradient(145deg,#0b1d2d,#07131f)}
-.drive-panel h3{margin-top:0}.drive-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.drive-row button{flex:1 1 180px}
-.drive-status{margin-top:10px;padding:10px 12px;border-radius:10px;background:#07131f;border:1px solid #294a64;color:#aebdca;font-size:13px}
-.drive-status.ok{color:#6be58a;border-color:#2d8d4b}.drive-status.sync{color:#72baff;border-color:#2c6fb3}.drive-status.err{color:#ff7373;border-color:#a63f3f}
-.drive-note{margin-top:8px;color:#8ea2b3;font-size:12px;line-height:1.4}
-
-.excel-report-panel{margin-top:18px;padding:16px;border:1px solid #31516c;border-radius:14px;background:linear-gradient(145deg,#0b1d2d,#07131f)}
-.excel-report-panel h3{margin-top:0}.excel-report-panel button{width:100%;font-size:16px;padding:14px!important}
 </style>
 <style>
 .graph-fullscreen {
@@ -157,8 +149,41 @@ table thead th {
 </style>
 
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style id="drive-sync-ui">
+.drive-card{margin-top:16px!important;background:linear-gradient(145deg,rgba(13,47,78,.72),rgba(6,25,42,.92))!important;border:1px solid rgba(54,135,214,.65)!important;border-radius:14px;padding:15px!important}
+.drive-title{font-size:18px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.drive-help{color:#a9bfd3;font-size:13px;line-height:1.45;margin-bottom:12px}
+.drive-config{margin:12px 0;padding:12px;border:1px solid rgba(76,130,174,.55);border-radius:12px;background:rgba(5,19,31,.55)}
+.drive-config label{margin:0 0 5px}.drive-config-row{display:flex;gap:8px;align-items:center}.drive-config-row input{margin:0!important;flex:1;min-width:0}.drive-config-row button{flex:0 0 auto;white-space:nowrap}
+.drive-actions{display:flex;gap:10px;flex-wrap:wrap}
+.drive-actions button{flex:1 1 210px}
+#btn-drive-connect{background:linear-gradient(135deg,#1678e8,#0c4fab)!important;color:#fff}
+#btn-drive-sync{background:linear-gradient(135deg,#11a24a,#08772f)!important;color:#fff}
+#btn-drive-sync:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
+.drive-status{margin-top:12px;padding:10px 12px;border-radius:10px;background:#071725;border:1px solid #2c536e;color:#c8d8e5;font-size:13px;line-height:1.45}
+.drive-status.ok{border-color:#178c45;color:#9ef0b8;background:rgba(8,74,37,.28)}
+.drive-status.warn{border-color:#b47b18;color:#ffd68c;background:rgba(105,66,0,.22)}
+.drive-status.err{border-color:#b92d3d;color:#ffb1bb;background:rgba(104,11,24,.25)}
+@media(max-width:520px){.drive-actions{display:block}.drive-actions button{width:100%;margin:5px 0}}
+</style>
+
+
+<style id="diario-plus8-ui">
+.quick-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:4px 0 12px}
+.quick-actions button{min-height:44px}
+.edit-banner{display:none;margin:0 0 12px;padding:10px 12px;border:1px solid #f0a000;border-radius:10px;background:rgba(240,128,0,.12);color:#ffd89a;font-weight:700}
+.edit-banner.show{display:block}
+.trip-link-box{display:none;margin:4px 0 12px;padding:12px;border:1px solid rgba(18,217,234,.45);border-radius:12px;background:rgba(18,217,234,.06)}
+.trip-link-box.show{display:block}
+.drive-sync-meta{margin-top:8px;color:#9fb0c2;font-size:12px;line-height:1.45}
+.trash-card{margin-top:16px;background:linear-gradient(145deg,rgba(69,23,27,.55),rgba(28,10,14,.8));border:1px solid rgba(229,42,53,.5);border-radius:14px;padding:14px}
+.trash-title{font-size:18px;font-weight:800;margin-bottom:7px}.trash-help{font-size:13px;color:#c7b1b5;margin-bottom:10px}
+.trash-list{display:grid;gap:8px}.trash-item{display:flex;gap:10px;align-items:center;justify-content:space-between;background:#0b1722;border:1px solid #3c4650;border-radius:10px;padding:10px}
+.trash-main{min-width:0}.trash-main b{display:block}.trash-main span{display:block;color:#9fb0c2;font-size:12px;margin-top:3px;white-space:normal}.trash-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.dash-card.action-card{cursor:pointer}.dash-card.action-card:hover{transform:translateY(-1px);border-color:#4f82a7}.dash-status{font-size:12px;margin-top:5px;color:#9fb0c2}
+@media(max-width:620px){.quick-actions{grid-template-columns:1fr}.trash-item{display:block}.trash-actions{margin-top:9px;justify-content:flex-start}}
+</style>
+
 </head>
 
 <body>
@@ -235,19 +260,18 @@ table thead th {
                     <option value="SETTIMANALE">SETTIMANALE</option>
                 </select>
 
-                <div id="weekend-fuori-wrap" style="display:none; margin:8px 0 12px; padding:12px; border:1px solid #31516c; border-radius:10px; background:#0b1d2d;">
-                    <label style="display:flex; align-items:center; gap:10px; margin:0; cursor:pointer;">
-                        <input type="checkbox" id="g_weekend_fuori" style="width:auto; margin:0;">
-                        <span><b>Weekend Fuori</b></span>
-                    </label>
-                </div>
-
                 <label>Note</label>
                 <input type="text" id="g_note" placeholder="Inserisci eventuali note">
             </div>
 
         </div>
 
+        <div id="g-edit-banner" class="edit-banner">✏️ Modifica in corso: il record originale resta salvato finché non premi “Salva modifiche”.</div>
+        <div class="quick-actions">
+            <button type="button" class="secondary" id="btn-g-start">▶ Inizio giornata</button>
+            <button type="button" class="secondary" id="btn-g-end">■ Fine giornata</button>
+            <button type="button" class="secondary" id="btn-g-copy-last">↻ Copia ultimo mezzo</button>
+        </div>
         <button type="button" class="primary" id="btn-add-giornaliero">Salva giornata</button>
     </form>
 
@@ -256,7 +280,6 @@ table thead th {
     <table id="table-giornaliero">
         <thead>
             <tr>
-                <th>Giorno</th>
                 <th>Data</th>
                 <th>Trattore</th>
                 <th>Semirimorchio</th>
@@ -268,7 +291,6 @@ table thead th {
                 <th>Luogo sosta</th>
                 <th>Pausa</th>
                 <th>Note</th>
-                <th>Weekend Fuori</th>
                 <th>Azioni</th>
             </tr>
         </thead>
@@ -313,6 +335,12 @@ table thead th {
 
         </div>
 
+        <div id="c-edit-banner" class="edit-banner">✏️ Modifica in corso: il record originale resta salvato finché non premi “Salva modifiche”.</div>
+        <div id="c-trip-link-wrap" class="trip-link-box">
+            <label for="c_trip_link">Abbina questo scarico a un viaggio aperto</label>
+            <select id="c_trip_link"><option value="">Non abbinare adesso</option></select>
+            <div class="drive-help">Mostra solo i viaggi ancora senza scarico. Puoi comunque abbinarlo dopo dalla scheda Viaggi.</div>
+        </div>
         <button type="button" class="primary" id="btn-add-carico">Salva operazione</button>
     </form>
 
@@ -377,24 +405,33 @@ table thead th {
         <button class="secondary" id="btn-import-json">Importa DIARIO.json</button>
     </div>
 
-    <div class="excel-report-panel">
-        <h3>📄 Rapportino Excel</h3>
-        <button type="button" class="primary" id="btn-genera-rapportino">Genera Rapportino Excel</button><div class="drive-note">Esporta fino a 28 viaggi spuntati come “Esporta” e non ancora inclusi in un rapportino. Se sono meno, esporta quelli disponibili.</div>
-        <div id="rapportino-status" class="drive-note">
-            Compila il modello con gli ultimi 28 viaggi completi, dal più vecchio al più recente.
-            Le colonne “N. Pallet resi” e “Riserve” del modello restano invariate.
+    <div class="drive-card">
+        <div class="drive-title">☁️ Google Drive</div>
+        <div class="drive-help">
+            Collega il tuo account Google per usare un unico file <b>KnightTrucker/DIARIO.json</b> su Drive.
+            Al collegamento l'app cerca (o crea) la cartella <b>KnightTrucker</b>, carica il file da lì e con <b>Sincronizza ora</b> aggiorna sempre lo stesso file. Finché Drive resta collegato, le modifiche successive vengono sincronizzate automaticamente.
         </div>
+        <div class="drive-config">
+            <label for="drive-client-id">Google OAuth Client ID</label>
+            <div class="drive-config-row">
+                <input type="text" id="drive-client-id" autocomplete="off" spellcheck="false" placeholder="xxxxxxxxxxxx-xxxxxxxxxxxxxxxx.apps.googleusercontent.com">
+                <button type="button" class="secondary" id="btn-drive-save-client">Salva</button>
+            </div>
+            <div class="drive-help" style="margin:7px 0 0;">Va configurato una sola volta su questo dispositivo.</div>
+        </div>
+        <div class="drive-actions">
+            <button type="button" class="primary" id="btn-drive-connect">🔗 Collega Google Drive</button>
+            <button type="button" class="secondary" id="btn-drive-sync" disabled>🔄 Sincronizza ora</button>
+        </div>
+        <div id="drive-status" class="drive-status">Drive non collegato.</div>
+        <div id="drive-sync-meta" class="drive-sync-meta">Backup storico: ogni 7 giorni in KnightTrucker/Backup.</div>
     </div>
 
-    <div class="drive-panel">
-        <h3>☁ Google Drive</h3>
-        <div class="drive-row">
-            <button type="button" class="primary" id="btn-drive-connect" onclick="GDRIVE.connect()">Connetti Google Drive</button>
-            <button type="button" class="secondary" id="btn-drive-save" onclick="GDRIVE.saveNow()" style="display:none">Sincronizza ora</button>
-            <button type="button" class="secondary" id="btn-drive-disconnect" onclick="GDRIVE.disconnect()" style="display:none">Disconnetti</button>
-        </div>
-        <div id="drive-status" class="drive-status">Drive non connesso. I dati continuano a essere salvati sul dispositivo.</div>
-        <div class="drive-note">File remoto: <b>diaro.json</b>. Dopo la connessione, ogni modifica viene sincronizzata automaticamente.</div>
+    <div class="trash-card">
+        <div class="trash-title">🗑️ Cestino</div>
+        <div class="trash-help">Gli elementi eliminati restano recuperabili per 30 giorni, poi vengono rimossi automaticamente.</div>
+        <div id="trash-summary" class="drive-sync-meta"></div>
+        <div id="trash-list" class="trash-list"></div>
     </div>
 </div>
 
@@ -418,7 +455,6 @@ table thead th {
                 <th>Semirimorchio</th>
                 <th>Peso</th>
 
-                <th>Rapportino</th>
                 <th>Azioni</th>
             </tr>
         </thead>
@@ -590,42 +626,136 @@ let DIARIO = {
     giornaliero: [],
     carichi_scarichi: [],
     viaggi: [],
-    security: {
-        pinSalt: "",
-        pinHash: ""
-    },
-    stipendi: []
+    security: { pinSalt: "", pinHash: "" },
+    stipendi: [],
+    cestino: []
 };
+
+const TRASH_RETENTION_DAYS = 30;
+let giornalieroEditId = null;
+let caricoEditId = null;
+let stipendioEditId = null;
+
+function newRecordId(prefix="R") {
+    if (window.crypto && typeof crypto.randomUUID === "function") return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}`;
+}
+function deepClone(v){ return JSON.parse(JSON.stringify(v)); }
+function sameCargoShape(a,b){
+    if(!a||!b) return false;
+    return ["data","operazione","luogo","cliente","semirimorchio","peso"].every(k=>String(a[k]??"")===String(b[k]??""));
+}
+const SYNC_LEGACY_TIME = "1970-01-01T00:00:00.000Z";
+function syncNow(){ return new Date().toISOString(); }
+function recordUpdatedTime(r){ return Date.parse(r?._updatedAt || SYNC_LEGACY_TIME) || 0; }
+function touchRecord(r, when=syncNow()){ if(r && typeof r === "object") r._updatedAt = when; return r; }
+function ensureRecordMeta(r){ if(r && typeof r === "object" && !r._updatedAt) r._updatedAt = SYNC_LEGACY_TIME; return r; }
+function tombstoneKey(type,id){ return `${type}:${id}`; }
+function addSyncTombstone(type,id,deletedAt=syncNow(),permanent=false){
+    if(!id) return;
+    if(!Array.isArray(DIARIO.sync_deleted)) DIARIO.sync_deleted=[];
+    const k=tombstoneKey(type,id), i=DIARIO.sync_deleted.findIndex(x=>tombstoneKey(x.type,x.id)===k);
+    const next={type,id,deletedAt,permanent:!!permanent};
+    if(i<0) DIARIO.sync_deleted.push(next);
+    else {
+        const cur=DIARIO.sync_deleted[i];
+        if((Date.parse(deletedAt)||0) >= (Date.parse(cur.deletedAt)||0)) DIARIO.sync_deleted[i]={...cur,...next,permanent:!!(cur.permanent||permanent)};
+        else if(permanent) cur.permanent=true;
+    }
+}
+function removeSyncTombstone(type,id){
+    if(!Array.isArray(DIARIO.sync_deleted)) return;
+    DIARIO.sync_deleted=DIARIO.sync_deleted.filter(x=>!(x.type===type && x.id===id));
+}
+function normalizeDiarioSnapshot(input){
+    const d=(input && typeof input==="object") ? deepClone(input) : {};
+    if (!Array.isArray(d.giornaliero)) d.giornaliero=[];
+    if (!Array.isArray(d.carichi_scarichi)) d.carichi_scarichi=[];
+    if (!Array.isArray(d.viaggi)) d.viaggi=[];
+    if (!Array.isArray(d.stipendi)) d.stipendi=[];
+    if (!Array.isArray(d.cestino)) d.cestino=[];
+    if (!Array.isArray(d.sync_deleted)) d.sync_deleted=[];
+    if (!d.sync_meta || typeof d.sync_meta!=="object") d.sync_meta={modifiedAt:SYNC_LEGACY_TIME,securityUpdatedAt:SYNC_LEGACY_TIME};
+    if (!d.sync_meta.modifiedAt) d.sync_meta.modifiedAt=SYNC_LEGACY_TIME;
+    if (!d.sync_meta.securityUpdatedAt) d.sync_meta.securityUpdatedAt=SYNC_LEGACY_TIME;
+    if (!d.security || typeof d.security!=="object") d.security={pinSalt:"",pinHash:""};
+
+    d.giornaliero.forEach(r=>{ if(r&&!r.id) r.id=newRecordId("G"); ensureRecordMeta(r); });
+    d.carichi_scarichi.forEach(r=>{ if(r&&!r.id) r.id=newRecordId("C"); ensureRecordMeta(r); });
+    d.stipendi.forEach(r=>{ if(r&&!r.id) r.id=newRecordId("S"); ensureRecordMeta(r); });
+
+    d.viaggi.forEach(v=>{
+        if(!v.id) v.id=newRecordId("V"); ensureRecordMeta(v);
+        if(v.carico){
+            let found = v.carico.id ? d.carichi_scarichi.find(r=>r.id===v.carico.id) : d.carichi_scarichi.find(r=>r.operazione==="CARICO" && sameCargoShape(r,v.carico));
+            if(found){ v.caricoId=found.id; v.carico=deepClone(found); }
+            else { if(!v.carico.id) v.carico.id=newRecordId("C"); ensureRecordMeta(v.carico); v.caricoId=v.carico.id; }
+        }
+        if(v.scarico){
+            let found = v.scarico.id ? d.carichi_scarichi.find(r=>r.id===v.scarico.id) : d.carichi_scarichi.find(r=>r.operazione==="SCARICO" && sameCargoShape(r,v.scarico));
+            if(found){ v.scaricoId=found.id; v.scarico=deepClone(found); }
+            else { if(!v.scarico.id) v.scarico.id=newRecordId("C"); ensureRecordMeta(v.scarico); v.scaricoId=v.scarico.id; }
+        } else { v.scaricoId=null; }
+    });
+    d.cestino.forEach(x=>{ if(x&&!x.trashId)x.trashId=newRecordId("T"); if(x&&!x.deletedAt)x.deletedAt=SYNC_LEGACY_TIME; });
+    d.sync_deleted=d.sync_deleted.filter(x=>x&&x.type&&x.id).map(x=>({type:x.type,id:x.id,deletedAt:x.deletedAt||SYNC_LEGACY_TIME,permanent:!!x.permanent}));
+    return d;
+}
+function normalizeDiarioData(){ DIARIO = normalizeDiarioSnapshot(DIARIO); purgeExpiredTrash(false); }
+
+function syncRecordIntoTrips(rec){
+    DIARIO.viaggi.forEach(v=>{
+        let changed=false;
+        if(v.caricoId===rec.id){ v.carico=deepClone(rec); changed=true; }
+        if(v.scaricoId===rec.id){ v.scarico=deepClone(rec); changed=true; }
+        if(changed) touchRecord(v, rec._updatedAt || syncNow());
+    });
+}
+
+function purgeExpiredTrash(save=true){
+    if(!Array.isArray(DIARIO.cestino)) DIARIO.cestino=[];
+    const limit=Date.now()-TRASH_RETENTION_DAYS*86400000;
+    const before=DIARIO.cestino.length;
+    const expired=DIARIO.cestino.filter(x=>{const t=Date.parse(x.deletedAt||"");return Number.isFinite(t)&&t<limit;});
+    expired.forEach(x=>{const r=x.record||{};if(r.id)addSyncTombstone(x.type,r.id,x.deletedAt||syncNow(),true);(x.linkedViaggi||[]).forEach(v=>v?.id&&addSyncTombstone("viaggio",v.id,x.deletedAt||syncNow(),true));});
+    DIARIO.cestino=DIARIO.cestino.filter(x=>{
+        const t=Date.parse(x.deletedAt||"");
+        return !Number.isFinite(t) || t>=limit;
+    });
+    if(save && DIARIO.cestino.length!==before) saveToLocalStorage();
+}
+
 
 /* ============================================================
    LOCAL STORAGE
    ============================================================ */
 
-function saveToLocalStorage(skipDriveSync) {
-    localStorage.setItem("DIARIO_DATA", JSON.stringify(DIARIO));
-    setTimeout(()=>{ if(document.getElementById("salary-stats")) renderSalaryStats(); if(document.getElementById("client-stats")) renderClientStats(); if(document.getElementById("dashboard-output")) renderDashboard(); },0);
-    if (!skipDriveSync && window.GDRIVE && typeof GDRIVE.scheduleSync === "function") {
-        GDRIVE.scheduleSync();
+function saveToLocalStorage(options={}) {
+    normalizeDiarioData();
+    if (!options.fromDrive) {
+        const now=syncNow();
+        DIARIO.sync_meta.modifiedAt=now;
+        localStorage.setItem("DIARIO_LAST_LOCAL_CHANGE_AT", now);
     }
+    localStorage.setItem("DIARIO_DATA", JSON.stringify(DIARIO));
+    setTimeout(()=>{
+        if(document.getElementById("salary-stats")) renderSalaryStats();
+        if(document.getElementById("client-stats")) renderClientStats();
+        if(document.getElementById("dashboard-output")) renderDashboard();
+        if(document.getElementById("trash-list")) renderTrash();
+        if(document.getElementById("c_trip_link")) renderOpenTripOptions();
+    },0);
+    if (!options.fromDrive && !options.skipDriveSync && typeof scheduleDriveAutoSync === "function") scheduleDriveAutoSync();
 }
 
 function loadFromLocalStorage() {
     const data = localStorage.getItem("DIARIO_DATA");
-    if (data) DIARIO = JSON.parse(data);
-    if (!DIARIO.giornaliero) DIARIO.giornaliero = [];
-    if (!DIARIO.carichi_scarichi) DIARIO.carichi_scarichi = [];
-    if (!DIARIO.viaggi) DIARIO.viaggi = [];
-    if (!Array.isArray(DIARIO.stipendi)) DIARIO.stipendi = [];
-    if (!DIARIO.security || typeof DIARIO.security !== "object") DIARIO.security = { pinSalt:"", pinHash:"" };
-
+    if (data) {
+        try { DIARIO = JSON.parse(data); } catch(err){ console.error("DIARIO_DATA non valido",err); }
+    }
+    normalizeDiarioData();
     DIARIO.giornaliero.forEach(r => {
-        if (r && r.pausa) {
-            r.note = mergeWeeklyRestNote(r.note || "", r.pausa.ore, r.pausa.tipo);
-        }
-    });
-
-    DIARIO.viaggi.forEach(v => {
-        if (typeof v.rapportino_esportato !== "boolean") v.rapportino_esportato = false;
+        if (r && r.pausa) r.note = mergeWeeklyRestNote(r.note || "", r.pausa.ore, r.pausa.tipo);
     });
 }
 
@@ -730,48 +860,6 @@ function mergeWeeklyRestNote(noteEsistenti, pausaOre, tipoPausa) {
     return note ? `${note} | ${auto}` : auto;
 }
 
-
-/* ============================================================
-   COMPATIBILITA DATI STORICI KM
-   ============================================================ */
-
-function giornoSettimanaIT(dataISO) {
-    if (!dataISO) return "";
-    const parti = String(dataISO).split("-").map(Number);
-    if (parti.length !== 3 || !parti[0] || !parti[1] || !parti[2]) return "";
-    const d = new Date(parti[0], parti[1] - 1, parti[2]);
-    const nomi = ["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"];
-    return nomi[d.getDay()] || "";
-}
-
-function getKmValue(rec) {
-    if (!rec || typeof rec !== "object") return 0;
-    const raw = rec.km ?? rec.km_percorsi ?? rec.kmPercorsi ?? rec.chilometri ?? rec.kilometri ?? rec.distanza ?? 0;
-    if (typeof raw === "number") return Number.isFinite(raw) ? raw : 0;
-    const normalized = String(raw).trim().replace(/\s/g, "").replace(",", ".");
-    const n = Number(normalized);
-    return Number.isFinite(n) ? n : 0;
-}
-function getKmDisplay(rec) {
-    const v = getKmValue(rec);
-    return v === 0 ? ((rec && (rec.km === 0 || rec.km === "0")) ? "0" : "") : String(v).replace(".", ",");
-}
-
-
-/* ============================================================
-   WEEKEND FUORI
-   ============================================================ */
-function aggiornaWeekendFuoriUI() {
-    const tipo = document.getElementById("g_pausa_tipo");
-    const wrap = document.getElementById("weekend-fuori-wrap");
-    const chk = document.getElementById("g_weekend_fuori");
-    if (!tipo || !wrap || !chk) return;
-    const settimanale = (tipo.value || "").toUpperCase() === "SETTIMANALE";
-    wrap.style.display = settimanale ? "block" : "none";
-    if (!settimanale) chk.checked = false;
-}
-document.getElementById("g_pausa_tipo")?.addEventListener("change", aggiornaWeekendFuoriUI);
-
 /* ============================================================
    GIORNALIERO — RENDER TABELLA
    ============================================================ */
@@ -785,19 +873,17 @@ function renderGiornalieroTable() {
     DIARIO.giornaliero.forEach((rec, index) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td>${giornoSettimanaIT(rec.data)}</td>
             <td>${formatDateIT(rec.data)}</td>
             <td>${rec.trattore}</td>
             <td>${rec.semirimorchio}</td>
             <td>${rec.ora_apertura}</td>
             <td>${rec.ora_chiusura}</td>
             <td class="${isImpegnoOverLimit(rec.impegno) ? 'value-alert' : ''}">${rec.impegno}</td>
-            <td>${getKmDisplay(rec)}</td>
+            <td>${rec.km}</td>
             <td class="${isGuidaOverLimit(rec.ore_guida) ? 'value-alert' : ''}">${rec.ore_guida}</td>
             <td>${rec.luogo_sosta}</td>
             <td class="${isPausaGiornalieraUnderLimit(rec) ? 'value-alert' : ''}">${rec.pausa.ore} (${rec.pausa.tipo})</td>
             <td class="note-cell">${escapeHtml(rec.note || "")}</td>
-            <td>${rec.weekend_fuori === true ? "✓ Weekend Fuori" : ""}</td>
             <td>
                 <button class="secondary" onclick="editG(${index})">Modifica</button>
                 <button class="danger" onclick="delG(${index})">Cancella</button>
@@ -808,77 +894,85 @@ function renderGiornalieroTable() {
 }
 
 /* ============================================================
-   GIORNALIERO — AGGIUNTA RECORD
+   GIORNALIERO — SALVATAGGIO / MODIFICA SICURA / AZIONI RAPIDE
    ============================================================ */
+function giornalieroAnomalies(rec){
+    const a=[];
+    if(!rec.data) a.push("data mancante");
+    if(!rec.trattore) a.push("trattore non indicato");
+    if(!rec.semirimorchio) a.push("semirimorchio non indicato");
+    if(rec.km==="" || Number(rec.km)<0) a.push("km mancanti o non validi");
+    if(!rec.ora_apertura || !rec.ora_chiusura) a.push("ora apertura/chiusura incompleta");
+    const dup=DIARIO.giornaliero.some(r=>r.id!==giornalieroEditId && r.data && r.data===rec.data);
+    if(dup) a.push("esiste già una giornata con la stessa data");
+    const g=oreToMinuti(rec.ore_guida), imp=oreToMinuti(rec.impegno);
+    if(g>600) a.push("ore guida superiori a 10:00");
+    if(g && imp && g>imp) a.push("ore guida superiori all'impegno");
+    return a;
+}
+function confirmAnomalies(title,items){
+    if(!items.length) return true;
+    return confirm(`${title}\n\n• ${items.join("\n• ")}\n\nVuoi salvare comunque?`);
+}
+function resetGEdit(){
+    giornalieroEditId=null;
+    document.getElementById("btn-add-giornaliero").textContent="Salva giornata";
+    document.getElementById("g-edit-banner")?.classList.remove("show");
+}
 
 document.getElementById("btn-add-giornaliero").addEventListener("click", () => {
-
     const rec = {
-        data: g_data.value,
-        trattore: g_trattore.value,
-        semirimorchio: g_semirimorchio.value,
-        km: g_km.value,
-        ora_apertura: g_ora_apertura.value,
-        ora_chiusura: g_ora_chiusura.value,
-        impegno: calcolaIntervallo(g_ora_apertura.value, g_ora_chiusura.value),
-        ore_guida: g_ore_guida.value,
-        luogo_sosta: g_luogo_sosta.value,
-        note: g_note.value,
-        pausa: {
-            ore: g_pausa_ore.value,
-            tipo: g_pausa_tipo.value
-        },
-        weekend_fuori: ((g_pausa_tipo.value || "").toUpperCase() === "SETTIMANALE" && document.getElementById("g_weekend_fuori")?.checked === true)
+        id: giornalieroEditId || newRecordId("G"),
+        data: g_data.value, trattore: g_trattore.value.trim(), semirimorchio: g_semirimorchio.value.trim(),
+        km: g_km.value, ora_apertura: g_ora_apertura.value, ora_chiusura: g_ora_chiusura.value,
+        impegno: calcolaIntervallo(g_ora_apertura.value, g_ora_chiusura.value), ore_guida: g_ore_guida.value,
+        luogo_sosta: g_luogo_sosta.value.trim(), note: g_note.value,
+        pausa: { ore: g_pausa_ore.value, tipo: g_pausa_tipo.value },
+        _updatedAt: syncNow()
     };
-
-    rec.note = mergeWeeklyRestNote(rec.note || "", rec.pausa.ore, rec.pausa.tipo);
-
-    DIARIO.giornaliero.push(rec);
-    saveToLocalStorage();
-    renderGiornalieroTable();
-    aggiornaSuggerimentiGiornaliero();
-    form_giornaliero.reset();
-    aggiornaWeekendFuoriUI();
+    rec.note=mergeWeeklyRestNote(rec.note||"",rec.pausa.ore,rec.pausa.tipo);
+    if(!confirmAnomalies("Ho trovato alcuni dati da controllare:",giornalieroAnomalies(rec))) return;
+    if(giornalieroEditId){
+        const idx=DIARIO.giornaliero.findIndex(r=>r.id===giornalieroEditId);
+        if(idx>=0) DIARIO.giornaliero[idx]=rec; else DIARIO.giornaliero.push(rec);
+    } else DIARIO.giornaliero.push(rec);
+    saveToLocalStorage(); renderGiornalieroTable(); aggiornaSuggerimentiGiornaliero();
+    form_giornaliero.reset(); resetGEdit();
 });
 
-/* ============================================================
-   GIORNALIERO — MODIFICA RECORD
-   ============================================================ */
-
 function editG(i) {
-    const r = DIARIO.giornaliero[i];
-
-    g_data.value = r.data;
-    g_trattore.value = r.trattore;
-    g_semirimorchio.value = r.semirimorchio;
-    g_km.value = r.km;
-    g_ora_apertura.value = r.ora_apertura;
-    g_ora_chiusura.value = r.ora_chiusura;
-    g_ore_guida.value = r.ore_guida;
-    g_luogo_sosta.value = r.luogo_sosta;
-    g_note.value = r.note || "";
-    g_pausa_ore.value = r.pausa.ore;
-    g_pausa_tipo.value = r.pausa.tipo;
-    aggiornaWeekendFuoriUI();
-    document.getElementById("g_weekend_fuori").checked = r.weekend_fuori === true;
-
-    DIARIO.giornaliero.splice(i,1);
-    saveToLocalStorage();
-    renderGiornalieroTable();
-    aggiornaSuggerimentiGiornaliero();
+    const r=DIARIO.giornaliero[i]; if(!r) return;
+    giornalieroEditId=r.id;
+    g_data.value=r.data||""; g_trattore.value=r.trattore||""; g_semirimorchio.value=r.semirimorchio||""; g_km.value=r.km??"";
+    g_ora_apertura.value=r.ora_apertura||""; g_ora_chiusura.value=r.ora_chiusura||""; g_ore_guida.value=r.ore_guida||"";
+    g_luogo_sosta.value=r.luogo_sosta||""; g_note.value=r.note||""; g_pausa_ore.value=r.pausa?.ore||""; g_pausa_tipo.value=r.pausa?.tipo||"GIORNALIERA";
+    document.getElementById("btn-add-giornaliero").textContent="Salva modifiche";
+    document.getElementById("g-edit-banner")?.classList.add("show");
+    document.getElementById("form-giornaliero")?.scrollIntoView({behavior:"smooth",block:"start"});
 }
 
-/* ============================================================
-   GIORNALIERO — CANCELLA RECORD
-   ============================================================ */
-
+function addTrashEntry(type, record, extra={}){
+    const deletedAt=syncNow();
+    DIARIO.cestino.push({trashId:newRecordId("T"),type,record:deepClone(record),deletedAt,...deepClone(extra)});
+    if(record?.id) addSyncTombstone(type,record.id,deletedAt,false);
+}
 function delG(i) {
-    DIARIO.giornaliero.splice(i,1);
-    saveToLocalStorage();
-    renderGiornalieroTable();
-    aggiornaSuggerimentiGiornaliero();
+    const r=DIARIO.giornaliero[i]; if(!r || !confirm("Spostare questa giornata nel Cestino? Potrai recuperarla per 30 giorni.")) return;
+    addTrashEntry("giornaliero",r); DIARIO.giornaliero.splice(i,1);
+    if(giornalieroEditId===r.id){form_giornaliero.reset();resetGEdit();}
+    saveToLocalStorage(); renderGiornalieroTable(); aggiornaSuggerimentiGiornaliero();
 }
 
+function isoToday(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
+function currentHHMM(){const d=new Date();return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;}
+document.getElementById("btn-g-start")?.addEventListener("click",()=>{g_data.value=isoToday();g_ora_apertura.value=currentHHMM();});
+document.getElementById("btn-g-end")?.addEventListener("click",()=>{if(!g_data.value)g_data.value=isoToday();g_ora_chiusura.value=currentHHMM();});
+document.getElementById("btn-g-copy-last")?.addEventListener("click",()=>{
+    const last=[...DIARIO.giornaliero].sort((a,b)=>(b.data||"").localeCompare(a.data||""))[0];
+    if(!last){alert("Non ci sono giornate precedenti da copiare.");return;}
+    g_data.value=isoToday();g_trattore.value=last.trattore||"";g_semirimorchio.value=last.semirimorchio||"";
+    g_km.value="";g_ora_apertura.value="";g_ora_chiusura.value="";g_ore_guida.value="";
+});
 
 /* ============================================================
    CARICHI / SCARICHI — MEMORIA CLIENTI E LUOGHI
@@ -951,74 +1045,68 @@ function renderCarichiTable() {
 }
 
 /* ============================================================
-   CARICHI / SCARICHI — AGGIUNTA RECORD
+   CARICHI / SCARICHI — SALVATAGGIO, ID, ABBINAMENTO E MODIFICA SICURA
    ============================================================ */
+function caricoAnomalies(rec){
+    const a=[]; if(!rec.data)a.push("data mancante"); if(!rec.luogo)a.push("luogo mancante"); if(!rec.cliente)a.push("cliente mancante"); if(!rec.semirimorchio)a.push("semirimorchio mancante");
+    if(rec.operazione==="CARICO" && (!(Number(rec.peso)>0))) a.push("peso del carico non indicato o uguale a zero");
+    const dup=DIARIO.carichi_scarichi.some(r=>r.id!==caricoEditId && sameCargoShape(r,rec)); if(dup)a.push("operazione identica già presente");
+    return a;
+}
+function resetCEdit(){caricoEditId=null;document.getElementById("btn-add-carico").textContent="Salva operazione";document.getElementById("c-edit-banner")?.classList.remove("show");renderOpenTripOptions();}
+function renderOpenTripOptions(selected=""){
+    const sel=document.getElementById("c_trip_link"); if(!sel)return;
+    const opens=DIARIO.viaggi.filter(v=>!v.scaricoId && !v.scarico);
+    sel.innerHTML='<option value="">Non abbinare adesso</option>'+opens.map(v=>`<option value="${escapeHtml(v.id)}">${escapeHtml(formatDateIT(v.carico?.data||""))} · ${escapeHtml(v.carico?.cliente||"")} · ${escapeHtml(v.carico?.luogo||"")} · ${escapeHtml(v.carico?.semirimorchio||"")}</option>`).join("");
+    if(selected && opens.some(v=>v.id===selected)) sel.value=selected; else if(opens.length===1) sel.value=opens[0].id;
+}
+function updateTripLinkUI(){
+    const isScarico=(c_operazione.value||"").toUpperCase()==="SCARICO"; document.getElementById("c-trip-link-wrap")?.classList.toggle("show",isScarico); if(isScarico)renderOpenTripOptions();
+}
 
 document.getElementById("btn-add-carico").addEventListener("click", () => {
+    const rec={id:caricoEditId||newRecordId("C"),data:c_data.value,operazione:c_operazione.value,luogo:c_luogo.value.trim(),cliente:c_cliente.value.trim(),semirimorchio:c_semirimorchio.value.trim(),peso:c_peso.value,_updatedAt:syncNow()};
+    if(!confirmAnomalies("Ho trovato alcuni dati da controllare:",caricoAnomalies(rec)))return;
+    const old=caricoEditId?DIARIO.carichi_scarichi.find(r=>r.id===caricoEditId):null;
+    if(caricoEditId){const idx=DIARIO.carichi_scarichi.findIndex(r=>r.id===caricoEditId);if(idx>=0)DIARIO.carichi_scarichi[idx]=rec;else DIARIO.carichi_scarichi.push(rec);syncRecordIntoTrips(rec);}
+    else DIARIO.carichi_scarichi.push(rec);
 
-    const rec = {
-        data: c_data.value,
-        operazione: c_operazione.value,
-        luogo: c_luogo.value,
-        cliente: c_cliente.value,
-        semirimorchio: c_semirimorchio.value,
-        peso: c_peso.value
-    };
-
-    DIARIO.carichi_scarichi.push(rec);
-
-    const esisteGia = DIARIO.viaggi.some(v =>
-        v.carico.data === rec.data &&
-        v.carico.cliente === rec.cliente &&
-        v.carico.luogo === rec.luogo &&
-        v.carico.semirimorchio === rec.semirimorchio &&
-        v.carico.peso === rec.peso
-    );
-
-    if (rec.operazione === "CARICO" && !esisteGia) {
-        DIARIO.viaggi.push({ carico: rec, scarico: null
-        , rapportino_esportato: false, rapportino_esporta: true });
+    if(old && old.operazione!==rec.operazione){
+        if(old.operazione==="CARICO") {
+            const removed=DIARIO.viaggi.filter(v=>v.caricoId===rec.id);
+            removed.forEach(v=>addSyncTombstone("viaggio",v.id,syncNow(),false));
+            DIARIO.viaggi=DIARIO.viaggi.filter(v=>v.caricoId!==rec.id);
+        }
+        if(old.operazione==="SCARICO") DIARIO.viaggi.forEach(v=>{if(v.scaricoId===rec.id){v.scaricoId=null;v.scarico=null;touchRecord(v);}});
     }
-
-    saveToLocalStorage();
-    renderCarichiTable();
-    renderViaggiTable();
-    aggiornaSuggerimentiCarichi();
-    form_carichi.reset();
+    if(rec.operazione==="CARICO" && !DIARIO.viaggi.some(v=>v.caricoId===rec.id)) DIARIO.viaggi.push({id:newRecordId("V"),caricoId:rec.id,carico:deepClone(rec),scaricoId:null,scarico:null,_updatedAt:syncNow()});
+    if(rec.operazione==="SCARICO"){
+        const tripId=document.getElementById("c_trip_link")?.value||"";
+        if(tripId){const v=DIARIO.viaggi.find(x=>x.id===tripId);if(v){v.scaricoId=rec.id;v.scarico=deepClone(rec);touchRecord(v);}}
+    }
+    syncRecordIntoTrips(rec);
+    saveToLocalStorage(); renderCarichiTable(); renderViaggiTable(); aggiornaSuggerimentiCarichi(); form_carichi.reset(); resetCEdit(); updateTripLinkUI();
 });
 
-/* ============================================================
-   CARICHI / SCARICHI — MODIFICA RECORD
-   ============================================================ */
-
-function editC(i) {
-    const r = DIARIO.carichi_scarichi[i];
-
-    c_data.value = r.data;
-    c_operazione.value = r.operazione;
-    c_luogo.value = r.luogo;
-    c_cliente.value = r.cliente;
-    c_semirimorchio.value = r.semirimorchio;
-    c_peso.value = r.peso;
-
-    DIARIO.carichi_scarichi.splice(i,1);
-    saveToLocalStorage();
-    renderCarichiTable();
-    aggiornaSuggerimentiCarichi();
-    aggiornaWeekendFuoriUI();
+function editC(i){
+    const r=DIARIO.carichi_scarichi[i];if(!r)return;caricoEditId=r.id;
+    c_data.value=r.data||"";c_operazione.value=r.operazione||"CARICO";c_luogo.value=r.luogo||"";c_cliente.value=r.cliente||"";c_semirimorchio.value=r.semirimorchio||"";c_peso.value=r.peso??"";
+    document.getElementById("btn-add-carico").textContent="Salva modifiche";document.getElementById("c-edit-banner")?.classList.add("show");updateTripLinkUI();
+    const linked=DIARIO.viaggi.find(v=>v.scaricoId===r.id);if(linked)renderOpenTripOptions(linked.id);
+    document.getElementById("form-carichi")?.scrollIntoView({behavior:"smooth",block:"start"});
 }
-
-/* ============================================================
-   CARICHI / SCARICHI — CANCELLA RECORD
-   ============================================================ */
-
-function delC(i) {
-    DIARIO.carichi_scarichi.splice(i,1);
-    saveToLocalStorage();
-    renderCarichiTable();
-    aggiornaSuggerimentiCarichi();
+function delC(i){
+    const r=DIARIO.carichi_scarichi[i];if(!r||!confirm("Spostare questa operazione nel Cestino? Potrai recuperarla per 30 giorni."))return;
+    const linked=DIARIO.viaggi.filter(v=>v.caricoId===r.id||v.scaricoId===r.id).map(deepClone);
+    addTrashEntry("carico",r,{linkedViaggi:linked});
+    if(r.operazione==="CARICO") {
+        linked.forEach(v=>addSyncTombstone("viaggio",v.id,syncNow(),false));
+        DIARIO.viaggi=DIARIO.viaggi.filter(v=>v.caricoId!==r.id);
+    }
+    else DIARIO.viaggi.forEach(v=>{if(v.scaricoId===r.id){v.scaricoId=null;v.scarico=null;touchRecord(v);}});
+    DIARIO.carichi_scarichi.splice(i,1);if(caricoEditId===r.id){form_carichi.reset();resetCEdit();}
+    saveToLocalStorage();renderCarichiTable();renderViaggiTable();aggiornaSuggerimentiCarichi();
 }
-
 /* ============================================================
    RIASSUNTO — RIFERIMENTI DOM
    ============================================================ */
@@ -1078,7 +1166,7 @@ document.getElementById("btn-calcola-riassunto").addEventListener("click", () =>
     let totKg = 0;
 
     lista.forEach(r => {
-        const kmVal = getKmValue(r);
+        const kmVal = Number(r.km) || 0;
         const oreGuidaVal = r.ore_guida && r.ore_guida.includes(":") ? oreToMinuti(r.ore_guida) : 0;
         const impegnoVal = r.impegno && r.impegno.includes(":") ? oreToMinuti(r.impegno) : 0;
         const pausaVal = r.pausa && r.pausa.ore && r.pausa.ore.includes(":") ? oreToMinuti(r.pausa.ore) : 0;
@@ -1101,14 +1189,12 @@ document.getElementById("btn-calcola-riassunto").addEventListener("click", () =>
     const mediaImpegno = giorniLavorati ? Math.round(totImpegno / giorniLavorati) : 0;
 
     
-    const giorniGuidati = new Set(lista.filter(r => getKmValue(r) > 0).map(r => r.data)).size;
-    const weekendFuoriCount = lista.filter(r => r.weekend_fuori === true).length;
+    const giorniGuidati = new Set(lista.filter(r => (Number(r.km) || 0) > 0).map(r => r.data)).size;
     const alertGuida = lista.some(r => isGuidaOverLimit(r.ore_guida));
     const alertImpegno = lista.some(r => isImpegnoOverLimit(r.impegno));
     const alertPausa = lista.some(r => isPausaGiornalieraUnderLimit(r));
 summary_output.innerHTML = `
     <div class="summary-card"><div class="summary-icon">📅</div><div><div class="summary-label">Giorni guidati</div><div class="summary-value">${giorniGuidati}</div><div class="summary-unit">giorni</div></div></div>
-    <div class="summary-card"><div class="summary-icon">🌙</div><div><div class="summary-label">Weekend Fuori</div><div class="summary-value">${weekendFuoriCount}</div><div class="summary-unit">weekend</div></div></div>
     <div class="summary-card"><div class="summary-icon">🛣️</div><div><div class="summary-label">Totale Km</div><div class="summary-value">${totKm}</div><div class="summary-unit">km</div></div></div>
     <div class="summary-card"><div class="summary-icon">◴</div><div><div class="summary-label">Media Km/giorno</div><div class="summary-value">${mediaKm}</div><div class="summary-unit">km</div></div></div>
     <div class="summary-card"><div class="summary-icon">◉</div><div><div class="summary-label">Totale ore guida</div><div class="summary-value">${minutiToOre(totOreGuida)}</div><div class="summary-unit">ore</div></div></div>
@@ -1128,7 +1214,7 @@ summary_output.innerHTML = `
 
 function renderGrafici(lista) {
 
-    const km = lista.map(r => getKmValue(r));
+    const km = lista.map(r => r.km);
     const ore = lista.map(r => oreToMinuti(r.ore_guida));
     const peso = DIARIO.carichi_scarichi.map(r => r.peso);
 
@@ -1207,23 +1293,7 @@ function renderViaggiTable() {
     DIARIO.viaggi.sort((a,b) => b.carico.data.localeCompare(a.carico.data));
 
     DIARIO.viaggi.forEach((v, index) => {
-        if (typeof v.rapportino_esportato !== "boolean") v.rapportino_esportato = false;
-        if (typeof v.rapportino_esporta !== "boolean") v.rapportino_esporta = true;
-
         const tr = document.createElement("tr");
-
-        const statoRapportino = v.rapportino_esportato === true
-            ? `<div style="display:flex;flex-direction:column;gap:8px;min-width:130px;">
-                 <span>✓ Esportato</span>
-                 <button class="secondary" onclick="resetRapportinoFlag(${index})">Rendi riesportabile</button>
-               </div>`
-            : `<label style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
-                 <input type="checkbox"
-                        ${v.rapportino_esporta !== false ? "checked" : ""}
-                        onchange="setRapportinoEsporta(${index}, this.checked)"
-                        style="width:auto;margin:0;">
-                 <span>Esporta</span>
-               </label>`;
 
         tr.innerHTML = `
             <td>${formatDateIT(v.carico.data)}</td>
@@ -1237,10 +1307,9 @@ function renderViaggiTable() {
             <td>${v.carico.semirimorchio}</td>
             <td>${v.carico.peso}</td>
 
-            <td>${statoRapportino}</td>
             <td>
-                <button class="primary" onclick="popupAbbina(${index})">Abbina</button>
-                ${v.scarico ? `<button class="secondary" onclick="popupModifica(${index})">Modifica abbinamento</button>` : ""}
+                ${v.scarico ? `` : `<button class="primary" onclick="popupAbbina(${index})">Abbina</button>`}
+                ${v.scarico ? `<button class="secondary" onclick="popupModifica(${index})">Modifica</button>` : ""}
             </td>
         `;
 
@@ -1252,25 +1321,9 @@ function renderViaggiTable() {
    VIAGGI — POPUP ABBINAMENTO
    ============================================================ */
 
-function setRapportinoEsporta(i, value) {
-    const v = DIARIO.viaggi[i];
-    if (!v || v.rapportino_esportato === true) return;
-    v.rapportino_esporta = !!value;
-    saveToLocalStorage();
-}
-
-function resetRapportinoFlag(i) {
-    const v = DIARIO.viaggi[i];
-    if (!v) return;
-    v.rapportino_esportato = false;
-    v.rapportino_esporta = true;
-    saveToLocalStorage();
-    renderViaggiTable();
-    alert("Il viaggio è di nuovo disponibile per il prossimo rapportino.");
-}
-
 function popupAbbina(indexViaggio) {
-    const scarichiDisponibili = DIARIO.carichi_scarichi.filter(s => s.operazione === "SCARICO");
+    const used=new Set(DIARIO.viaggi.filter((v,idx)=>idx!==indexViaggio && v.scaricoId).map(v=>v.scaricoId));
+    const scarichiDisponibili = DIARIO.carichi_scarichi.filter(s => s.operazione === "SCARICO" && !used.has(s.id));
     mostraPopupScarichi(scarichiDisponibili, indexViaggio);
 }
 
@@ -1329,11 +1382,14 @@ function mostraPopupScarichi(lista, indexViaggio) {
 
 function selezionaScarico(indexViaggio, indexScarico) {
     const scarico = DIARIO.carichi_scarichi[indexScarico];
-    DIARIO.viaggi[indexViaggio].scarico = scarico;
-
+    const viaggio = DIARIO.viaggi[indexViaggio];
+    if (!scarico || !viaggio) return;
+    viaggio.scaricoId = scarico.id;
+    viaggio.scarico = deepClone(scarico);
+    touchRecord(viaggio);
     saveToLocalStorage();
     renderViaggiTable();
-
+    renderOpenTripOptions();
     document.getElementById("popup-viaggi").style.display = "none";
 }
 
@@ -1404,79 +1460,16 @@ function renderStipendiTable() {
     });
 }
 
-let stipendioEditIndex = null;
-
 document.getElementById("btn-add-stipendio").addEventListener("click", () => {
-    const mese = document.getElementById("s_mese_riferimento").value;
-    const dataRicezione = document.getElementById("s_data_ricezione").value;
-    const importo = document.getElementById("s_importo").value;
-    const causale = document.getElementById("s_causale").value;
-
-    if (!mese || !dataRicezione || !importo || !causale) {
-        alert("Compila tutti i campi.");
-        return;
-    }
-
-    const nuovoRecord = {
-        mese_riferimento: mese,
-        data_ricezione: dataRicezione,
-        importo: importo,
-        causale: causale
-    };
-
-    if (stipendioEditIndex !== null) {
-        DIARIO.stipendi[stipendioEditIndex] = nuovoRecord;
-        stipendioEditIndex = null;
-        document.getElementById("btn-add-stipendio").textContent = "Salva voce";
-    } else {
-        DIARIO.stipendi.push(nuovoRecord);
-    }
-
-    saveToLocalStorage();
-    renderStipendiTable();
-    renderSalaryStats();
-    renderDashboard();
-    document.getElementById("form-stipendi").reset();
+    const mese=document.getElementById("s_mese_riferimento").value, dataRicezione=document.getElementById("s_data_ricezione").value, importo=document.getElementById("s_importo").value, causale=document.getElementById("s_causale").value;
+    if(!mese||!dataRicezione||!importo||!causale){alert("Compila tutti i campi.");return;}
+    const nuovoRecord={id:stipendioEditId||newRecordId("S"),mese_riferimento:mese,data_ricezione:dataRicezione,importo,causale,_updatedAt:syncNow()};
+    if(stipendioEditId){const idx=DIARIO.stipendi.findIndex(r=>r.id===stipendioEditId);if(idx>=0)DIARIO.stipendi[idx]=nuovoRecord;else DIARIO.stipendi.push(nuovoRecord);stipendioEditId=null;document.getElementById("btn-add-stipendio").textContent="Salva voce";}
+    else DIARIO.stipendi.push(nuovoRecord);
+    saveToLocalStorage();renderStipendiTable();renderSalaryStats();renderDashboard();document.getElementById("form-stipendi").reset();
 });
-
-function editStipendio(i) {
-    const r = DIARIO.stipendi[i];
-    if (!r) return;
-
-    document.getElementById("s_mese_riferimento").value =
-        r.mese_riferimento || (r.data ? r.data.slice(0,7) : "");
-    document.getElementById("s_data_ricezione").value =
-        r.data_ricezione || r.data || "";
-    document.getElementById("s_importo").value = r.importo ?? "";
-    document.getElementById("s_causale").value =
-        (r.causale || "STIPENDIO").toUpperCase();
-
-    stipendioEditIndex = i;
-    document.getElementById("btn-add-stipendio").textContent = "Salva modifiche";
-
-    document.getElementById("s_mese_riferimento").scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-    });
-}
-
-function delStipendio(i) {
-    if (!confirm("Cancellare questa voce stipendio?")) return;
-    DIARIO.stipendi.splice(i,1);
-
-    if (stipendioEditIndex === i) {
-        stipendioEditIndex = null;
-        document.getElementById("form-stipendi").reset();
-        document.getElementById("btn-add-stipendio").textContent = "Salva voce";
-    } else if (stipendioEditIndex !== null && i < stipendioEditIndex) {
-        stipendioEditIndex--;
-    }
-
-    saveToLocalStorage();
-    renderStipendiTable();
-    renderSalaryStats();
-    renderDashboard();
-}
+function editStipendio(i){const r=DIARIO.stipendi[i];if(!r)return;document.getElementById("s_mese_riferimento").value=r.mese_riferimento||(r.data?r.data.slice(0,7):"");document.getElementById("s_data_ricezione").value=r.data_ricezione||r.data||"";document.getElementById("s_importo").value=r.importo??"";document.getElementById("s_causale").value=(r.causale||"STIPENDIO").toUpperCase();stipendioEditId=r.id;document.getElementById("btn-add-stipendio").textContent="Salva modifiche";document.getElementById("s_mese_riferimento").scrollIntoView({behavior:"smooth",block:"center"});}
+function delStipendio(i){const r=DIARIO.stipendi[i];if(!r||!confirm("Spostare questa voce stipendio nel Cestino?"))return;addTrashEntry("stipendio",r);DIARIO.stipendi.splice(i,1);if(stipendioEditId===r.id){stipendioEditId=null;document.getElementById("form-stipendi").reset();document.getElementById("btn-add-stipendio").textContent="Salva voce";}saveToLocalStorage();renderStipendiTable();renderSalaryStats();renderDashboard();}
 
 /* ============================================================
    RICERCA
@@ -1504,7 +1497,7 @@ function renderSearchResults() {
 
     if (tipo === "giornaliero") {
         rows = DIARIO.giornaliero.filter(r => containsQuery([
-            r.data, formatDateIT(r.data), r.trattore, r.semirimorchio, getKmValue(r),
+            r.data, formatDateIT(r.data), r.trattore, r.semirimorchio, r.km,
             r.ora_apertura, r.ora_chiusura, r.impegno, r.ore_guida,
             r.luogo_sosta, r.pausa?.ore, r.pausa?.tipo, r.note
         ], q));
@@ -1592,12 +1585,7 @@ document.getElementById("btn-import-json").addEventListener("click", () => {
             if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.giornaliero) || !Array.isArray(parsed.carichi_scarichi)) throw new Error("Struttura non valida");
             if (!confirm("Il backup è valido. Importarlo e sostituire i dati attuali?")) return;
             DIARIO = parsed;
-            if (Array.isArray(DIARIO.viaggi)) {
-                DIARIO.viaggi.forEach(v => {
-                    if (typeof v.rapportino_esportato !== "boolean") v.rapportino_esportato = false;
-                });
-            }
-
+            normalizeDiarioData();
             if (Array.isArray(DIARIO.giornaliero)) {
                 DIARIO.giornaliero.forEach(r => {
                     if (r && r.pausa) {
@@ -1628,6 +1616,625 @@ document.getElementById("btn-import-json").addEventListener("click", () => {
 
 
 /* ============================================================
+   GOOGLE DRIVE SYNC — cartella KnightTrucker
+   - Il Client ID OAuth 2.0 viene salvato nelle impostazioni locali dell'app.
+   - In Google Cloud abilitare Google Drive API.
+   - Aggiungere l'origine HTTPS della GitHub Pages tra le origini JavaScript autorizzate.
+   - Il file dati viene letto/scritto esclusivamente come KnightTrucker/DIARIO.json.
+   ============================================================ */
+
+const GOOGLE_DRIVE_CLIENT_ID_KEY = "DIARIO_GOOGLE_CLIENT_ID";
+const GOOGLE_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+const GOOGLE_DRIVE_FOLDER_NAME = "KnightTrucker";
+const GOOGLE_DRIVE_FOLDER_MIME = "application/vnd.google-apps.folder";
+const GOOGLE_DRIVE_FILENAME = "DIARIO.json";
+const GOOGLE_DRIVE_APP_KEY = "toradiario";
+const GOOGLE_DRIVE_APP_VALUE = "main";
+const GOOGLE_DRIVE_FOLDER_APP_KEY = "toradiario_folder";
+const GOOGLE_DRIVE_FOLDER_APP_VALUE = "KnightTrucker";
+const GOOGLE_DRIVE_FILE_ID_KEY = "DIARIO_DRIVE_FILE_ID";
+const GOOGLE_DRIVE_FOLDER_ID_KEY = "DIARIO_DRIVE_FOLDER_ID";
+const GOOGLE_DRIVE_BACKUP_FOLDER_ID_KEY = "DIARIO_DRIVE_BACKUP_FOLDER_ID";
+const GOOGLE_DRIVE_BACKUP_FOLDER_NAME = "Backup";
+const GOOGLE_DRIVE_BACKUP_APP_KEY = "toradiario_backup_folder";
+const GOOGLE_DRIVE_BACKUP_APP_VALUE = "weekly";
+const GOOGLE_DRIVE_LAST_REMOTE_MODIFIED_KEY = "DIARIO_DRIVE_LAST_REMOTE_MODIFIED";
+const GOOGLE_DRIVE_LAST_SYNC_AT_KEY = "DIARIO_DRIVE_LAST_SYNC_AT";
+const GOOGLE_DRIVE_LAST_LOCAL_CHANGE_KEY = "DIARIO_LAST_LOCAL_CHANGE_AT";
+const GOOGLE_DRIVE_WEEKLY_BACKUP_MS = 7 * 24 * 60 * 60 * 1000;
+
+let driveTokenClient = null;
+let driveAccessToken = "";
+let driveTokenExpiresAt = 0;
+let driveFileId = localStorage.getItem(GOOGLE_DRIVE_FILE_ID_KEY) || "";
+let driveFolderId = localStorage.getItem(GOOGLE_DRIVE_FOLDER_ID_KEY) || "";
+let driveBackupFolderId = localStorage.getItem(GOOGLE_DRIVE_BACKUP_FOLDER_ID_KEY) || "";
+let drivePendingAction = null;
+let driveAutoSyncEnabled = false;
+let driveAutoSyncTimer = null;
+let driveReconcileInProgress = false;
+let driveRemoteVerifiedThisSession = false;
+
+function setDriveStatus(message, type="") {
+    const el = document.getElementById("drive-status");
+    if (el) { el.textContent = message; el.className = "drive-status" + (type ? " " + type : ""); }
+    updateDriveSyncMeta();
+}
+
+function setDriveConnectedUI(connected) {
+    const syncBtn = document.getElementById("btn-drive-sync");
+    if (syncBtn) syncBtn.disabled = !connected;
+    const connectBtn = document.getElementById("btn-drive-connect");
+    if (connectBtn) connectBtn.textContent = connected ? "✅ Drive collegato" : "🔗 Collega Google Drive";
+}
+
+function recordDriveSync(remoteModifiedTime=""){
+    const now=syncNow();
+    localStorage.setItem(GOOGLE_DRIVE_LAST_SYNC_AT_KEY,now);
+    localStorage.setItem(GOOGLE_DRIVE_LAST_REMOTE_MODIFIED_KEY,remoteModifiedTime||now);
+    driveRemoteVerifiedThisSession=true;
+    updateDriveSyncMeta();
+    if(document.getElementById("dashboard-output")) renderDashboard();
+}
+function getDriveSyncInfo(){
+    const sync=Date.parse(localStorage.getItem(GOOGLE_DRIVE_LAST_SYNC_AT_KEY)||"")||0;
+    const local=Date.parse(localStorage.getItem(GOOGLE_DRIVE_LAST_LOCAL_CHANGE_KEY)||"")||0;
+    const knownRemote=Date.parse(localStorage.getItem(GOOGLE_DRIVE_LAST_REMOTE_MODIFIED_KEY)||"")||0;
+    return {sync,local,knownRemote,pending:local>sync,lastSync:sync?new Date(sync):null};
+}
+function updateDriveSyncMeta(){
+    const el=document.getElementById("drive-sync-meta"); if(!el)return;
+    const s=getDriveSyncInfo();
+    let state;
+    if(!driveRemoteVerifiedThisSession && isDriveConfigured()) state=s.pending?"🟠 Modifiche locali presenti · Drive da verificare":"🟡 Drive da verificare su questo dispositivo";
+    else state=s.pending?"🟠 Modifiche locali non ancora sincronizzate":(s.lastSync?`🟢 Ultima sincronizzazione: ${s.lastSync.toLocaleString("it-IT")}`:"⚪ Nessuna sincronizzazione registrata");
+    el.textContent=`${state} · Backup storico ogni 7 giorni in KnightTrucker/Backup.`;
+}
+function remoteChangedSinceKnown(file){
+    const known=Date.parse(localStorage.getItem(GOOGLE_DRIVE_LAST_REMOTE_MODIFIED_KEY)||"")||0;
+    const remote=Date.parse(file?.modifiedTime||"")||0;
+    return !known || remote>known+1000;
+}
+function hasLocalPayload(d=DIARIO){
+    return ["giornaliero","carichi_scarichi","viaggi","stipendi","cestino"].some(k=>Array.isArray(d?.[k])&&d[k].length>0);
+}
+function mergeSyncTombstones(a=[],b=[]){
+    const map=new Map();
+    [...a,...b].forEach(x=>{
+        if(!x?.type||!x?.id)return;
+        const k=tombstoneKey(x.type,x.id), cur=map.get(k);
+        if(!cur || (Date.parse(x.deletedAt||"")||0)>(Date.parse(cur.deletedAt||"")||0)) map.set(k,{type:x.type,id:x.id,deletedAt:x.deletedAt||SYNC_LEGACY_TIME,permanent:!!x.permanent});
+        else if(x.permanent) cur.permanent=true;
+    });
+    return map;
+}
+function mergeRecordArray(type,localArr=[],remoteArr=[],tombMap=new Map()){
+    const map=new Map();
+    const put=(r,preferRemote=false)=>{
+        if(!r?.id)return;
+        const cur=map.get(r.id);
+        if(!cur){map.set(r.id,deepClone(r));return;}
+        const nt=recordUpdatedTime(r), ct=recordUpdatedTime(cur);
+        if(nt>ct || (nt===ct && preferRemote)) map.set(r.id,deepClone(r));
+    };
+    localArr.forEach(r=>put(r,false));
+    remoteArr.forEach(r=>put(r,true));
+    return [...map.values()].filter(r=>{
+        const t=tombMap.get(tombstoneKey(type,r.id));
+        return !t || recordUpdatedTime(r)>(Date.parse(t.deletedAt||"")||0);
+    });
+}
+function mergeTrash(localTrash=[],remoteTrash=[],tombMap=new Map(),activeMap=new Map()){
+    const map=new Map();
+    [...localTrash,...remoteTrash].forEach(x=>{
+        if(!x?.trashId)return;
+        const cur=map.get(x.trashId);
+        if(!cur || (Date.parse(x.deletedAt||"")||0)>(Date.parse(cur.deletedAt||"")||0)) map.set(x.trashId,deepClone(x));
+    });
+    const limit=Date.now()-TRASH_RETENTION_DAYS*86400000;
+    return [...map.values()].filter(x=>{
+        const r=x.record||{}, key=r.id?tombstoneKey(x.type,r.id):"", tomb=key?tombMap.get(key):null;
+        if(tomb?.permanent)return false;
+        const active=key?activeMap.get(key):null;
+        if(active && recordUpdatedTime(active)>(Date.parse(x.deletedAt||"")||0))return false;
+        const t=Date.parse(x.deletedAt||"");
+        return !Number.isFinite(t)||t>=limit;
+    });
+}
+function mergeDiarioSnapshots(localInput,remoteInput){
+    const l=normalizeDiarioSnapshot(localInput), r=normalizeDiarioSnapshot(remoteInput);
+    const tombMap=mergeSyncTombstones(l.sync_deleted,r.sync_deleted);
+    const out={
+        giornaliero:mergeRecordArray("giornaliero",l.giornaliero,r.giornaliero,tombMap),
+        carichi_scarichi:mergeRecordArray("carico",l.carichi_scarichi,r.carichi_scarichi,tombMap),
+        viaggi:mergeRecordArray("viaggio",l.viaggi,r.viaggi,tombMap),
+        stipendi:mergeRecordArray("stipendio",l.stipendi,r.stipendi,tombMap),
+        cestino:[],sync_deleted:[],security:{pinSalt:"",pinHash:""},sync_meta:{}
+    };
+    const ls=Date.parse(l.sync_meta?.securityUpdatedAt||"")||0, rs=Date.parse(r.sync_meta?.securityUpdatedAt||"")||0;
+    if(rs>ls || (rs===ls && (r.security?.pinHash||""))) out.security=deepClone(r.security||{});
+    else out.security=deepClone(l.security||{});
+    out.sync_meta={
+        modifiedAt:new Date(Math.max(Date.parse(l.sync_meta?.modifiedAt||"")||0,Date.parse(r.sync_meta?.modifiedAt||"")||0,Date.now())).toISOString(),
+        securityUpdatedAt:(rs>=ls?(r.sync_meta?.securityUpdatedAt||SYNC_LEGACY_TIME):(l.sync_meta?.securityUpdatedAt||SYNC_LEGACY_TIME))
+    };
+    const activeMap=new Map();
+    out.giornaliero.forEach(x=>activeMap.set(tombstoneKey("giornaliero",x.id),x));
+    out.carichi_scarichi.forEach(x=>activeMap.set(tombstoneKey("carico",x.id),x));
+    out.viaggi.forEach(x=>activeMap.set(tombstoneKey("viaggio",x.id),x));
+    out.stipendi.forEach(x=>activeMap.set(tombstoneKey("stipendio",x.id),x));
+    out.sync_deleted=[...tombMap.values()].filter(t=>{
+        const a=activeMap.get(tombstoneKey(t.type,t.id));
+        return !a || (Date.parse(t.deletedAt||"")||0)>=recordUpdatedTime(a);
+    });
+    const cleanTombMap=mergeSyncTombstones(out.sync_deleted,[]);
+    out.cestino=mergeTrash(l.cestino,r.cestino,cleanTombMap,activeMap);
+    return normalizeDiarioSnapshot(out);
+}
+
+function getDriveClientId() {
+    return (localStorage.getItem(GOOGLE_DRIVE_CLIENT_ID_KEY) || "").trim();
+}
+
+function isValidDriveClientId(value) {
+    return /^[0-9]+-[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/.test((value || "").trim());
+}
+
+function isDriveConfigured() {
+    return isValidDriveClientId(getDriveClientId());
+}
+
+function saveDriveClientIdFromUI() {
+    const input = document.getElementById("drive-client-id");
+    const value = (input?.value || "").trim();
+    if (!isValidDriveClientId(value)) {
+        setDriveStatus("Client ID non valido. Deve terminare con .apps.googleusercontent.com", "err");
+        return false;
+    }
+    localStorage.setItem(GOOGLE_DRIVE_CLIENT_ID_KEY, value);
+    driveTokenClient = null;
+    driveAccessToken = "";
+    driveTokenExpiresAt = 0;
+    drivePendingAction = null;
+    driveAutoSyncEnabled = false;
+    setDriveConnectedUI(false);
+    setDriveStatus("Client ID salvato. Ora premi “Collega Google Drive”.", "ok");
+    return true;
+}
+
+function isDriveTokenValid() {
+    return !!driveAccessToken && Date.now() < driveTokenExpiresAt;
+}
+
+function initDriveTokenClient() {
+    if (!isDriveConfigured()) {
+        setDriveStatus("Google Drive non configurato: inserisci e salva il Client ID OAuth qui sopra.", "warn");
+        return false;
+    }
+    if (!window.google || !google.accounts || !google.accounts.oauth2) {
+        setDriveStatus("Servizi Google non disponibili. Controlla la connessione Internet e riprova.", "err");
+        return false;
+    }
+    if (driveTokenClient) return true;
+
+    driveTokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: getDriveClientId(),
+        scope: GOOGLE_DRIVE_SCOPE,
+        callback: async (response) => {
+            if (!response || response.error) {
+                setDriveStatus("Collegamento a Google Drive non riuscito.", "err");
+                drivePendingAction = null;
+                return;
+            }
+            driveAccessToken = response.access_token || "";
+            const expires = Number(response.expires_in || 3600);
+            driveTokenExpiresAt = Date.now() + Math.max(60, expires - 60) * 1000;
+
+            const action = drivePendingAction;
+            drivePendingAction = null;
+            try {
+                if (action === "sync") await syncDiarioToDrive();
+                else await connectAndLoadDrive();
+            } catch (err) {
+                console.error("Drive action error", err);
+                setDriveStatus("Errore Google Drive: " + (err.message || err), "err");
+            }
+        },
+        error_callback: () => {
+            drivePendingAction = null;
+            setDriveStatus("Finestra Google chiusa o non disponibile.", "err");
+        }
+    });
+    return true;
+}
+
+function requestDriveAccess(action) {
+    if (!initDriveTokenClient()) return;
+    drivePendingAction = action;
+    driveTokenClient.requestAccessToken(isDriveTokenValid() ? {prompt:""} : {});
+}
+
+async function driveFetch(url, options={}) {
+    const headers = new Headers(options.headers || {});
+    headers.set("Authorization", "Bearer " + driveAccessToken);
+    const response = await fetch(url, { ...options, headers });
+    if (!response.ok) {
+        let detail = "";
+        try { detail = await response.text(); } catch {}
+        throw new Error(`HTTP ${response.status}${detail ? " - " + detail.slice(0,180) : ""}`);
+    }
+    return response;
+}
+
+function escapeDriveQueryValue(value) {
+    return String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+async function getDriveMetadata(fileId, fields="id,name,mimeType,modifiedTime,trashed,parents") {
+    const url = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=${encodeURIComponent(fields)}`;
+    const r = await driveFetch(url);
+    return r.json();
+}
+
+async function searchDriveFiles(q, fields="files(id,name,mimeType,modifiedTime,size,trashed,parents)") {
+    const url = "https://www.googleapis.com/drive/v3/files?" + new URLSearchParams({
+        q,
+        spaces: "drive",
+        orderBy: "modifiedTime desc",
+        pageSize: "20",
+        fields
+    }).toString();
+    const r = await driveFetch(url);
+    const data = await r.json();
+    return Array.isArray(data.files) ? data.files : [];
+}
+
+async function ensureDriveFolder() {
+    if (driveFolderId) {
+        try {
+            const f = await getDriveMetadata(driveFolderId, "id,name,mimeType,trashed");
+            if (f && !f.trashed && f.mimeType === GOOGLE_DRIVE_FOLDER_MIME && f.name === GOOGLE_DRIVE_FOLDER_NAME) {
+                return f;
+            }
+        } catch (err) {
+            console.warn("Cartella Drive salvata non più accessibile, nuova ricerca", err);
+        }
+        driveFolderId = "";
+        localStorage.removeItem(GOOGLE_DRIVE_FOLDER_ID_KEY);
+    }
+
+    const folderName = escapeDriveQueryValue(GOOGLE_DRIVE_FOLDER_NAME);
+    const queries = [
+        `mimeType = '${GOOGLE_DRIVE_FOLDER_MIME}' and trashed = false and appProperties has { key='${GOOGLE_DRIVE_FOLDER_APP_KEY}' and value='${GOOGLE_DRIVE_FOLDER_APP_VALUE}' }`,
+        `name = '${folderName}' and mimeType = '${GOOGLE_DRIVE_FOLDER_MIME}' and trashed = false`
+    ];
+
+    for (const q of queries) {
+        const files = await searchDriveFiles(q, "files(id,name,mimeType,modifiedTime,trashed)");
+        if (files.length) {
+            driveFolderId = files[0].id;
+            localStorage.setItem(GOOGLE_DRIVE_FOLDER_ID_KEY, driveFolderId);
+            return files[0];
+        }
+    }
+
+    setDriveStatus(`Creo la cartella ${GOOGLE_DRIVE_FOLDER_NAME} su Google Drive…`);
+    const metadata = {
+        name: GOOGLE_DRIVE_FOLDER_NAME,
+        mimeType: GOOGLE_DRIVE_FOLDER_MIME,
+        appProperties: { [GOOGLE_DRIVE_FOLDER_APP_KEY]: GOOGLE_DRIVE_FOLDER_APP_VALUE }
+    };
+    const create = await driveFetch("https://www.googleapis.com/drive/v3/files?fields=id,name,mimeType,modifiedTime", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(metadata)
+    });
+    const folder = await create.json();
+    driveFolderId = folder.id;
+    localStorage.setItem(GOOGLE_DRIVE_FOLDER_ID_KEY, driveFolderId);
+    return folder;
+}
+
+async function ensureDriveBackupFolder(){
+    const root=await ensureDriveFolder();
+    if(driveBackupFolderId){
+        try{const f=await getDriveMetadata(driveBackupFolderId,"id,name,mimeType,trashed,parents");if(f&&!f.trashed&&f.mimeType===GOOGLE_DRIVE_FOLDER_MIME&&f.name===GOOGLE_DRIVE_BACKUP_FOLDER_NAME&&(f.parents||[]).includes(root.id))return f;}catch{}
+        driveBackupFolderId="";localStorage.removeItem(GOOGLE_DRIVE_BACKUP_FOLDER_ID_KEY);
+    }
+    const rid=escapeDriveQueryValue(root.id), name=escapeDriveQueryValue(GOOGLE_DRIVE_BACKUP_FOLDER_NAME);
+    const qs=[`'${rid}' in parents and mimeType = '${GOOGLE_DRIVE_FOLDER_MIME}' and trashed = false and appProperties has { key='${GOOGLE_DRIVE_BACKUP_APP_KEY}' and value='${GOOGLE_DRIVE_BACKUP_APP_VALUE}' }`,`'${rid}' in parents and name = '${name}' and mimeType = '${GOOGLE_DRIVE_FOLDER_MIME}' and trashed = false`];
+    for(const q of qs){const f=await searchDriveFiles(q,"files(id,name,mimeType,modifiedTime,trashed,parents)");if(f.length){driveBackupFolderId=f[0].id;localStorage.setItem(GOOGLE_DRIVE_BACKUP_FOLDER_ID_KEY,driveBackupFolderId);return f[0];}}
+    const r=await driveFetch("https://www.googleapis.com/drive/v3/files?fields=id,name,mimeType,modifiedTime,parents",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:GOOGLE_DRIVE_BACKUP_FOLDER_NAME,mimeType:GOOGLE_DRIVE_FOLDER_MIME,parents:[root.id],appProperties:{[GOOGLE_DRIVE_BACKUP_APP_KEY]:GOOGLE_DRIVE_BACKUP_APP_VALUE}})});
+    const f=await r.json();driveBackupFolderId=f.id;localStorage.setItem(GOOGLE_DRIVE_BACKUP_FOLDER_ID_KEY,driveBackupFolderId);return f;
+}
+async function maybeCreateWeeklyDriveBackup(){
+    const folder=await ensureDriveBackupFolder(); const fid=escapeDriveQueryValue(folder.id);
+    const files=await searchDriveFiles(`'${fid}' in parents and name contains 'DIARIO_BACKUP_' and trashed = false`);
+    const latest=files[0]; const last=latest?Date.parse(latest.modifiedTime||"")||0:0;
+    if(last && Date.now()-last<GOOGLE_DRIVE_WEEKLY_BACKUP_MS) return false;
+    const d=new Date(); const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; const name=`DIARIO_BACKUP_${ds}.json`;
+    const cr=await driveFetch("https://www.googleapis.com/drive/v3/files?fields=id,name,modifiedTime,parents",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,mimeType:"application/json",parents:[folder.id],appProperties:{toradiario_backup:"weekly"}})});
+    const f=await cr.json();
+    await driveFetch(`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(f.id)}?uploadType=media&fields=id,name,modifiedTime,parents`,{method:"PATCH",headers:{"Content-Type":"application/json; charset=UTF-8"},body:JSON.stringify(DIARIO,null,2)});
+    return true;
+}
+
+async function moveDriveFileIntoFolder(file) {
+    const folder = await ensureDriveFolder();
+    const parents = Array.isArray(file.parents) ? file.parents : [];
+    if (parents.includes(folder.id)) return file;
+
+    const params = new URLSearchParams({
+        addParents: folder.id,
+        fields: "id,name,modifiedTime,size,trashed,parents"
+    });
+    if (parents.length) params.set("removeParents", parents.join(","));
+
+    const url = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.id)}?${params.toString()}`;
+    const r = await driveFetch(url, { method: "PATCH" });
+    return r.json();
+}
+
+async function scheduleDriveAutoSyncNow() {
+    if (!driveAutoSyncEnabled || !driveFileId) return;
+    if (!isDriveTokenValid()) {
+        driveRemoteVerifiedThisSession=false;
+        setDriveStatus("Dati salvati sul dispositivo. Sessione Drive scaduta: premi “Collega Google Drive” per verificare e sincronizzare senza sovrascrivere dati più recenti.", "warn");
+        return;
+    }
+    await reconcileDriveData({reason:"auto"});
+}
+
+function scheduleDriveAutoSync() {
+    if (!driveAutoSyncEnabled || !driveFileId) return;
+    if (driveAutoSyncTimer) clearTimeout(driveAutoSyncTimer);
+
+    driveAutoSyncTimer = setTimeout(async () => {
+        driveAutoSyncTimer = null;
+        try {
+            await scheduleDriveAutoSyncNow();
+        } catch (err) {
+            console.error("Drive auto sync error", err);
+            setDriveStatus("Dati salvati sul dispositivo, ma sincronizzazione Drive non riuscita: " + (err.message || err), "err");
+        }
+    }, 1200);
+}
+
+function validateDiarioObject(parsed) {
+    if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.giornaliero) || !Array.isArray(parsed.carichi_scarichi)) {
+        throw new Error("Il file DIARIO.json su Drive non ha una struttura valida.");
+    }
+}
+
+function applyDiarioObject(parsed) {
+    validateDiarioObject(parsed);
+    DIARIO = parsed;
+
+    normalizeDiarioData();
+
+    if (Array.isArray(DIARIO.giornaliero)) {
+        DIARIO.giornaliero.forEach(r => {
+            if (r && r.pausa) r.note = mergeWeeklyRestNote(r.note || "", r.pausa.ore, r.pausa.tipo);
+        });
+    }
+
+    saveToLocalStorage({fromDrive:true});
+    renderGiornalieroTable();
+    renderCarichiTable();
+    renderViaggiTable();
+    renderStipendiTable();
+    aggiornaSuggerimentiGiornaliero();
+    aggiornaSuggerimentiCarichi();
+    renderSalaryStats();
+    renderClientStats();
+    renderDashboard();
+}
+
+async function findDriveDiarioFile() {
+    const folder = await ensureDriveFolder();
+    const folderId = escapeDriveQueryValue(folder.id);
+    const fileName = escapeDriveQueryValue(GOOGLE_DRIVE_FILENAME);
+
+    // Prima scelta: il DIARIO.json già presente dentro KnightTrucker.
+    const queries = [
+        `'${folderId}' in parents and trashed = false and appProperties has { key='${GOOGLE_DRIVE_APP_KEY}' and value='${GOOGLE_DRIVE_APP_VALUE}' }`,
+        `'${folderId}' in parents and name = '${fileName}' and trashed = false`
+    ];
+
+    for (const q of queries) {
+        const files = await searchDriveFiles(q);
+        if (files.length) {
+            driveFileId = files[0].id;
+            localStorage.setItem(GOOGLE_DRIVE_FILE_ID_KEY, driveFileId);
+            return files[0];
+        }
+    }
+
+    // Migrazione dalla versione precedente: se l'app ricorda un DIARIO.json fuori cartella,
+    // lo sposta dentro KnightTrucker invece di crearne una seconda copia.
+    if (driveFileId) {
+        try {
+            let oldFile = await getDriveMetadata(driveFileId, "id,name,modifiedTime,size,trashed,parents");
+            if (oldFile && !oldFile.trashed) {
+                oldFile = await moveDriveFileIntoFolder(oldFile);
+                return oldFile;
+            }
+        } catch (err) {
+            console.warn("Vecchio file Drive non più accessibile, verrà creato un nuovo DIARIO.json", err);
+            driveFileId = "";
+            localStorage.removeItem(GOOGLE_DRIVE_FILE_ID_KEY);
+        }
+    }
+
+    return null;
+}
+
+async function createDriveDiarioFile() {
+    const folder = await ensureDriveFolder();
+    setDriveStatus(`Creo ${GOOGLE_DRIVE_FOLDER_NAME}/${GOOGLE_DRIVE_FILENAME} su Google Drive…`);
+    const metadata = {
+        name: GOOGLE_DRIVE_FILENAME,
+        mimeType: "application/json",
+        parents: [folder.id],
+        appProperties: { [GOOGLE_DRIVE_APP_KEY]: GOOGLE_DRIVE_APP_VALUE }
+    };
+
+    const create = await driveFetch("https://www.googleapis.com/drive/v3/files?fields=id,name,modifiedTime,parents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(metadata)
+    });
+    const file = await create.json();
+    driveFileId = file.id;
+    localStorage.setItem(GOOGLE_DRIVE_FILE_ID_KEY, driveFileId);
+
+    return uploadDiarioContentToDrive(driveFileId);
+}
+
+async function uploadDiarioContentToDrive(fileId) {
+    const url = `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(fileId)}?uploadType=media&fields=id,name,modifiedTime,parents`;
+    const r = await driveFetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json; charset=UTF-8" },
+        body: JSON.stringify(DIARIO, null, 2)
+    });
+    return r.json();
+}
+
+async function downloadDiarioFromDrive(fileId) {
+    const url = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`;
+    const r = await driveFetch(url);
+    return r.json();
+}
+
+async function reconcileDriveData({reason="manual"}={}) {
+    if(driveReconcileInProgress) return;
+    if(!isDriveTokenValid()) { requestDriveAccess(reason==="connect"?"connect":"sync"); return; }
+    driveReconcileInProgress=true;
+    try{
+        setDriveStatus(`Verifica ${GOOGLE_DRIVE_FOLDER_NAME}/${GOOGLE_DRIVE_FILENAME} e confronto con questo dispositivo…`);
+        let file=await findDriveDiarioFile();
+        if(!file){
+            normalizeDiarioData();
+            const created=await createDriveDiarioFile();
+            recordDriveSync(created.modifiedTime||"");
+            driveAutoSyncEnabled=true;setDriveConnectedUI(true);
+            let backup=false;try{backup=await maybeCreateWeeklyDriveBackup();}catch(err){console.warn("Backup settimanale Drive non riuscito",err);}
+            setDriveStatus(`Drive collegato. Creato ${GOOGLE_DRIVE_FOLDER_NAME}/${GOOGLE_DRIVE_FILENAME} con i dati di questo dispositivo.${backup?" Backup settimanale creato.":""} Sincronizzazione multi-dispositivo attiva.`,"ok");
+            return;
+        }
+
+        driveFileId=file.id;localStorage.setItem(GOOGLE_DRIVE_FILE_ID_KEY,driveFileId);setDriveConnectedUI(true);
+        const remote=await downloadDiarioFromDrive(driveFileId);validateDiarioObject(remote);
+        const info=getDriveSyncInfo();
+        const firstVerification=!info.knownRemote;
+        const remoteChanged=remoteChangedSinceKnown(file);
+        const localDirty=info.pending;
+        let mode="none";
+
+        if(firstVerification){
+            if(!hasLocalPayload(DIARIO)){
+                applyDiarioObject(remote); mode="download";
+            }else{
+                const merged=mergeDiarioSnapshots(DIARIO,remote);
+                applyDiarioObject(merged); mode="merge";
+            }
+        }else if(remoteChanged && localDirty){
+            const merged=mergeDiarioSnapshots(DIARIO,remote);
+            applyDiarioObject(merged); mode="merge";
+        }else if(remoteChanged && !localDirty){
+            applyDiarioObject(remote); mode="download";
+        }else if(!remoteChanged && localDirty){
+            mode="upload";
+        }
+
+        if(mode==="merge" || mode==="upload"){
+            // Ultimo controllo immediatamente prima dell'upload: se un altro dispositivo
+            // ha scritto mentre stavamo confrontando i dati, inglobiamo anche quella versione.
+            try{
+                const latestMeta=await getDriveMetadata(driveFileId,"id,name,modifiedTime,parents,trashed");
+                const firstRemote=Date.parse(file.modifiedTime||"")||0;
+                const latestRemote=Date.parse(latestMeta.modifiedTime||"")||0;
+                if(latestRemote>firstRemote+500){
+                    const newest=await downloadDiarioFromDrive(driveFileId);validateDiarioObject(newest);
+                    const mergedAgain=mergeDiarioSnapshots(DIARIO,newest);
+                    applyDiarioObject(mergedAgain);mode="merge";file=latestMeta;
+                }
+            }catch(err){console.warn("Controllo finale Drive non riuscito",err);}
+            const updated=await uploadDiarioContentToDrive(driveFileId);
+            recordDriveSync(updated.modifiedTime||"");
+        }else{
+            recordDriveSync(file.modifiedTime||"");
+        }
+
+        let backup=false;try{backup=await maybeCreateWeeklyDriveBackup();}catch(err){console.warn("Backup settimanale Drive non riuscito",err);}
+        driveAutoSyncEnabled=true;driveRemoteVerifiedThisSession=true;setDriveConnectedUI(true);
+        const labels={download:"Drive era più recente: dati aggiornati automaticamente su questo dispositivo.",merge:"Modifiche di più dispositivi unite e risalvate su Drive.",upload:"Modifiche di questo dispositivo inviate a Drive.",none:"Questo dispositivo e Drive erano già allineati."};
+        setDriveStatus(`✅ ${labels[mode]}${backup?" Backup settimanale creato.":""} Sincronizzazione multi-dispositivo attiva.`,"ok");
+    }finally{
+        driveReconcileInProgress=false;
+        updateDriveSyncMeta();
+    }
+}
+
+async function connectAndLoadDrive() {
+    if(!isDriveTokenValid()){requestDriveAccess("connect");return;}
+    await reconcileDriveData({reason:"connect"});
+}
+
+async function syncDiarioToDrive() {
+    if(!isDriveTokenValid()){requestDriveAccess("sync");return;}
+    await reconcileDriveData({reason:"manual"});
+}
+
+let lastDriveResumeCheck=0;
+function verifyDriveOnResume(){
+    if(document.visibilityState==="hidden")return;
+    if(!isDriveTokenValid()||!driveFileId){driveRemoteVerifiedThisSession=false;updateDriveSyncMeta();return;}
+    if(Date.now()-lastDriveResumeCheck<15000)return;
+    lastDriveResumeCheck=Date.now();
+    reconcileDriveData({reason:"resume"}).catch(err=>{console.error("Drive resume sync",err);setDriveStatus("Verifica Drive non riuscita: "+(err.message||err),"err");});
+}
+document.addEventListener("visibilitychange",verifyDriveOnResume);
+window.addEventListener("focus",verifyDriveOnResume);
+
+const driveClientInput = document.getElementById("drive-client-id");
+if (driveClientInput) driveClientInput.value = getDriveClientId();
+
+document.getElementById("btn-drive-save-client")?.addEventListener("click", saveDriveClientIdFromUI);
+driveClientInput?.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        saveDriveClientIdFromUI();
+    }
+});
+
+document.getElementById("btn-drive-connect")?.addEventListener("click", () => {
+    if (isDriveTokenValid()) {
+        connectAndLoadDrive().catch(err => {
+            console.error(err);
+            setDriveStatus("Errore Google Drive: " + (err.message || err), "err");
+        });
+    } else {
+        requestDriveAccess("connect");
+    }
+});
+
+document.getElementById("btn-drive-sync")?.addEventListener("click", () => {
+    syncDiarioToDrive().catch(err => {
+        console.error(err);
+        setDriveStatus("Errore Google Drive: " + (err.message || err), "err");
+    });
+});
+
+if (!isDriveConfigured()) {
+    setDriveStatus("Google Drive pronto: inserisci qui sopra il Client ID OAuth e premi Salva.", "warn");
+} else {
+    setDriveStatus(`Client ID configurato. Premi “Collega Google Drive”: confronterò automaticamente questo dispositivo con ${GOOGLE_DRIVE_FOLDER_NAME}/${GOOGLE_DRIVE_FILENAME} e unirò eventuali modifiche.`);
+}
+
+
+/* ============================================================
    V2 — DASHBOARD, FILTRI, STATISTICHE, RICERCA GLOBALE, REPORT
    ============================================================ */
 function inRange(date, da, a){ if(!date) return false; return (!da || date>=da) && (!a || date<=a); }
@@ -1642,14 +2249,30 @@ function clearTableFilter(tableId,daId,aId){document.getElementById(daId).value=
 function card(label,value,unit=''){return `<div class="dash-card"><div class="dash-label">${label}</div><div class="dash-value">${value}</div><div class="dash-unit">${unit}</div></div>`;}
 
 
+function openAppTab(tabId){
+ const btn=[...document.querySelectorAll(".tab-btn")].find(b=>b.dataset.tab===tabId); if(!btn)return; btn.click(); setTimeout(()=>document.getElementById(tabId)?.scrollIntoView({behavior:"smooth",block:"start"}),50);
+}
+function actionCard(label,value,unit,tab){return `<div class="dash-card action-card" onclick="openAppTab('${tab}')"><div class="dash-label">${label}</div><div class="dash-value">${value}</div><div class="dash-unit">${unit||""}</div></div>`;}
 function renderDashboard(){
- const el=document.getElementById('dash-month'); let ym=el.value; if(!ym){const d=new Date();ym=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;el.value=ym;}
- const g=DIARIO.giornaliero.filter(r=>(r.data||'').startsWith(ym)); const days=new Set(g.filter(r=>getKmValue(r)>0).map(r=>r.data)).size;
- const weekendFuori=g.filter(r=>r.weekend_fuori===true).length;
- const km=g.reduce((s,r)=>s+getKmValue(r),0), guida=g.reduce((s,r)=>s+oreToMinuti(r.ore_guida),0), imp=g.reduce((s,r)=>s+oreToMinuti(r.impegno),0);
- const kg=DIARIO.carichi_scarichi.filter(r=>(r.data||'').startsWith(ym)&&r.operazione==='CARICO').reduce((s,r)=>s+(Number(r.peso)||0),0);
+ const el=document.getElementById('dash-month');let ym=el.value;if(!ym){const d=new Date();ym=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;el.value=ym;}
+ const today=isoToday(),todayRec=DIARIO.giornaliero.find(r=>r.data===today);const g=DIARIO.giornaliero.filter(r=>(r.data||'').startsWith(ym));
+ const km=g.reduce((s,r)=>s+(Number(r.km)||0),0),guida=g.reduce((s,r)=>s+oreToMinuti(r.ore_guida),0);
+ const openTrips=DIARIO.viaggi.filter(v=>!v.scaricoId&&!v.scarico);const lastOpen=[...openTrips].sort((a,b)=>(b.carico?.data||'').localeCompare(a.carico?.data||''))[0];
+ const lastRest=[...DIARIO.giornaliero].filter(r=>r.luogo_sosta).sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];
+ const sync=getDriveSyncInfo();const driveValue=sync.pending?'DA SINCRONIZZARE':(sync.lastSync?'SINCRONIZZATO':'NON COLLEGATO');
+ const dayState=todayRec?(todayRec.ora_chiusura?'CHIUSA':'APERTA'):'NON INIZIATA';
+ const tripText=lastOpen?(lastOpen.carico?.cliente||lastOpen.carico?.luogo||'APERTO'):'NESSUNO';
  const sal=(DIARIO.stipendi||[]).filter(r=>((r.mese_riferimento||r.data||'').startsWith(ym))).reduce((s,r)=>s+(Number(r.importo)||0),0);
- document.getElementById('dashboard-output').innerHTML=[card('Giorni guidati',days,'giorni'),card('Weekend Fuori',weekendFuori,'weekend'),card('Km del mese',km.toLocaleString('it-IT'),'km'),card('Ore guida',minutiToOre(guida),'ore'),card('Impegno',minutiToOre(imp),'ore'),card('Kg trasportati',kg.toLocaleString('it-IT'),'kg'),moneyCard('Competenze mese',formatEuro(sal),'')].join('');
+ document.getElementById('dashboard-output').innerHTML=[
+   actionCard('Oggi',formatDateIT(today),'Apri Giornaliero','tab-giornaliero'),
+   actionCard('Giornata',dayState,todayRec?`${todayRec.ora_apertura||'--:--'} → ${todayRec.ora_chiusura||'--:--'}`:'Tocca per iniziare','tab-giornaliero'),
+   actionCard('Google Drive',driveValue,sync.lastSync?sync.lastSync.toLocaleString('it-IT'):'Apri Import/Export','tab-impexp'),
+   actionCard('Viaggio aperto',escapeHtml(tripText),`${openTrips.length} viaggio/i aperto/i`,'tab-viaggi'),
+   actionCard('Km del mese',km.toLocaleString('it-IT'),'km','tab-riassunto'),
+   actionCard('Ore guida',minutiToOre(guida),'mese selezionato','tab-riassunto'),
+   actionCard('Ultima sosta',escapeHtml(lastRest?.luogo_sosta||'—'),lastRest?formatDateIT(lastRest.data):'Nessun dato','tab-giornaliero'),
+   moneyCard('Competenze mese',formatEuro(sal),'')
+ ].join('');
 }
 
 function filterStipendi(){
@@ -1851,6 +2474,8 @@ function createPersonalPin() {
         pinSalt: salt,
         pinHash: pinHash
     };
+    if(!DIARIO.sync_meta||typeof DIARIO.sync_meta!=="object")DIARIO.sync_meta={};
+    DIARIO.sync_meta.securityUpdatedAt=syncNow();
 
     saveToLocalStorage();
     alert("PIN personale creato correttamente.");
@@ -1934,7 +2559,32 @@ function aggiornaPesoScarico() {
         peso.value = "0";
     }
 }
-document.getElementById("c_operazione")?.addEventListener("change", aggiornaPesoScarico);
+document.getElementById("c_operazione")?.addEventListener("change", ()=>{aggiornaPesoScarico();updateTripLinkUI();});
+
+/* ============================================================
+   CESTINO — 30 GIORNI, RIPRISTINO E CANCELLAZIONE DEFINITIVA
+   ============================================================ */
+function trashLabel(x){
+ const r=x.record||{}; if(x.type==="giornaliero")return `${formatDateIT(r.data)} · ${r.trattore||"Giornata"}`;
+ if(x.type==="carico")return `${r.operazione||"Operazione"} · ${formatDateIT(r.data)} · ${r.cliente||r.luogo||""}`;
+ if(x.type==="stipendio")return `${r.causale||"Stipendio"} · ${r.mese_riferimento||r.data||""}`; return x.type||"Elemento";
+}
+function renderTrash(){
+ purgeExpiredTrash(false); const list=document.getElementById("trash-list"),sum=document.getElementById("trash-summary");if(!list||!sum)return;
+ const arr=[...DIARIO.cestino].sort((a,b)=>(b.deletedAt||"").localeCompare(a.deletedAt||""));sum.textContent=arr.length?`${arr.length} elemento/i recuperabile/i.`:"Cestino vuoto.";
+ list.innerHTML=arr.map(x=>{const days=Math.max(0,TRASH_RETENTION_DAYS-Math.floor((Date.now()-(Date.parse(x.deletedAt)||Date.now()))/86400000));return `<div class="trash-item"><div class="trash-main"><b>${escapeHtml(trashLabel(x))}</b><span>Eliminato ${new Date(x.deletedAt).toLocaleString("it-IT")} · ${days} giorni rimanenti</span></div><div class="trash-actions"><button class="secondary" onclick="restoreTrash('${x.trashId}')">Ripristina</button><button class="danger" onclick="deleteTrashForever('${x.trashId}')">Elimina definitivamente</button></div></div>`;}).join("");
+}
+function restoreTrash(id){
+ const idx=DIARIO.cestino.findIndex(x=>x.trashId===id);if(idx<0)return;const x=DIARIO.cestino[idx],r=deepClone(x.record);touchRecord(r);removeSyncTombstone(x.type,r.id);
+ if(x.type==="giornaliero"){if(!DIARIO.giornaliero.some(a=>a.id===r.id))DIARIO.giornaliero.push(r);}
+ else if(x.type==="stipendio"){if(!DIARIO.stipendi.some(a=>a.id===r.id))DIARIO.stipendi.push(r);}
+ else if(x.type==="carico"){
+   if(!DIARIO.carichi_scarichi.some(a=>a.id===r.id))DIARIO.carichi_scarichi.push(r);
+   (x.linkedViaggi||[]).forEach(v=>{removeSyncTombstone("viaggio",v.id);touchRecord(v);const existing=DIARIO.viaggi.find(a=>a.id===v.id);if(existing)Object.assign(existing,deepClone(v));else DIARIO.viaggi.push(deepClone(v));});
+ }
+ DIARIO.cestino.splice(idx,1);saveToLocalStorage();renderGiornalieroTable();renderCarichiTable();renderViaggiTable();renderStipendiTable();aggiornaSuggerimentiGiornaliero();aggiornaSuggerimentiCarichi();renderTrash();
+}
+function deleteTrashForever(id){if(!confirm("Eliminare definitivamente questo elemento? Questa operazione non è annullabile."))return;const i=DIARIO.cestino.findIndex(x=>x.trashId===id);if(i>=0){const x=DIARIO.cestino[i],r=x.record||{};if(r.id)addSyncTombstone(x.type,r.id,x.deletedAt||syncNow(),true);(x.linkedViaggi||[]).forEach(v=>v?.id&&addSyncTombstone("viaggio",v.id,x.deletedAt||syncNow(),true));DIARIO.cestino.splice(i,1);saveToLocalStorage();renderTrash();}}
 
 /* ============================================================
    INIT APP
@@ -1951,437 +2601,10 @@ function preparaGraficaTabelle() {
     });
 }
 
-
-
-/* ============================================================
-   RAPPORTINO EXCEL — ultimi 28 viaggi
-   Modello incorporato: RAPPORTINO SETTIMANALE
-   ============================================================ */
-const RAPPORTINO_TEMPLATE_B64 = "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KKACopP/AK/bt6e9S1HIaAPlb/gnfpM3hv4X+OPDlw0j3Hh/xheaPKsm07Hgt7aMgEdR8oOfevq2vnT9lu3/ALL+JHx/0vCq8fjNrtlj7/aLeOUMT6lSv5V9F0AFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUxv8/4U+oWH/1v/rUAfO/wFmez/ac/aP0wfPbx3uiXqfKwy8thlsMRg8Kg4PbnrX0aDXzZoOzw/wDt+eJrGJVRfEngG11iZlhCb5La9NsuWHLEJInXpngc19JLQA6iiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACimk1Gknmfd9vmyOR68fSgCaiiigAqOTt/nuKkppFAHgnjq5l0f9sT4Uyv9jht9U8Oa9pqzM4WSaQSWE4jwfvHEZYKPRzXu8Z/z+nT8P1rh/iZ4P1PxJqngTUtKuLeK68O+Io9TeO63BJoHtri0nUFejiG7kZcjBZFBxnI7lP4v8+/9aAJaKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA8w+NeqXmmy+DPsd3Pa+drcUcvkSMm9NrfK2DyPY16Wv8f+9/QUUUASUUUUAFFFFAEMvb6H+Yp0f/ALKP60UUASUUUUAFFFFABRRRQAUUUUAFFFFAH//ZUEsDBBQABgAIAAAAIQDgV2P23AAAANIBAAAjAAAAeGwvd29ya3NoZWV0cy9fcmVscy9zaGVldDEueG1sLnJlbHOskcFKAzEQhu+C7xDmbrLbg4g024sIvdb1AWIymw1NJiGT6vbtBaHglh48eJv5B77/g9nulhTFJ1YOmTT0sgOBZLML5DW8j68PTyC4GXImZkINZ2TYDfd32wNG00ImnkNhsaRIrGFurTwrxXbGZFjmgrSkOOWaTGOZq1fF2KPxqDZd96jq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";
-const RAPPORTINO_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-const XLSX_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
-
-function rapportinoBase64ToUint8Array(base64) {
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i=0; i<binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return bytes;
-}
-
-function rapportinoFormatDateIT(iso) {
-    if (!iso) return "";
-    const p = String(iso).split("-");
-    if (p.length !== 3) return iso;
-    return `${p[2].padStart(2,"0")}/${p[1].padStart(2,"0")}/${p[0]}`;
-}
-
-function rapportinoExcelSerial(iso) {
-    const p = String(iso || "").split("-").map(Number);
-    if (p.length !== 3 || !p[0] || !p[1] || !p[2]) return null;
-    const utc = Date.UTC(p[0], p[1]-1, p[2]);
-    const epoch = Date.UTC(1899, 11, 30);
-    return Math.round((utc - epoch) / 86400000);
-}
-
-function rapportinoTestoTappa(rec) {
-    if (!rec) return "";
-    const luogo = String(rec.luogo || "").trim();
-    const cliente = String(rec.cliente || "").trim();
-    if (!luogo) return cliente;
-    if (!cliente) return luogo;
-    if (luogo.toLocaleLowerCase("it-IT").includes(cliente.toLocaleLowerCase("it-IT"))) return luogo;
-    return luogo + " - " + cliente;
-}
-
-function rapportinoViaggiCompleti() {
-    return (DIARIO.viaggi || [])
-        .filter(v => v && v.carico && v.scarico && v.carico.data && v.scarico.data)
-        .slice()
-        .sort((a,b) => {
-            const c = String(a.carico.data).localeCompare(String(b.carico.data));
-            if (c !== 0) return c;
-            const sc = String(a.scarico.data).localeCompare(String(b.scarico.data));
-            if (sc !== 0) return sc;
-            return rapportinoTestoTappa(a.carico).localeCompare(rapportinoTestoTappa(b.carico), "it");
-        });
-}
-
-function rapportinoTrovaCella(doc, ref) {
-    const cells = doc.getElementsByTagNameNS(XLSX_NS, "c");
-    for (let i=0; i<cells.length; i++) {
-        if (cells[i].getAttribute("r") === ref) return cells[i];
-    }
-    return null;
-}
-
-function rapportinoSvuotaCella(cell) {
-    if (!cell) return;
-    while (cell.firstChild) cell.removeChild(cell.firstChild);
-    cell.removeAttribute("t");
-}
-
-function rapportinoScriviNumero(doc, ref, value) {
-    const cell = rapportinoTrovaCella(doc, ref);
-    if (!cell) throw new Error("Cella modello non trovata: " + ref);
-    rapportinoSvuotaCella(cell);
-    if (value === null || value === undefined || value === "") return;
-    const v = doc.createElementNS(XLSX_NS, "v");
-    v.textContent = String(value);
-    cell.appendChild(v);
-}
-
-function rapportinoScriviTesto(doc, ref, text) {
-    const cell = rapportinoTrovaCella(doc, ref);
-    if (!cell) throw new Error("Cella modello non trovata: " + ref);
-    rapportinoSvuotaCella(cell);
-    if (text === null || text === undefined || text === "") return;
-    cell.setAttribute("t", "inlineStr");
-    const is = doc.createElementNS(XLSX_NS, "is");
-    const t = doc.createElementNS(XLSX_NS, "t");
-    t.textContent = String(text);
-    is.appendChild(t);
-    cell.appendChild(is);
-}
-
-function rapportinoNomeFile(dataDa, dataA) {
-    const safe = x => rapportinoFormatDateIT(x).replaceAll("/", "-");
-    return `RAPPORTINO_VIAGGI_DAL_${safe(dataDa)}_AL_${safe(dataA)}.xlsx`;
-}
-
-async function generaRapportinoExcel() {
-    const status = document.getElementById("rapportino-status");
-
-    const selezionati = (DIARIO.viaggi || [])
-        .filter(v => v && v.carico && v.scarico && v.rapportino_esportato !== true && v.rapportino_esporta !== false)
-        .sort((a,b) => String(a.carico?.data || "").localeCompare(String(b.carico?.data || "")))
-        .slice(0, 28);
-
-    if (selezionati.length === 0) {
-        if (status) status.textContent = "Nessun viaggio nuovo da esportare.";
-        alert("Non ci sono viaggi selezionati da esportare.");
-        return;
-    }
-
-    try {
-        if (typeof JSZip === "undefined") {
-            alert("Il modulo Excel non è ancora disponibile. Controlla la connessione e riprova.");
-            return;
-        }
-
-        const dataDa = selezionati[0].carico.data;
-        const dataA = selezionati.reduce((max, v) =>
-            String(v.scarico.data) > String(max) ? v.scarico.data : max,
-            selezionati[0].scarico.data
-        );
-
-        if (status) status.textContent = `Genero il rapportino con ${selezionati.length} viaggi…`;
-
-        const zip = await JSZip.loadAsync(rapportinoBase64ToUint8Array(RAPPORTINO_TEMPLATE_B64));
-        const sheetFile = zip.file("xl/worksheets/sheet1.xml");
-        if (!sheetFile) throw new Error("Foglio CARICO-CONSEGNA non trovato nel modello.");
-
-        const xmlText = await sheetFile.async("string");
-        const doc = new DOMParser().parseFromString(xmlText, "application/xml");
-        if (doc.getElementsByTagName("parsererror").length) {
-            throw new Error("Impossibile leggere il modello Excel.");
-        }
-
-        // Pulisce SOLO i dati viaggio. F e G (Pallet resi e Riserve) restano intatti.
-        for (let row = 5; row <= 32; row++) {
-            for (const col of ["A","B","C","D","E"]) {
-                rapportinoSvuotaCella(rapportinoTrovaCella(doc, col + row));
-            }
-        }
-
-        rapportinoScriviTesto(
-            doc,
-            "A1",
-            `VIAGGI DAL ${rapportinoFormatDateIT(dataDa)} AL ${rapportinoFormatDateIT(dataA)}`
-        );
-
-        selezionati.forEach((v, i) => {
-            const row = 5 + i;
-            rapportinoScriviNumero(doc, "A"+row, rapportinoExcelSerial(v.carico.data));
-            rapportinoScriviTesto(doc, "B"+row, rapportinoTestoTappa(v.carico));
-            rapportinoScriviNumero(doc, "C"+row, rapportinoExcelSerial(v.scarico.data));
-            rapportinoScriviTesto(doc, "D"+row, rapportinoTestoTappa(v.scarico));
-            rapportinoScriviTesto(doc, "E"+row, String(v.carico.semirimorchio || v.scarico.semirimorchio || "").trim());
-        });
-
-        zip.file("xl/worksheets/sheet1.xml", new XMLSerializer().serializeToString(doc));
-
-        const blob = await zip.generateAsync({
-            type: "blob",
-            mimeType: RAPPORTINO_MIME,
-            compression: "DEFLATE"
-        });
-
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = rapportinoNomeFile(dataDa, dataA);
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 3000);
-
-        // Il flag viene impostato SOLO dopo che il file Excel è stato generato e il download avviato.
-        selezionati.forEach(v => { v.rapportino_esportato = true; });
-        saveToLocalStorage();
-        renderViaggiTable();
-
-        if (status) {
-            status.textContent =
-                `Rapportino creato: ${selezionati.length} viaggi, dal ${rapportinoFormatDateIT(dataDa)} al ${rapportinoFormatDateIT(dataA)}.`;
-        }
-    } catch (e) {
-        console.error("Rapportino Excel:", e);
-        if (status) status.textContent = "Errore nella creazione del rapportino. Nessun viaggio è stato marcato come esportato.";
-        alert("Errore nella creazione del rapportino Excel: " + (e.message || e));
-    }
-}
-
-document.getElementById("btn-genera-rapportino")?.addEventListener("click", generaRapportinoExcel);
-
-/* ============================================================
-   GOOGLE DRIVE — stessa autorizzazione del Navigatore
-   ============================================================ */
-const GDRIVE = {
-    clientId: '239044648260-dpn2l35dhjk1md1okn8nc7fob7fqnvrq.apps.googleusercontent.com',
-    scope: 'https://www.googleapis.com/auth/drive.file',
-    fileName: 'diaro.json',
-    accessToken: null,
-    tokenClient: null,
-    connected: false,
-    fileId: localStorage.getItem('diario_drive_file_id') || null,
-    busy: false,
-    pending: false,
-    syncTimer: null,
-
-    init() {
-        if (this.tokenClient || !window.google || !google.accounts || !google.accounts.oauth2) return;
-        this.tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: this.clientId,
-            scope: this.scope,
-            callback: (resp) => this._tokenCallback(resp)
-        });
-        this._ui();
-    },
-
-    connect() {
-        this.init();
-        if (!this.tokenClient) {
-            this._status('Google non è ancora pronto. Riprova tra qualche secondo.', 'err');
-            setTimeout(() => this.init(), 1200);
-            return;
-        }
-        this._status('Accesso a Google Drive…', 'sync');
-        this.tokenClient.requestAccessToken({prompt: this.accessToken ? '' : 'consent'});
-    },
-
-    async _tokenCallback(resp) {
-        if (!resp || resp.error) {
-            this.connected=false;
-            this._status('Accesso Google Drive non riuscito.', 'err');
-            this._ui();
-            return;
-        }
-        this.accessToken=resp.access_token;
-        this.connected=true;
-        try {
-            await this._ensureFile();
-            this._ui();
-        } catch(e) {
-            this.connected=false;
-            this._status('Errore Drive: '+(e.message||e), 'err');
-            this._ui();
-        }
-    },
-
-    _headers(extra) {
-        return Object.assign({'Authorization':'Bearer '+this.accessToken}, extra||{});
-    },
-
-    async _fetch(url, options) {
-        options=options||{};
-        options.headers=Object.assign({}, this._headers(), options.headers||{});
-        const r=await fetch(url,options);
-        if (r.status===401) {
-            this.connected=false; this.accessToken=null; this._ui();
-            throw new Error('Sessione Google scaduta. Premi Connetti Google Drive.');
-        }
-        if (!r.ok) {
-            let msg=''; try{msg=(await r.json()).error.message||''}catch(e){}
-            throw new Error(msg||('HTTP '+r.status));
-        }
-        return r;
-    },
-
-    async _testSavedFile() {
-        if (!this.fileId) return false;
-        try {
-            const r=await this._fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(this.fileId)+'?fields=id,name,modifiedTime');
-            return !!(await r.json()).id;
-        } catch(e) {
-            this.fileId=null;
-            localStorage.removeItem('diario_drive_file_id');
-            return false;
-        }
-    },
-
-    async _findExistingFile() {
-        const safe=this.fileName.replace(/'/g,"\\'");
-        const q=encodeURIComponent("name='"+safe+"' and trashed=false");
-        const r=await this._fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&spaces=drive&fields=files(id,name,modifiedTime)&orderBy=modifiedTime%20desc&pageSize=10');
-        const j=await r.json();
-        return (j.files&&j.files.length)?j.files[0]:null;
-    },
-
-    async _ensureFile() {
-        this._status('Cerco '+this.fileName+' su Drive…','sync');
-        if (await this._testSavedFile()) {
-            await this.load();
-            return;
-        }
-        const found=await this._findExistingFile();
-        if (found) {
-            this.fileId=found.id;
-            localStorage.setItem('diario_drive_file_id',this.fileId);
-            await this.load();
-            return;
-        }
-        const metaResp=await this._fetch('https://www.googleapis.com/drive/v3/files?fields=id,name',{
-            method:'POST',headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({name:this.fileName,mimeType:'application/json'})
-        });
-        const meta=await metaResp.json();
-        this.fileId=meta.id;
-        localStorage.setItem('diario_drive_file_id',this.fileId);
-        await this._write(true);
-        this._status(this.fileName+' creato e sincronizzato.','ok');
-    },
-
-    _normalizeRemote(data) {
-        if (!data || typeof data!=='object' || Array.isArray(data)) throw new Error('Formato '+this.fileName+' non valido.');
-        if (!Array.isArray(data.giornaliero)) data.giornaliero=[];
-        if (!Array.isArray(data.carichi_scarichi)) data.carichi_scarichi=[];
-        if (!Array.isArray(data.viaggi)) data.viaggi=[];
-        if (!Array.isArray(data.stipendi)) data.stipendi=[];
-        if (!data.security || typeof data.security!=='object') data.security={pinSalt:'',pinHash:''};
-        return data;
-    },
-
-    async load() {
-        if (!this.connected || !this.accessToken || !this.fileId) return;
-        this._status('Scarico '+this.fileName+'…','sync');
-        const r=await this._fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(this.fileId)+'?alt=media');
-        const raw=await r.text();
-        if (!raw.trim()) {
-            await this._write(true);
-            return;
-        }
-        let data;
-        try { data=JSON.parse(raw); } catch(e) { throw new Error('Il JSON su Drive non è valido.'); }
-        DIARIO=this._normalizeRemote(data);
-        saveToLocalStorage(true);
-        renderGiornalieroTable();
-        renderCarichiTable();
-        renderViaggiTable();
-        renderStipendiTable();
-        renderSalaryStats();
-        renderClientStats();
-        renderDashboard();
-        aggiornaSuggerimentiGiornaliero();
-        aggiornaSuggerimentiCarichi();
-        this._status('Sincronizzato con '+this.fileName+'.','ok');
-    },
-
-    scheduleSync() {
-        if (!this.connected || !this.accessToken || !this.fileId) return;
-        this.pending=true;
-        clearTimeout(this.syncTimer);
-        this.syncTimer=setTimeout(()=>this._flushPending(),450);
-    },
-
-    async _flushPending() {
-        if (!this.pending || !this.connected) return;
-        if (this.busy) return;
-        this.pending=false;
-        await this._write(true);
-    },
-
-    async _write(silent) {
-        if (!this.connected || !this.accessToken || !this.fileId) return;
-        if (this.busy) { this.pending=true; return; }
-        this.busy=true;
-        this._status('Sincronizzazione in corso…','sync');
-        try {
-            await this._fetch('https://www.googleapis.com/upload/drive/v3/files/'+encodeURIComponent(this.fileId)+'?uploadType=media&fields=id,modifiedTime',{
-                method:'PATCH',
-                headers:{'Content-Type':'application/json; charset=UTF-8'},
-                body:JSON.stringify(DIARIO,null,2)
-            });
-            this._status('Salvato su Drive.','ok');
-        } catch(e) {
-            this._status('Salvataggio Drive non riuscito: '+(e.message||e),'err');
-            if (!silent) alert('Salvataggio Drive non riuscito: '+(e.message||e));
-        } finally {
-            this.busy=false;
-            if (this.pending) setTimeout(()=>this._flushPending(),80);
-        }
-    },
-
-    async saveNow() {
-        if (!this.connected) { this.connect(); return; }
-        this.pending=false;
-        clearTimeout(this.syncTimer);
-        await this._write(false);
-    },
-
-    disconnect() {
-        if (this.accessToken && window.google && google.accounts && google.accounts.oauth2) {
-            try { google.accounts.oauth2.revoke(this.accessToken,()=>{}); } catch(e) {}
-        }
-        this.accessToken=null;
-        this.connected=false;
-        this.pending=false;
-        clearTimeout(this.syncTimer);
-        this._status('Drive disconnesso. I dati locali restano disponibili.','');
-        this._ui();
-    },
-
-    _status(msg,state) {
-        const el=document.getElementById('drive-status');
-        if (!el) return;
-        el.textContent=msg;
-        el.className='drive-status'+(state?' '+state:'');
-    },
-
-    _ui() {
-        const c=document.getElementById('btn-drive-connect');
-        const sv=document.getElementById('btn-drive-save');
-        const d=document.getElementById('btn-drive-disconnect');
-        if (!c||!sv||!d) return;
-        c.style.display=this.connected?'none':'';
-        sv.style.display=this.connected?'':'none';
-        d.style.display=this.connected?'':'none';
-    }
-};
-window.GDRIVE=GDRIVE;
-
-(function waitForGoogleIdentity(attempt){
-    if (window.google && google.accounts && google.accounts.oauth2) GDRIVE.init();
-    else if ((attempt||0)<60) setTimeout(()=>waitForGoogleIdentity((attempt||0)+1),250);
-    else GDRIVE._status('Google Identity Services non disponibile. Controlla la connessione.','err');
-})(0);
-
-window.addEventListener('online',()=>{ if(GDRIVE.connected) GDRIVE.scheduleSync(); });
-
-
 function initApp() {
     loadFromLocalStorage();
-    if (!DIARIO.viaggi) DIARIO.viaggi = [];
-    if (!DIARIO.stipendi) DIARIO.stipendi = [];
+    normalizeDiarioData();
+    purgeExpiredTrash(false);
     renderGiornalieroTable();
     renderCarichiTable();
     renderViaggiTable();
@@ -2392,6 +2615,10 @@ function initApp() {
     aggiornaSuggerimentiGiornaliero();
     preparaGraficaTabelle();
     aggiornaSuggerimentiCarichi();
+    renderOpenTripOptions();
+    updateTripLinkUI();
+    renderTrash();
+    updateDriveSyncMeta();
 }
 
 initApp();
