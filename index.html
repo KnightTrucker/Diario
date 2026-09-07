@@ -235,7 +235,7 @@ table thead th {
 
 <div class="tabs">
     <button class="tab-btn" data-tab="tab-dashboard"><span class="tab-icon">🏠</span><span>Home</span></button>
-    <button class="tab-btn active" data-tab="tab-giornaliero"><span class="tab-icon">📅</span><span>Giornaliero</span></button>
+    <button class="tab-btn" data-tab="tab-giornaliero"><span class="tab-icon">📅</span><span>Giornaliero</span></button>
     <button class="tab-btn" data-tab="tab-carichi"><span class="tab-icon">🚚</span><span>Carichi/Scarichi</span></button>
     <button class="tab-btn" data-tab="tab-riassunto"><span class="tab-icon">📊</span><span>Riassunto</span></button>
     <button class="tab-btn" data-tab="tab-hgv"><span class="tab-icon">🚫</span><span>Divieti HGV</span></button>
@@ -243,7 +243,7 @@ table thead th {
     <button class="tab-btn" data-tab="tab-viaggi"><span class="tab-icon">📍</span><span>Viaggi</span></button>
     <button class="tab-btn" data-tab="tab-stipendi"><span class="tab-icon">💶</span><span>Stipendi</span></button>
     <button class="tab-btn" data-tab="tab-ricerca"><span class="tab-icon">🔎</span><span>Ricerca</span></button>
-    <button class="tab-btn" data-tab="tab-impexp"><span class="tab-icon">☁️</span><span>Import/Export</span></button>
+    <button class="tab-btn active" data-tab="tab-impexp"><span class="tab-icon">☁️</span><span>Import/Export</span></button>
 </div>
 
 
@@ -255,7 +255,7 @@ table thead th {
 </div>
 
 <!-- TAB GIORNALIERO -->
-<div id="tab-giornaliero" class="tab-content active">
+<div id="tab-giornaliero" class="tab-content">
     <h2>Giornaliero</h2>
 
     <form id="form-giornaliero">
@@ -492,7 +492,7 @@ table thead th {
 </div>
 
 <!-- TAB IMPORT / EXPORT -->
-<div id="tab-impexp" class="tab-content">
+<div id="tab-impexp" class="tab-content active">
     <h2>Import / Export JSON</h2>
 
     <button class="primary" id="btn-export-json">Backup completo</button>
@@ -1029,17 +1029,30 @@ function mergeWeeklyRestNote(noteEsistenti, pausaOre, tipoPausa) {
 /* ============================================================
    WEEKEND FUORI
    ============================================================ */
+function isDomenicaISO(dataISO) {
+    if (!dataISO) return false;
+    const p = String(dataISO).split("-").map(Number);
+    if (p.length !== 3 || !p[0] || !p[1] || !p[2]) return false;
+    return new Date(p[0], p[1] - 1, p[2]).getDay() === 0;
+}
+
 function aggiornaWeekendFuoriUI() {
     const tipo = document.getElementById("g_pausa_tipo");
+    const data = document.getElementById("g_data");
     const wrap = document.getElementById("weekend-fuori-wrap");
     const chk = document.getElementById("g_weekend_fuori");
-    if (!tipo || !wrap || !chk) return;
+    if (!tipo || !data || !wrap || !chk) return;
 
     const settimanale = (tipo.value || "").toUpperCase() === "SETTIMANALE";
-    wrap.style.display = settimanale ? "block" : "none";
-    if (!settimanale) chk.checked = false;
+    const domenica = isDomenicaISO(data.value);
+    const visibile = settimanale && domenica;
+
+    wrap.style.display = visibile ? "block" : "none";
+    if (!visibile) chk.checked = false;
 }
 document.getElementById("g_pausa_tipo")?.addEventListener("change", aggiornaWeekendFuoriUI);
+document.getElementById("g_data")?.addEventListener("change", aggiornaWeekendFuoriUI);
+document.getElementById("g_data")?.addEventListener("input", aggiornaWeekendFuoriUI);
 
 /* ============================================================
    GIORNALIERO — RENDER TABELLA
@@ -1110,7 +1123,7 @@ document.getElementById("btn-add-giornaliero").addEventListener("click", () => {
         impegno: calcolaIntervallo(g_ora_apertura.value, g_ora_chiusura.value), ore_guida: g_ore_guida.value,
         luogo_sosta: g_luogo_sosta.value.trim(), note: g_note.value,
         pausa: { ore: g_pausa_ore.value, tipo: g_pausa_tipo.value },
-        weekend_fuori: ((g_pausa_tipo.value || "").toUpperCase() === "SETTIMANALE" && document.getElementById("g_weekend_fuori")?.checked === true),
+        weekend_fuori: (isDomenicaISO(g_data.value) && (g_pausa_tipo.value || "").toUpperCase() === "SETTIMANALE" && document.getElementById("g_weekend_fuori")?.checked === true),
         _updatedAt: syncNow()
     };
     rec.note=mergeWeeklyRestNote(rec.note||"",rec.pausa.ore,rec.pausa.tipo);
@@ -1131,7 +1144,7 @@ function editG(i) {
     g_luogo_sosta.value=r.luogo_sosta||""; g_note.value=r.note||""; g_pausa_ore.value=r.pausa?.ore||""; g_pausa_tipo.value=r.pausa?.tipo||"GIORNALIERA";
     aggiornaWeekendFuoriUI();
     const weekendChk=document.getElementById("g_weekend_fuori");
-    if(weekendChk) weekendChk.checked = r.weekend_fuori === true;
+    if(weekendChk) weekendChk.checked = (r.weekend_fuori === true && isDomenicaISO(r.data) && (r.pausa?.tipo || "").toUpperCase() === "SETTIMANALE");
     document.getElementById("btn-add-giornaliero").textContent="Salva modifiche";
     document.getElementById("g-edit-banner")?.classList.add("show");
     document.getElementById("form-giornaliero")?.scrollIntoView({behavior:"smooth",block:"start"});
@@ -1151,13 +1164,14 @@ function delG(i) {
 
 function isoToday(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function currentHHMM(){const d=new Date();return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;}
-document.getElementById("btn-g-start")?.addEventListener("click",()=>{g_data.value=isoToday();g_ora_apertura.value=currentHHMM();});
-document.getElementById("btn-g-end")?.addEventListener("click",()=>{if(!g_data.value)g_data.value=isoToday();g_ora_chiusura.value=currentHHMM();});
+document.getElementById("btn-g-start")?.addEventListener("click",()=>{g_data.value=isoToday();g_ora_apertura.value=currentHHMM();aggiornaWeekendFuoriUI();});
+document.getElementById("btn-g-end")?.addEventListener("click",()=>{if(!g_data.value)g_data.value=isoToday();g_ora_chiusura.value=currentHHMM();aggiornaWeekendFuoriUI();});
 document.getElementById("btn-g-copy-last")?.addEventListener("click",()=>{
     const last=[...DIARIO.giornaliero].sort((a,b)=>(b.data||"").localeCompare(a.data||""))[0];
     if(!last){alert("Non ci sono giornate precedenti da copiare.");return;}
     g_data.value=isoToday();g_trattore.value=last.trattore||"";g_semirimorchio.value=last.semirimorchio||"";
     g_km.value="";g_ora_apertura.value="";g_ora_chiusura.value="";g_ore_guida.value="";
+    aggiornaWeekendFuoriUI();
 });
 
 /* ============================================================
@@ -2940,6 +2954,7 @@ function initApp() {
     normalizeDiarioData();
     purgeExpiredTrash(false);
     renderGiornalieroTable();
+    aggiornaWeekendFuoriUI();
     renderCarichiTable();
     renderViaggiTable();
     renderStipendiTable();
