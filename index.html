@@ -300,6 +300,13 @@ table thead th {
                     <option value="SETTIMANALE">SETTIMANALE</option>
                 </select>
 
+                <div id="weekend-fuori-wrap" style="display:none; margin:8px 0 12px; padding:12px; border:1px solid #31516c; border-radius:10px; background:#0b1d2d;">
+                    <label style="display:flex; align-items:center; gap:10px; margin:0; cursor:pointer;">
+                        <input type="checkbox" id="g_weekend_fuori" style="width:auto; margin:0;">
+                        <span><b>🌙 Weekend Fuori</b></span>
+                    </label>
+                </div>
+
                 <label>Note</label>
                 <input type="text" id="g_note" placeholder="Inserisci eventuali note">
             </div>
@@ -331,6 +338,7 @@ table thead th {
                 <th>Luogo sosta</th>
                 <th>Pausa</th>
                 <th>Note</th>
+                <th>Weekend Fuori</th>
                 <th>Azioni</th>
             </tr>
         </thead>
@@ -1019,6 +1027,21 @@ function mergeWeeklyRestNote(noteEsistenti, pausaOre, tipoPausa) {
 }
 
 /* ============================================================
+   WEEKEND FUORI
+   ============================================================ */
+function aggiornaWeekendFuoriUI() {
+    const tipo = document.getElementById("g_pausa_tipo");
+    const wrap = document.getElementById("weekend-fuori-wrap");
+    const chk = document.getElementById("g_weekend_fuori");
+    if (!tipo || !wrap || !chk) return;
+
+    const settimanale = (tipo.value || "").toUpperCase() === "SETTIMANALE";
+    wrap.style.display = settimanale ? "block" : "none";
+    if (!settimanale) chk.checked = false;
+}
+document.getElementById("g_pausa_tipo")?.addEventListener("change", aggiornaWeekendFuoriUI);
+
+/* ============================================================
    GIORNALIERO — RENDER TABELLA
    ============================================================ */
 
@@ -1042,6 +1065,7 @@ function renderGiornalieroTable() {
             <td>${rec.luogo_sosta}</td>
             <td class="${isPausaGiornalieraUnderLimit(rec) ? 'value-alert' : ''}">${rec.pausa.ore} (${rec.pausa.tipo})</td>
             <td class="note-cell">${escapeHtml(rec.note || "")}</td>
+            <td>${rec.weekend_fuori === true ? "✓ Weekend Fuori" : ""}</td>
             <td>
                 <button class="secondary" onclick="editG(${index})">Modifica</button>
                 <button class="danger" onclick="delG(${index})">Cancella</button>
@@ -1086,6 +1110,7 @@ document.getElementById("btn-add-giornaliero").addEventListener("click", () => {
         impegno: calcolaIntervallo(g_ora_apertura.value, g_ora_chiusura.value), ore_guida: g_ore_guida.value,
         luogo_sosta: g_luogo_sosta.value.trim(), note: g_note.value,
         pausa: { ore: g_pausa_ore.value, tipo: g_pausa_tipo.value },
+        weekend_fuori: ((g_pausa_tipo.value || "").toUpperCase() === "SETTIMANALE" && document.getElementById("g_weekend_fuori")?.checked === true),
         _updatedAt: syncNow()
     };
     rec.note=mergeWeeklyRestNote(rec.note||"",rec.pausa.ore,rec.pausa.tipo);
@@ -1095,7 +1120,7 @@ document.getElementById("btn-add-giornaliero").addEventListener("click", () => {
         if(idx>=0) DIARIO.giornaliero[idx]=rec; else DIARIO.giornaliero.push(rec);
     } else DIARIO.giornaliero.push(rec);
     saveToLocalStorage(); renderGiornalieroTable(); aggiornaSuggerimentiGiornaliero();
-    form_giornaliero.reset(); resetGEdit();
+    form_giornaliero.reset(); resetGEdit(); aggiornaWeekendFuoriUI();
 });
 
 function editG(i) {
@@ -1104,6 +1129,9 @@ function editG(i) {
     g_data.value=r.data||""; g_trattore.value=r.trattore||""; g_semirimorchio.value=r.semirimorchio||""; g_km.value=r.km??"";
     g_ora_apertura.value=r.ora_apertura||""; g_ora_chiusura.value=r.ora_chiusura||""; g_ore_guida.value=r.ore_guida||"";
     g_luogo_sosta.value=r.luogo_sosta||""; g_note.value=r.note||""; g_pausa_ore.value=r.pausa?.ore||""; g_pausa_tipo.value=r.pausa?.tipo||"GIORNALIERA";
+    aggiornaWeekendFuoriUI();
+    const weekendChk=document.getElementById("g_weekend_fuori");
+    if(weekendChk) weekendChk.checked = r.weekend_fuori === true;
     document.getElementById("btn-add-giornaliero").textContent="Salva modifiche";
     document.getElementById("g-edit-banner")?.classList.add("show");
     document.getElementById("form-giornaliero")?.scrollIntoView({behavior:"smooth",block:"start"});
@@ -1117,7 +1145,7 @@ function addTrashEntry(type, record, extra={}){
 function delG(i) {
     const r=DIARIO.giornaliero[i]; if(!r || !confirm("Spostare questa giornata nel Cestino? Potrai recuperarla per 30 giorni.")) return;
     addTrashEntry("giornaliero",r); DIARIO.giornaliero.splice(i,1);
-    if(giornalieroEditId===r.id){form_giornaliero.reset();resetGEdit();}
+    if(giornalieroEditId===r.id){form_giornaliero.reset();resetGEdit();aggiornaWeekendFuoriUI();}
     saveToLocalStorage(); renderGiornalieroTable(); aggiornaSuggerimentiGiornaliero();
 }
 
@@ -1348,11 +1376,13 @@ document.getElementById("btn-calcola-riassunto").addEventListener("click", () =>
 
     
     const giorniGuidati = new Set(lista.filter(r => (Number(r.km) || 0) > 0).map(r => r.data)).size;
+    const weekendFuoriCount = lista.filter(r => r.weekend_fuori === true).length;
     const alertGuida = lista.some(r => isGuidaOverLimit(r.ore_guida));
     const alertImpegno = lista.some(r => isImpegnoOverLimit(r.impegno));
     const alertPausa = lista.some(r => isPausaGiornalieraUnderLimit(r));
 summary_output.innerHTML = `
     <div class="summary-card"><div class="summary-icon">📅</div><div><div class="summary-label">Giorni guidati</div><div class="summary-value">${giorniGuidati}</div><div class="summary-unit">giorni</div></div></div>
+    <div class="summary-card"><div class="summary-icon">🌙</div><div><div class="summary-label">Weekend Fuori</div><div class="summary-value">${weekendFuoriCount}</div><div class="summary-unit">weekend</div></div></div>
     <div class="summary-card"><div class="summary-icon">🛣️</div><div><div class="summary-label">Totale Km</div><div class="summary-value">${totKm}</div><div class="summary-unit">km</div></div></div>
     <div class="summary-card"><div class="summary-icon">◴</div><div><div class="summary-label">Media Km/giorno</div><div class="summary-value">${mediaKm}</div><div class="summary-unit">km</div></div></div>
     <div class="summary-card"><div class="summary-icon">◉</div><div><div class="summary-label">Totale ore guida</div><div class="summary-value">${minutiToOre(totOreGuida)}</div><div class="summary-unit">ore</div></div></div>
@@ -2178,6 +2208,7 @@ function applyDiarioObject(parsed) {
 
     saveToLocalStorage({fromDrive:true});
     renderGiornalieroTable();
+    aggiornaWeekendFuoriUI();
     renderCarichiTable();
     renderViaggiTable();
     renderStipendiTable();
@@ -2414,6 +2445,7 @@ function actionCard(label,value,unit,tab){return `<div class="dash-card action-c
 function renderDashboard(){
  const el=document.getElementById('dash-month');let ym=el.value;if(!ym){const d=new Date();ym=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;el.value=ym;}
  const today=isoToday(),todayRec=DIARIO.giornaliero.find(r=>r.data===today);const g=DIARIO.giornaliero.filter(r=>(r.data||'').startsWith(ym));
+ const weekendFuori=g.filter(r=>r.weekend_fuori===true).length;
  const km=g.reduce((s,r)=>s+(Number(r.km)||0),0),guida=g.reduce((s,r)=>s+oreToMinuti(r.ore_guida),0);
  const openTrips=DIARIO.viaggi.filter(v=>!v.scaricoId&&!v.scarico);const lastOpen=[...openTrips].sort((a,b)=>(b.carico?.data||'').localeCompare(a.carico?.data||''))[0];
  const lastRest=[...DIARIO.giornaliero].filter(r=>r.luogo_sosta).sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];
@@ -2424,6 +2456,7 @@ function renderDashboard(){
  document.getElementById('dashboard-output').innerHTML=[
    actionCard('Oggi',formatDateIT(today),'Apri Giornaliero','tab-giornaliero'),
    actionCard('Giornata',dayState,todayRec?`${todayRec.ora_apertura||'--:--'} → ${todayRec.ora_chiusura||'--:--'}`:'Tocca per iniziare','tab-giornaliero'),
+   actionCard('Weekend Fuori',weekendFuori,'mese selezionato','tab-riassunto'),
    actionCard('Google Drive',driveValue,sync.lastSync?sync.lastSync.toLocaleString('it-IT'):'Apri Import/Export','tab-impexp'),
    actionCard('Viaggio aperto',escapeHtml(tripText),`${openTrips.length} viaggio/i aperto/i`,'tab-viaggi'),
    actionCard('Km del mese',km.toLocaleString('it-IT'),'km','tab-riassunto'),
