@@ -274,7 +274,7 @@ table thead th {
                 <datalist id="lista-semirimorchi"></datalist>
 
                 <label>Km percorsi</label>
-                <input type="number" id="g_km">
+                <input type="number" id="g_km" min="0" step="0.1">
 
                 <label>Ora apertura</label>
                 <input type="time" id="g_ora_apertura">
@@ -934,10 +934,45 @@ function escapeHtml(value) {
         .replace(/'/g, "&#039;");
 }
 
-function formatEuro(value) {
-    const n = Number(value) || 0;
-    return n.toLocaleString("it-IT", {style:"currency", currency:"EUR"});
+function parseNumeroIT(value) {
+    if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+    let s = String(value ?? "").trim().replace(/\s/g, "");
+    if (!s) return 0;
+    const lastComma = s.lastIndexOf(",");
+    const lastDot = s.lastIndexOf(".");
+    if (lastComma >= 0 && lastDot >= 0) {
+        if (lastComma > lastDot) s = s.replace(/\./g, "").replace(",", ".");
+        else s = s.replace(/,/g, "");
+    } else if (lastComma >= 0) {
+        s = s.replace(",", ".");
+    }
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
 }
+
+function toScaledInt(value, scale) {
+    return Math.round(parseNumeroIT(value) * scale);
+}
+
+function kmToDecimi(value) { return toScaledInt(value, 10); }
+function formatKmDaDecimi(decimi) {
+    return (Number(decimi || 0) / 10).toLocaleString("it-IT", {minimumFractionDigits:0, maximumFractionDigits:1});
+}
+function formatKmValue(value) {
+    if (value === "" || value === null || value === undefined) return "";
+    return formatKmDaDecimi(kmToDecimi(value));
+}
+
+function kgToMillesimi(value) { return toScaledInt(value, 1000); }
+function formatKgDaMillesimi(millesimi) {
+    return (Number(millesimi || 0) / 1000).toLocaleString("it-IT", {minimumFractionDigits:0, maximumFractionDigits:3});
+}
+
+function euroToCentesimi(value) { return toScaledInt(value, 100); }
+function formatEuroDaCentesimi(centesimi) {
+    return (Number(centesimi || 0) / 100).toLocaleString("it-IT", {style:"currency", currency:"EUR"});
+}
+function formatEuro(value) { return formatEuroDaCentesimi(euroToCentesimi(value)); }
 
 function aggiornaSuggerimentiGiornaliero() {
     const campi = [
@@ -1073,7 +1108,7 @@ function renderGiornalieroTable() {
             <td>${rec.ora_apertura}</td>
             <td>${rec.ora_chiusura}</td>
             <td class="${isImpegnoOverLimit(rec.impegno) ? 'value-alert' : ''}">${rec.impegno}</td>
-            <td>${rec.km}</td>
+            <td>${formatKmValue(rec.km)}</td>
             <td class="${isGuidaOverLimit(rec.ore_guida) ? 'value-alert' : ''}">${rec.ore_guida}</td>
             <td>${rec.luogo_sosta}</td>
             <td class="${isPausaGiornalieraUnderLimit(rec) ? 'value-alert' : ''}">${rec.pausa.ore} (${rec.pausa.tipo})</td>
@@ -1096,7 +1131,7 @@ function giornalieroAnomalies(rec){
     if(!rec.data) a.push("data mancante");
     if(!rec.trattore) a.push("trattore non indicato");
     if(!rec.semirimorchio) a.push("semirimorchio non indicato");
-    if(rec.km==="" || Number(rec.km)<0) a.push("km mancanti o non validi");
+    if(rec.km==="" || parseNumeroIT(rec.km)<0) a.push("km mancanti o non validi");
     if(!rec.ora_apertura || !rec.ora_chiusura) a.push("ora apertura/chiusura incompleta");
     const dup=DIARIO.giornaliero.some(r=>r.id!==giornalieroEditId && r.data && r.data===rec.data);
     if(dup) a.push("esiste già una giornata con la stessa data");
@@ -1249,7 +1284,7 @@ function renderCarichiTable() {
    ============================================================ */
 function caricoAnomalies(rec){
     const a=[]; if(!rec.data)a.push("data mancante"); if(!rec.luogo)a.push("luogo mancante"); if(!rec.cliente)a.push("cliente mancante"); if(!rec.semirimorchio)a.push("semirimorchio mancante");
-    if(rec.operazione==="CARICO" && (!(Number(rec.peso)>0))) a.push("peso del carico non indicato o uguale a zero");
+    if(rec.operazione==="CARICO" && (!(parseNumeroIT(rec.peso)>0))) a.push("peso del carico non indicato o uguale a zero");
     const dup=DIARIO.carichi_scarichi.some(r=>r.id!==caricoEditId && sameCargoShape(r,rec)); if(dup)a.push("operazione identica già presente");
     return a;
 }
@@ -1359,37 +1394,35 @@ document.getElementById("btn-calcola-riassunto").addEventListener("click", () =>
         lista = DIARIO.giornaliero.filter(r => r.data.startsWith(`${yyyy}-${mm}`));
     }
 
-    let totKm = 0;
+    let totKmDecimi = 0;
     let totOreGuida = 0;
     let totImpegno = 0;
     let totPausa = 0;
-    let totKg = 0;
+    let totKgMillesimi = 0;
 
     lista.forEach(r => {
-        const kmVal = Number(r.km) || 0;
+        const kmDecimi = kmToDecimi(r.km);
         const oreGuidaVal = r.ore_guida && r.ore_guida.includes(":") ? oreToMinuti(r.ore_guida) : 0;
         const impegnoVal = r.impegno && r.impegno.includes(":") ? oreToMinuti(r.impegno) : 0;
         const pausaVal = r.pausa && r.pausa.ore && r.pausa.ore.includes(":") ? oreToMinuti(r.pausa.ore) : 0;
 
-        // SOMMA KG DEI CARICHI
-        const kgVal = DIARIO.carichi_scarichi
+        const kgMillesimi = DIARIO.carichi_scarichi
             .filter(c => c.data === r.data && c.operazione === "CARICO")
-            .reduce((sum, c) => sum + (Number(c.peso) || 0), 0);
+            .reduce((sum, c) => sum + kgToMillesimi(c.peso), 0);
 
-        totKm += kmVal;
+        totKmDecimi += kmDecimi;
         totOreGuida += oreGuidaVal;
         totImpegno += impegnoVal;
         totPausa += pausaVal;
-        totKg += kgVal;
+        totKgMillesimi += kgMillesimi;
     });
 
     const giorniLavorati = new Set(lista.map(r => r.data).filter(Boolean)).size;
-    const mediaKm = giorniLavorati ? (totKm / giorniLavorati).toFixed(1) : "0.0";
+    const mediaKmDecimi = giorniLavorati ? Math.round(totKmDecimi / giorniLavorati) : 0;
     const mediaOreGuida = giorniLavorati ? Math.round(totOreGuida / giorniLavorati) : 0;
     const mediaImpegno = giorniLavorati ? Math.round(totImpegno / giorniLavorati) : 0;
 
-    
-    const giorniGuidati = new Set(lista.filter(r => (Number(r.km) || 0) > 0).map(r => r.data)).size;
+    const giorniGuidati = new Set(lista.filter(r => kmToDecimi(r.km) > 0).map(r => r.data)).size;
     const weekendFuoriCount = lista.filter(r => r.weekend_fuori === true).length;
     const alertGuida = lista.some(r => isGuidaOverLimit(r.ore_guida));
     const alertImpegno = lista.some(r => isImpegnoOverLimit(r.impegno));
@@ -1397,14 +1430,14 @@ document.getElementById("btn-calcola-riassunto").addEventListener("click", () =>
 summary_output.innerHTML = `
     <div class="summary-card"><div class="summary-icon">📅</div><div><div class="summary-label">Giorni guidati</div><div class="summary-value">${giorniGuidati}</div><div class="summary-unit">giorni</div></div></div>
     <div class="summary-card"><div class="summary-icon">🌙</div><div><div class="summary-label">Weekend Fuori</div><div class="summary-value">${weekendFuoriCount}</div><div class="summary-unit">weekend</div></div></div>
-    <div class="summary-card"><div class="summary-icon">🛣️</div><div><div class="summary-label">Totale Km</div><div class="summary-value">${totKm}</div><div class="summary-unit">km</div></div></div>
-    <div class="summary-card"><div class="summary-icon">◴</div><div><div class="summary-label">Media Km/giorno</div><div class="summary-value">${mediaKm}</div><div class="summary-unit">km</div></div></div>
+    <div class="summary-card"><div class="summary-icon">🛣️</div><div><div class="summary-label">Totale Km</div><div class="summary-value">${formatKmDaDecimi(totKmDecimi)}</div><div class="summary-unit">km</div></div></div>
+    <div class="summary-card"><div class="summary-icon">◴</div><div><div class="summary-label">Media Km/giorno</div><div class="summary-value">${formatKmDaDecimi(mediaKmDecimi)}</div><div class="summary-unit">km</div></div></div>
     <div class="summary-card"><div class="summary-icon">◉</div><div><div class="summary-label">Totale ore guida</div><div class="summary-value">${minutiToOre(totOreGuida)}</div><div class="summary-unit">ore</div></div></div>
     <div class="summary-card"><div class="summary-icon">⏱</div><div><div class="summary-label">Media ore guida/giorno</div><div class="summary-value">${minutiToOre(mediaOreGuida)}</div><div class="summary-unit">ore</div></div></div>
     <div class="summary-card"><div class="summary-icon">💼</div><div><div class="summary-label">Totale impegno</div><div class="summary-value">${minutiToOre(totImpegno)}</div><div class="summary-unit">ore</div></div></div>
     <div class="summary-card"><div class="summary-icon">⏲</div><div><div class="summary-label">Media impegno/giorno</div><div class="summary-value">${minutiToOre(mediaImpegno)}</div><div class="summary-unit">ore</div></div></div>
     <div class="summary-card"><div class="summary-icon">☕</div><div><div class="summary-label">Totale pause</div><div class="summary-value">${minutiToOre(totPausa)}</div><div class="summary-unit">ore</div></div></div>
-    <div class="summary-card"><div class="summary-icon">KG</div><div><div class="summary-label">Totale Kg caricati</div><div class="summary-value">${Number(totKg).toLocaleString("it-IT")}</div><div class="summary-unit">kg</div></div></div>
+    <div class="summary-card"><div class="summary-icon">KG</div><div><div class="summary-label">Totale Kg caricati</div><div class="summary-value">${formatKgDaMillesimi(totKgMillesimi)}</div><div class="summary-unit">kg</div></div></div>
 `;
 
     renderGrafici(lista);
@@ -1416,7 +1449,7 @@ summary_output.innerHTML = `
 
 function renderGrafici(lista) {
 
-    const km = lista.map(r => r.km);
+    const km = lista.map(r => kmToDecimi(r.km) / 10);
     const ore = lista.map(r => oreToMinuti(r.ore_guida));
     const peso = DIARIO.carichi_scarichi.map(r => r.peso);
 
@@ -2460,23 +2493,23 @@ function renderDashboard(){
  const el=document.getElementById('dash-month');let ym=el.value;if(!ym){const d=new Date();ym=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;el.value=ym;}
  const today=isoToday(),todayRec=DIARIO.giornaliero.find(r=>r.data===today);const g=DIARIO.giornaliero.filter(r=>(r.data||'').startsWith(ym));
  const weekendFuori=g.filter(r=>r.weekend_fuori===true).length;
- const km=g.reduce((s,r)=>s+(Number(r.km)||0),0),guida=g.reduce((s,r)=>s+oreToMinuti(r.ore_guida),0);
+ const kmDecimi=g.reduce((s,r)=>s+kmToDecimi(r.km),0),guida=g.reduce((s,r)=>s+oreToMinuti(r.ore_guida),0);
  const openTrips=DIARIO.viaggi.filter(v=>!v.scaricoId&&!v.scarico);const lastOpen=[...openTrips].sort((a,b)=>(b.carico?.data||'').localeCompare(a.carico?.data||''))[0];
  const lastRest=[...DIARIO.giornaliero].filter(r=>r.luogo_sosta).sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];
  const sync=getDriveSyncInfo();const driveValue=sync.pending?'DA SINCRONIZZARE':(sync.lastSync?'SINCRONIZZATO':'NON COLLEGATO');
  const dayState=todayRec?(todayRec.ora_chiusura?'CHIUSA':'APERTA'):'NON INIZIATA';
  const tripText=lastOpen?(lastOpen.carico?.cliente||lastOpen.carico?.luogo||'APERTO'):'NESSUNO';
- const sal=(DIARIO.stipendi||[]).filter(r=>((r.mese_riferimento||r.data||'').startsWith(ym))).reduce((s,r)=>s+(Number(r.importo)||0),0);
+ const salCentesimi=(DIARIO.stipendi||[]).filter(r=>((r.mese_riferimento||r.data||'').startsWith(ym))).reduce((s,r)=>s+euroToCentesimi(r.importo),0);
  document.getElementById('dashboard-output').innerHTML=[
    actionCard('Oggi',formatDateIT(today),'Apri Giornaliero','tab-giornaliero'),
    actionCard('Giornata',dayState,todayRec?`${todayRec.ora_apertura||'--:--'} → ${todayRec.ora_chiusura||'--:--'}`:'Tocca per iniziare','tab-giornaliero'),
    actionCard('Weekend Fuori',weekendFuori,'mese selezionato','tab-riassunto'),
    actionCard('Google Drive',driveValue,sync.lastSync?sync.lastSync.toLocaleString('it-IT'):'Apri Import/Export','tab-impexp'),
    actionCard('Viaggio aperto',escapeHtml(tripText),`${openTrips.length} viaggio/i aperto/i`,'tab-viaggi'),
-   actionCard('Km del mese',km.toLocaleString('it-IT'),'km','tab-riassunto'),
+   actionCard('Km del mese',formatKmDaDecimi(kmDecimi),'km','tab-riassunto'),
    actionCard('Ore guida',minutiToOre(guida),'mese selezionato','tab-riassunto'),
    actionCard('Ultima sosta',escapeHtml(lastRest?.luogo_sosta||'—'),lastRest?formatDateIT(lastRest.data):'Nessun dato','tab-giornaliero'),
-   moneyCard('Competenze mese',formatEuro(sal),'')
+   moneyCard('Competenze mese',formatEuroDaCentesimi(salCentesimi),'')
  ].join('');
 }
 
@@ -2509,25 +2542,26 @@ function clearStipendiFilter(){
 function renderSalaryStats(){
  const y=new Date().getFullYear().toString();
  const arr=(DIARIO.stipendi||[]).filter(r=>((r.mese_riferimento||r.data||"").slice(0,4)===y));
- const sum=(pred)=>arr.filter(pred).reduce((s,r)=>s+(Number(r.importo)||0),0);
+ const sumCents=(pred)=>arr.filter(pred).reduce((s,r)=>s+euroToCentesimi(r.importo),0);
  const norm=x=>(x||'').toUpperCase();
- const totale=sum(()=>true), mesi=new Set(arr.map(r=>(r.mese_riferimento||r.data||'').slice(0,7)).filter(Boolean)).size;
+ const totaleCentesimi=sumCents(()=>true), mesi=new Set(arr.map(r=>(r.mese_riferimento||r.data||'').slice(0,7)).filter(Boolean)).size;
+ const mediaMensileCentesimi=mesi?Math.round(totaleCentesimi/mesi):0;
  const el=document.getElementById('salary-stats'); if(!el) return;
  el.innerHTML=[
-   card('Totale anno',formatEuro(totale),y),
-   card('Media mensile',formatEuro(mesi?totale/mesi:0),mesi+' mesi'),
-   card('Tredicesima',formatEuro(sum(r=>norm(r.causale)==='TREDICESIMA'))),
-   card('Quattordicesima',formatEuro(sum(r=>norm(r.causale)==='QUATTORDICESIMA'))),
-   card('Stipendi',formatEuro(sum(r=>norm(r.causale)==='STIPENDIO'))),
-   card('Rimborsi',formatEuro(sum(r=>norm(r.causale)==='RIMBORSI'))),
-   card('Acconti',formatEuro(sum(r=>norm(r.causale)==='ACCONTI')))
+   card('Totale anno',formatEuroDaCentesimi(totaleCentesimi),y),
+   card('Media mensile',formatEuroDaCentesimi(mediaMensileCentesimi),mesi+' mesi'),
+   card('Tredicesima',formatEuroDaCentesimi(sumCents(r=>norm(r.causale)==='TREDICESIMA'))),
+   card('Quattordicesima',formatEuroDaCentesimi(sumCents(r=>norm(r.causale)==='QUATTORDICESIMA'))),
+   card('Stipendi',formatEuroDaCentesimi(sumCents(r=>norm(r.causale)==='STIPENDIO'))),
+   card('Rimborsi',formatEuroDaCentesimi(sumCents(r=>norm(r.causale)==='RIMBORSI'))),
+   card('Acconti',formatEuroDaCentesimi(sumCents(r=>norm(r.causale)==='ACCONTI')))
  ].join('');
 }
 function renderClientStats(){
- const cs=DIARIO.carichi_scarichi; const count={}; const kg={};
- cs.forEach(r=>{const k=(r.cliente||r.luogo||'Non specificato').trim();count[k]=(count[k]||0)+1;if(r.operazione==='CARICO')kg[k]=(kg[k]||0)+(Number(r.peso)||0)});
+ const cs=DIARIO.carichi_scarichi; const count={}; const kgMillesimi={};
+ cs.forEach(r=>{const k=(r.cliente||r.luogo||'Non specificato').trim();count[k]=(count[k]||0)+1;if(r.operazione==='CARICO')kgMillesimi[k]=(kgMillesimi[k]||0)+kgToMillesimi(r.peso)});
  const top=Object.entries(count).sort((a,b)=>b[1]-a[1]).slice(0,3);
- document.getElementById('client-stats').innerHTML=top.length?top.map(([k,n])=>card(escapeHtml(k),n+' operazioni',(kg[k]||0).toLocaleString('it-IT')+' kg caricati')).join(''):card('Nessun dato','—','');
+ document.getElementById('client-stats').innerHTML=top.length?top.map(([k,n])=>card(escapeHtml(k),n+' operazioni',formatKgDaMillesimi(kgMillesimi[k]||0)+' kg caricati')).join(''):card('Nessun dato','—','');
 }
 function buildGlobalSearch(raw){
  const q=raw.toLowerCase(), blocks=[];
