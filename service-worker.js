@@ -1,4 +1,4 @@
-const CACHE_NAME = "diario-autista-v27-numeri-precisi";
+const CACHE_NAME = "diario-autista-v30-blocchi-dettaglio";
 const PRECACHE = [
   "./",
   "./index.html",

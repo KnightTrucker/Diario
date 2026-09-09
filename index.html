@@ -223,6 +223,29 @@ table thead th {
 @media(max-width:760px){.hgv-toolbar{grid-template-columns:1fr}.hgv-top{display:block}.hgv-when{text-align:left;margin-top:8px;white-space:normal}.hgv-event{padding:12px}.hgv-holidays{grid-template-columns:1fr}}
 </style>
 
+
+<style id="hgv-detail-modal-style">
+.hgv-event.hgv-clickable{cursor:pointer;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}
+.hgv-event.hgv-clickable:hover{transform:translateY(-1px);border-color:#4f82a7;box-shadow:0 10px 24px rgba(0,0,0,.28)}
+.hgv-event.hgv-clickable:focus{outline:2px solid #169cff;outline-offset:2px}
+.hgv-detail-modal{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.76);backdrop-filter:blur(5px)}
+.hgv-detail-modal.open{display:flex}
+.hgv-detail-panel{width:min(760px,100%);max-height:90vh;overflow:auto;background:linear-gradient(180deg,#0b2031,#06131e);border:1px solid #315a79;border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.hgv-detail-head{position:sticky;top:0;z-index:2;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 18px;background:rgba(8,28,43,.97);border-bottom:1px solid #31516d}
+.hgv-detail-head-title{font-size:21px;font-weight:850;line-height:1.2}
+.hgv-detail-close{flex:0 0 auto;width:42px;height:42px;min-height:42px!important;padding:0!important;border-radius:50%!important;background:#24394b!important;color:#fff;border:1px solid #52718a!important;font-size:24px;cursor:pointer}
+.hgv-detail-body{padding:16px 18px 20px}
+.hgv-detail-country{font-size:14px;color:#b7cbdd;margin-bottom:7px}
+.hgv-detail-status{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
+.hgv-detail-row{padding:12px 0;border-top:1px solid rgba(74,111,139,.38)}
+.hgv-detail-row:first-of-type{border-top:0}
+.hgv-detail-label{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#90a7bb;font-weight:800;margin-bottom:5px}
+.hgv-detail-value{font-size:15px;color:#f5f9ff;white-space:pre-wrap;line-height:1.45}
+.hgv-detail-source{margin-top:18px;padding-top:14px;border-top:1px solid rgba(74,111,139,.45)}
+.hgv-detail-source .hgv-source{display:inline-flex;align-items:center;gap:6px;padding:10px 12px;border:1px solid #315d7b;border-radius:10px;text-decoration:none;background:#0a2639}
+@media(max-width:600px){.hgv-detail-modal{padding:8px}.hgv-detail-panel{max-height:94vh;border-radius:14px}.hgv-detail-head{padding:13px}.hgv-detail-body{padding:13px}}
+</style>
+
 </head>
 
 <body>
@@ -238,7 +261,7 @@ table thead th {
     <button class="tab-btn" data-tab="tab-giornaliero"><span class="tab-icon">📅</span><span>Giornaliero</span></button>
     <button class="tab-btn" data-tab="tab-carichi"><span class="tab-icon">🚚</span><span>Carichi/Scarichi</span></button>
     <button class="tab-btn" data-tab="tab-riassunto"><span class="tab-icon">📊</span><span>Riassunto</span></button>
-    <button class="tab-btn" data-tab="tab-hgv"><span class="tab-icon">🚫</span><span>Divieti HGV</span></button>
+    <button class="tab-btn" data-tab="tab-hgv"><span class="tab-icon">🚫</span><span>Blocchi</span></button>
     
     <button class="tab-btn" data-tab="tab-viaggi"><span class="tab-icon">📍</span><span>Viaggi</span></button>
     <button class="tab-btn" data-tab="tab-stipendi"><span class="tab-icon">💶</span><span>Stipendi</span></button>
@@ -445,7 +468,7 @@ table thead th {
 
 <!-- TAB DIVIETI HGV EUROPA -->
 <div id="tab-hgv" class="tab-content">
-    <h2>Divieti HGV Europa</h2>
+    <h2>Blocchi</h2>
     <div class="hgv-intro">
         Calendario di pianificazione per Italia, Francia, Austria, Germania, Svizzera, Belgio, Lussemburgo, Spagna e Olanda.
         La lista principale mostra <b>tutti i divieti</b> del periodo selezionato; quelli più vicini vengono evidenziati automaticamente. Il database è multi-anno e il workflow GitHub prepara anche l’anno successivo appena le fonti ufficiali lo consentono.
@@ -468,20 +491,26 @@ table thead th {
                 <option value="all">Tutti gli anni disponibili</option>
             </select>
         </div>
+        <div style="display:flex;align-items:end;">
+            <label style="display:flex;align-items:center;gap:10px;min-height:44px;margin:0;padding:0 4px;cursor:pointer;">
+                <input type="checkbox" id="hgv-hide-sundays" style="width:auto;min-height:auto;margin:0;">
+                <span>Nascondi domeniche</span>
+            </label>
+        </div>
         <div class="hgv-refresh-wrap">
             <button type="button" class="primary" id="btn-hgv-refresh">🔄 Aggiorna informazioni</button>
         </div>
     </div>
 
-    <div id="hgv-db-status" class="hgv-db-status">Database divieti: caricamento…</div>
+    <div id="hgv-db-status" class="hgv-db-status">Database blocchi: caricamento…</div>
     <div id="hgv-disclaimer" class="hgv-disclaimer">Le informazioni servono alla pianificazione e non sostituiscono i provvedimenti ufficiali.</div>
     <div id="hgv-counts" class="hgv-counts"></div>
 
     <h3>Prossimi / in corso</h3>
     <div id="hgv-next" class="hgv-list"></div>
 
-    <h3>Tutti i divieti</h3>
-    <div class="hgv-show-all-note">Nessun limite al numero di avvisi: la lista contiene tutti gli eventi del periodo e del Paese selezionati.</div>
+    <h3>Tutti i blocchi</h3>
+    <div class="hgv-show-all-note">Nessun limite al numero di avvisi: la lista contiene tutti i blocchi del periodo e del Paese selezionati.</div>
     <div id="hgv-events" class="hgv-list"></div>
 
     <h3>Festività</h3>
@@ -489,6 +518,20 @@ table thead th {
 
     <h3>Paesi e fonti</h3>
     <div id="hgv-country-info" class="hgv-country-info"></div>
+</div>
+
+
+<div id="hgv-detail-modal" class="hgv-detail-modal" aria-hidden="true">
+  <div class="hgv-detail-panel" role="dialog" aria-modal="true" aria-labelledby="hgv-detail-title">
+    <div class="hgv-detail-head">
+      <div>
+        <div id="hgv-detail-country" class="hgv-detail-country"></div>
+        <div id="hgv-detail-title" class="hgv-detail-head-title">Dettaglio blocco</div>
+      </div>
+      <button type="button" id="hgv-detail-close" class="hgv-detail-close" aria-label="Chiudi">×</button>
+    </div>
+    <div id="hgv-detail-body" class="hgv-detail-body"></div>
+  </div>
 </div>
 
 <!-- TAB IMPORT / EXPORT -->
@@ -2832,6 +2875,7 @@ function deleteTrashForever(id){if(!confirm("Eliminare definitivamente questo el
 const HGV_DB_URL = "./hgv_europe.json";
 const HGV_STORAGE_KEY = "DIARIO_HGV_EUROPE_DB_V3";
 const HGV_FETCHED_KEY = "DIARIO_HGV_EUROPE_FETCHED_AT";
+const HGV_HIDE_SUNDAYS_KEY = "DIARIO_HGV_HIDE_SUNDAYS";
 let HGV_DB = null;
 let HGV_INITIALIZED = false;
 
@@ -2866,9 +2910,12 @@ function hgvSourceLink(sourceKey,label="Fonte ufficiale"){
   const src=HGV_DB?.sources?.[sourceKey]; if(!src)return ""; const url=hgvSafeUrl(src.url); if(url==="#")return "";
   return `<a class="hgv-source" href="${hgvEscape(url)}" target="_blank" rel="noopener noreferrer">🔗 ${hgvEscape(label||src.label)}</a>`;
 }
+function hgvEventKey(e){
+  return String(e?.id || [e?.country||"",e?.start_at||"",e?.end_at||"",e?.title||""].join("|"));
+}
 function hgvEventCard(e){
   const c=HGV_DB?.countries?.[e.country]||{name:e.country,flag:""}; const st=hgvState(e);
-  return `<div class="hgv-event is-${st.key}">
+  return `<div class="hgv-event hgv-clickable is-${st.key}" role="button" tabindex="0" data-hgv-event-id="${hgvEscape(hgvEventKey(e))}" aria-label="Apri dettaglio: ${hgvEscape(e.title||"Blocco")}">
     <div class="hgv-top"><div><div class="hgv-country-name">${hgvEscape(c.flag)} ${hgvEscape(c.name)}</div><div class="hgv-title">${hgvEscape(e.title)}</div></div>
     <div class="hgv-when">${hgvEscape(hgvWindowLabel(e))}<div class="hgv-relative">${hgvEscape(hgvRelative(e))}</div></div></div>
     <div class="hgv-badges"><span class="hgv-badge state">${hgvEscape(st.label)}</span><span class="hgv-badge">${hgvEscape(hgvKindLabel(e.kind))}</span>${e.threshold?`<span class="hgv-badge">${hgvEscape(e.threshold)}</span>`:""}</div>
@@ -2876,15 +2923,178 @@ function hgvEventCard(e){
     ${hgvSourceLink(e.source)}
   </div>`;
 }
+
+function hgvDetailText(v){
+  if(v===null||v===undefined||v==="")return "";
+  if(Array.isArray(v))return v.map(x=>typeof x==="object"?JSON.stringify(x):String(x)).join("\n");
+  if(typeof v==="object")return Object.entries(v).map(([k,val])=>`${k}: ${Array.isArray(val)?val.join(", "):String(val)}`).join("\n");
+  return String(v);
+}
+function hgvFirstDetailField(e,names){
+  for(const n of names){
+    const v=hgvDetailText(e?.[n]);
+    if(v)return v;
+  }
+  return "";
+}
+function hgvDetailRow(label,value,fallback="Non specificato nel database"){
+  const v=value||fallback;
+  return `<div class="hgv-detail-row"><div class="hgv-detail-label">${hgvEscape(label)}</div><div class="hgv-detail-value">${hgvEscape(v)}</div></div>`;
+}
+function hgvFindEventByKey(key){
+  return (HGV_DB?.events||[]).find(e=>hgvEventKey(e)===String(key||""))||null;
+}
+function openHgvEventDetailByKey(key){
+  const e=hgvFindEventByKey(key); if(!e)return;
+  const modal=document.getElementById("hgv-detail-modal");
+  const body=document.getElementById("hgv-detail-body");
+  const title=document.getElementById("hgv-detail-title");
+  const country=document.getElementById("hgv-detail-country");
+  if(!modal||!body||!title||!country)return;
+
+  const c=HGV_DB?.countries?.[e.country]||{name:e.country||"",flag:""};
+  const st=hgvState(e);
+  title.textContent=e.title||"Dettaglio blocco";
+  country.textContent=`${c.flag||""} ${c.name||e.country||""}`.trim();
+
+  const exceptions=hgvFirstDetailField(e,["exceptions","exception","exemptions","deroghe","exemptions_notes","exceptions_notes"]);
+  const roads=hgvFirstDetailField(e,["roads","road","routes","route","roads_scope","network"]);
+  const direction=hgvFirstDetailField(e,["direction","directions","travel_direction"]);
+  const area=hgvFirstDetailField(e,["area","region","regions","territory"]);
+  const extra=hgvFirstDetailField(e,["details","detail","description"]);
+
+  body.innerHTML=`
+    <div class="hgv-detail-status">
+      <span class="hgv-badge state">${hgvEscape(st.label)}</span>
+      <span class="hgv-badge">${hgvEscape(hgvKindLabel(e.kind))}</span>
+      ${e.threshold?`<span class="hgv-badge">${hgvEscape(e.threshold)}</span>`:""}
+    </div>
+    ${hgvDetailRow("Data e orari",hgvWindowLabel(e))}
+    ${hgvDetailRow("Stato",hgvRelative(e))}
+    ${hgvDetailRow("Ambito",hgvDetailText(e.scope))}
+    ${roads?hgvDetailRow("Strade / rete",roads,""):""}
+    ${direction?hgvDetailRow("Direzione",direction,""):""}
+    ${area?hgvDetailRow("Zona / regione",area,""):""}
+    ${hgvDetailRow("Peso / soglia",hgvDetailText(e.threshold))}
+    ${hgvDetailRow("Note",hgvDetailText(e.notes))}
+    ${extra?hgvDetailRow("Dettagli",extra,""):""}
+    ${hgvDetailRow("Eccezioni / deroghe",exceptions)}
+    <div class="hgv-detail-source">${hgvSourceLink(e.source,"Apri fonte ufficiale")||'<div class="hgv-detail-value">Fonte non disponibile nel database.</div>'}</div>
+  `;
+
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden","false");
+  document.body.style.overflow="hidden";
+  document.getElementById("hgv-detail-close")?.focus();
+}
+function closeHgvEventDetail(){
+  const modal=document.getElementById("hgv-detail-modal"); if(!modal)return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden","true");
+  document.body.style.overflow="";
+}
+function initHgvDetailInteractions(){
+  ["hgv-events","hgv-next"].forEach(id=>{
+    const box=document.getElementById(id); if(!box)return;
+    box.addEventListener("click",ev=>{
+      if(ev.target.closest("a,button,input,select,label"))return;
+      const card=ev.target.closest(".hgv-event[data-hgv-event-id]");
+      if(card)openHgvEventDetailByKey(card.dataset.hgvEventId);
+    });
+    box.addEventListener("keydown",ev=>{
+      if(ev.key!=="Enter"&&ev.key!==" ")return;
+      if(ev.target.closest("a,button,input,select,label"))return;
+      const card=ev.target.closest(".hgv-event[data-hgv-event-id]");
+      if(card){ev.preventDefault();openHgvEventDetailByKey(card.dataset.hgvEventId);}
+    });
+  });
+
+  document.getElementById("hgv-detail-close")?.addEventListener("click",closeHgvEventDetail);
+  document.getElementById("hgv-detail-modal")?.addEventListener("click",ev=>{
+    if(ev.target?.id==="hgv-detail-modal")closeHgvEventDetail();
+  });
+  document.addEventListener("keydown",ev=>{
+    if(ev.key==="Escape"&&document.getElementById("hgv-detail-modal")?.classList.contains("open"))closeHgvEventDetail();
+  });
+}
+
 function hgvEventOverlapsYear(e,year){
   const a=hgvDate(e.start_at),b=hgvDate(e.end_at); if(!a||!b)return false;
   const ys=new Date(Number(year),0,1).getTime(), ye=new Date(Number(year)+1,0,1).getTime();
   return b.getTime()>ys && a.getTime()<ye;
 }
+function hgvEventIsHolidayLinked(e){
+  if(!e)return false;
+
+  // Eventi esplicitamente classificati come festivi non vanno mai nascosti
+  // dal filtro "Nascondi domeniche".
+  if(String(e.kind||"").toLowerCase()==="holiday")return true;
+
+  const text=`${e.title||""} ${e.scope||""} ${e.notes||""}`.toLowerCase();
+
+  // Indicatori generici di festività in più lingue.
+  if(/festiv|holiday|feiertag|jour f[ée]ri[ée]|f[êe]te|feestdag|festivo|festa nacional|feriado/.test(text))return true;
+
+  // Festività ricorrenti principali: protegge i blocchi festivi anche quando
+  // la loro data cade di domenica.
+  if(/natale|christmas|no[eë]l|weihnacht|kerst|navidad|capodanno|new year|nouvel an|neujahr|nieuwjaar|año nuevo|pasqua|easter|p[aâ]ques|ostern|pasen|pascua|pasquetta|easter monday|lundi de p[aâ]ques|ostermontag|paasmaandag|lunes de pascua|epifania|epiphany|heilige drei k[oö]nige|hemelvaart|ascension|assunzione|ferragosto|immacolata|all saints|toussaint|allerheiligen|ognissanti/.test(text))return true;
+
+  // Controllo diretto contro il calendario festività del database.
+  const start=hgvDate(e.start_at), end=hgvDate(e.end_at);
+  if(!start||!end||!HGV_DB?.holidays)return false;
+
+  const holidays=HGV_DB.holidays[e.country]||[];
+  return holidays.some(h=>{
+    const hd=new Date(`${h.date}T00:00:00`);
+    if(Number.isNaN(hd.getTime()))return false;
+    const hs=hd.getTime(), he=hs+24*60*60*1000;
+    return end.getTime()>hs && start.getTime()<he;
+  });
+}
+
+function hgvIsSundayRestriction(e){
+  const a=hgvDate(e?.start_at), b=hgvDate(e?.end_at);
+  if(!a||!b)return false;
+
+  // Se è un blocco collegato a una festività, resta visibile anche quando
+  // la festività cade di domenica.
+  if(hgvEventIsHolidayLinked(e))return false;
+
+  // Se la descrizione indica esplicitamente una domenica, la consideriamo domenicale.
+  const text=`${e?.title||""} ${e?.scope||""} ${e?.notes||""}`.toLowerCase();
+  if(/domenic|sunday|sonntag|dimanche|zondag|domingo/.test(text))return true;
+
+  // Evita di nascondere blocchi stagionali/permanenti di più giorni solo perché
+  // nel loro intervallo cade anche una domenica.
+  const durata=b.getTime()-a.getTime();
+  if(durata>36*60*60*1000)return false;
+
+  // Per gli eventi brevi, nasconde anche quelli che iniziano il sabato sera
+  // e proseguono nella domenica.
+  const d=new Date(a.getTime());
+  d.setHours(0,0,0,0);
+  const fine=b.getTime();
+  while(d.getTime()<=fine){
+    if(d.getDay()===0){
+      const domStart=d.getTime();
+      const domEnd=domStart+24*60*60*1000;
+      if(b.getTime()>domStart && a.getTime()<domEnd)return true;
+    }
+    d.setDate(d.getDate()+1);
+  }
+  return false;
+}
+
 function hgvSelectedEvents(){
-  if(!HGV_DB)return []; const country=document.getElementById("hgv-country")?.value||"ALL"; const tf=document.getElementById("hgv-time-filter")?.value||"future"; const now=Date.now();
+  if(!HGV_DB)return [];
+  const country=document.getElementById("hgv-country")?.value||"ALL";
+  const tf=document.getElementById("hgv-time-filter")?.value||"future";
+  const hideSundays=document.getElementById("hgv-hide-sundays")?.checked===true;
+  const now=Date.now();
+
   return (HGV_DB.events||[]).filter(e=>{
     if(e.kind==="info"||(country!=="ALL"&&e.country!==country))return false;
+    if(hideSundays && hgvIsSundayRestriction(e))return false;
     if(tf==="future")return Date.parse(e.end_at)>now;
     if(tf.startsWith("year:"))return hgvEventOverlapsYear(e,tf.slice(5));
     return true;
@@ -2893,8 +3103,8 @@ function hgvSelectedEvents(){
 function renderHgvEvents(){
   const all=hgvSelectedEvents(), box=document.getElementById("hgv-events"), next=document.getElementById("hgv-next"), counts=document.getElementById("hgv-counts"); if(!box||!next||!counts)return;
   const stateCounts={active:0,soon24:0,soon7:0}; all.forEach(e=>{const k=hgvState(e).key;if(k in stateCounts)stateCounts[k]++;});
-  counts.innerHTML=`<span class="hgv-count">${all.length} avvisi visualizzati</span><span class="hgv-count active">${stateCounts.active} in corso</span><span class="hgv-count soon24">${stateCounts.soon24} entro 24h</span><span class="hgv-count soon7">${stateCounts.soon7} entro 7g</span>`;
-  box.innerHTML=all.length?all.map(hgvEventCard).join(""):'<div class="hgv-empty">Nessun divieto nel periodo selezionato.</div>';
+  counts.innerHTML=`<span class="hgv-count">${all.length} blocchi visualizzati</span><span class="hgv-count active">${stateCounts.active} in corso</span><span class="hgv-count soon24">${stateCounts.soon24} entro 24h</span><span class="hgv-count soon7">${stateCounts.soon7} entro 7g</span>`;
+  box.innerHTML=all.length?all.map(hgvEventCard).join(""):'<div class="hgv-empty">Nessun blocco nel periodo selezionato.</div>';
   const now=Date.now(); const upcoming=all.filter(e=>Date.parse(e.end_at)>now).sort((a,b)=>{const sa=hgvState(a),sb=hgvState(b);const rank={active:0,soon24:1,soon7:2,future:3,past:4};return (rank[sa.key]-rank[sb.key])||a.start_at.localeCompare(b.start_at)}).slice(0,12);
   next.innerHTML=upcoming.length?upcoming.map(hgvEventCard).join(""):'<div class="hgv-empty">Nessun blocco futuro disponibile.</div>';
 }
@@ -2961,10 +3171,21 @@ function initHgvModule(){
   if(HGV_INITIALIZED)return;
   HGV_INITIALIZED=true;
   try{const raw=localStorage.getItem(HGV_STORAGE_KEY);if(raw){const db=JSON.parse(raw);if(hgvValidateDb(db))HGV_DB=db;}}catch(_){localStorage.removeItem(HGV_STORAGE_KEY);}
+
+  const hideSundays=document.getElementById("hgv-hide-sundays");
+  if(hideSundays){
+    hideSundays.checked=localStorage.getItem(HGV_HIDE_SUNDAYS_KEY)==="1";
+    hideSundays.addEventListener("change",()=>{
+      localStorage.setItem(HGV_HIDE_SUNDAYS_KEY,hideSundays.checked?"1":"0");
+      renderHgv();
+    });
+  }
+
   if(HGV_DB)renderHgv(); else renderHgvStatus("Nessuna copia locale: scarico il database dal repository…");
   document.getElementById("btn-hgv-refresh")?.addEventListener("click",()=>refreshHgvDatabase(true));
   document.getElementById("hgv-country")?.addEventListener("change",renderHgv);
   document.getElementById("hgv-time-filter")?.addEventListener("change",renderHgv);
+  initHgvDetailInteractions();
   refreshHgvDatabase(false);
 }
 
