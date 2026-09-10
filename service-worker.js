@@ -1,10 +1,11 @@
-const CACHE_NAME = "diario-autista-v30-blocchi-dettaglio";
+const CACHE_NAME = "diario-autista-v31-header-torabook";
 const PRECACHE = [
   "./",
   "./index.html",
   "./manifest.json",
   "./icon-192.png",
-  "./icon-512.png"
+  "./icon-512.png",
+  "./torabook-header.png"
 ];
 const HGV_DB = "./hgv_europe.json";
 
