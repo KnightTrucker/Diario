@@ -1,4 +1,4 @@
-const CACHE_NAME = "diario-autista-v31-header-torabook";
+const CACHE_NAME = "diario-autista-v32-header-crop";
 const PRECACHE = [
   "./",
   "./index.html",
