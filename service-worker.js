@@ -1,12 +1,11 @@
-const CACHE_NAME = "diario-autista-v35-pwa-icon-splash";
+const CACHE_NAME = "diario-autista-v37-splash-fix";
 const PRECACHE = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./icon-192.png",
-  "./icon-512.png",
+  "./icon-192-v37.png",
+  "./icon-512-v37.png",
   "./apple-touch-icon.png",
-  "./splash-torabook-a51.png",
   "./torabook-header.png"
 ];
 const HGV_DB = "./hgv_europe.json";
