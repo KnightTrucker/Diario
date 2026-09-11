@@ -1,22 +1,25 @@
 {
-  "name": "Diario Autista",
-  "short_name": "Diario",
-  "id": "./",
-  "start_url": "./",
+  "name": "ToraBook - Diario di viaggio",
+  "short_name": "ToraBook",
+  "description": "Diario di viaggio / logbook per camionisti.",
+  "start_url": "./?source=pwa",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#07131f",
+  "background_color": "#04111d",
   "theme_color": "#07131f",
+  "lang": "it-IT",
   "icons": [
     {
       "src": "./icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "./icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
