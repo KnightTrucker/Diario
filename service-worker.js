@@ -1,4 +1,4 @@
-const CACHE_NAME = "diario-autista-v37-splash-fix";
+const CACHE_NAME = "diario-autista-v38-filtri-excel";
 const PRECACHE = [
   "./",
   "./index.html",
