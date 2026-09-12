@@ -1,4 +1,4 @@
-const CACHE_NAME = "diario-autista-v38-filtri-excel";
+const CACHE_NAME = "diario-autista-v40-rapportino-esterno-password";
 const PRECACHE = [
   "./",
   "./index.html",
@@ -6,9 +6,11 @@ const PRECACHE = [
   "./icon-192-v37.png",
   "./icon-512-v37.png",
   "./apple-touch-icon.png",
-  "./torabook-header.png"
+  "./torabook-header.png",
+  "./RAPPORTINO_SETTIMANALE.xlsx"
 ];
 const HGV_DB = "./hgv_europe.json";
+const RAPPORTINO_TEMPLATE = "./RAPPORTINO_SETTIMANALE.xlsx";
 
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
@@ -67,6 +69,12 @@ self.addEventListener("fetch", event => {
   // non crea infinite copie: salviamo sempre nella chiave canonica.
   if (url.pathname.endsWith("/hgv_europe.json")) {
     event.respondWith(networkFirst(event.request, HGV_DB));
+    return;
+  }
+
+  // Modello Rapportino Excel: rete prima, cache offline come fallback.
+  if (url.pathname.endsWith("/RAPPORTINO_SETTIMANALE.xlsx")) {
+    event.respondWith(networkFirst(event.request, RAPPORTINO_TEMPLATE));
     return;
   }
 
