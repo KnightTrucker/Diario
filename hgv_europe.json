@@ -1,8 +1,8 @@
 {
   "schema_version": 3,
-  "database_version": "2026.09.06-0756Z",
+  "database_version": "2026.09.13-0821Z",
   "year": 2026,
-  "verified_at": "2026-09-06",
+  "verified_at": "2026-09-13",
   "timezone": "Europe/Paris",
   "disclaimer": "Supporto alla pianificazione. Le restrizioni possono essere modificate, sospese o integrate da provvedimenti locali/temporanei. Verificare sempre la fonte ufficiale prima del viaggio.",
   "countries": {
@@ -38836,7 +38836,7 @@
       "source": "CH_ASTRA"
     }
   ],
-  "checked_at": "2026-09-06T07:56:07Z",
+  "checked_at": "2026-09-13T08:21:04Z",
   "years_available": [
     2026,
     2027
@@ -38844,43 +38844,42 @@
   "coverage_through": "2027-12-31",
   "source_status": {
     "IT-2026": {
-      "checked_at": "2026-09-06T07:55:53Z",
-      "status": "error",
-      "url": "https://www.mit.gov.it/comunicazione/news/mezzi-pesanti-calendario-2026-dei-divieti-di-circolazione-stradale",
-      "error": "solo 0 righe calendario estratte"
+      "checked_at": "2026-09-13T08:20:54Z",
+      "status": "not_found",
+      "url": null
     },
     "IT-2027": {
-      "checked_at": "2026-09-06T07:56:02Z",
+      "checked_at": "2026-09-13T08:20:59Z",
       "status": "not_found",
       "url": null
     },
     "FR-2026": {
-      "checked_at": "2026-09-06T07:56:06Z",
+      "checked_at": "2026-09-13T08:21:03Z",
       "status": "not_found",
       "url": null
     },
     "FR-2027": {
-      "checked_at": "2026-09-06T07:56:06Z",
+      "checked_at": "2026-09-13T08:21:03Z",
       "status": "not_found",
       "url": null
     },
     "AT-2026": {
-      "checked_at": "2026-09-06T07:56:06Z",
+      "checked_at": "2026-09-13T08:21:03Z",
       "status": "not_found",
       "url": null
     },
     "AT-2027": {
-      "checked_at": "2026-09-06T07:56:07Z",
+      "checked_at": "2026-09-13T08:21:04Z",
       "status": "not_found",
       "url": null
     },
     "ES-2026": {
-      "checked_at": "2026-09-06T07:56:07Z",
+      "checked_at": "2026-09-13T08:21:04Z",
       "status": "not_found",
       "url": null
     },
     "ES-2027": {
-      "checked_at": "2026-09-06T07:56:07Z",
+      "checked_at": "2026-09-13T08:21:04Z",
       "status": "not_found",
       "url": null
     }
