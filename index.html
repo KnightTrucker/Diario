@@ -189,7 +189,7 @@ table thead th {
 
 
 <!-- PWA v37: manifest, tema e icone -->
-<link rel="manifest" href="./manifest.json?v=38">
+<link rel="manifest" href="./manifest.json?v=1.0">
 <meta name="theme-color" content="#07131f">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -272,13 +272,89 @@ table thead th {
 }
 </style>
 
+
+<style id="torabook-version-ui-v1">
+.header-bar{position:relative}
+.torabook-version-hotspot{
+  position:absolute;
+  left:0;
+  top:0;
+  width:25%;
+  height:100%;
+  z-index:20;
+  border:0;
+  padding:0;
+  margin:0;
+  background:transparent;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.torabook-version-hotspot:focus-visible{outline:2px solid #19a8ff;outline-offset:-4px;border-radius:14px}
+.torabook-version-overlay{
+  position:fixed;
+  inset:0;
+  z-index:1000005;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  box-sizing:border-box;
+  background:rgba(0,0,0,.78);
+  backdrop-filter:blur(5px);
+}
+.torabook-version-overlay.open{display:flex}
+.torabook-version-card{
+  position:relative;
+  width:min(430px,100%);
+  padding:24px 22px 20px;
+  border:1px solid #2a668d;
+  border-radius:20px;
+  background:linear-gradient(160deg,#0b1b29,#06111b 72%);
+  box-shadow:0 22px 70px rgba(0,0,0,.72),0 0 34px rgba(0,145,255,.16);
+  color:#fff;
+  text-align:center;
+}
+.torabook-version-close{
+  position:absolute;
+  right:10px;
+  top:8px;
+  width:42px;
+  height:42px;
+  border:0;
+  border-radius:12px;
+  background:transparent;
+  color:#bcd5e7;
+  font-size:28px;
+  line-height:1;
+  cursor:pointer;
+}
+.torabook-version-logo{font-size:30px;font-weight:950;letter-spacing:.2px;margin:6px 0 4px}
+.torabook-version-number{font-size:24px;font-weight:900;color:#45b8ff;margin:6px 0 14px}
+.torabook-version-sub{font-size:14px;line-height:1.45;color:#b9ccda;margin:0 0 18px}
+.torabook-version-ok{width:100%;min-height:48px;font-size:16px;font-weight:850}
+@media(max-width:430px){.torabook-version-hotspot{width:27%}.torabook-version-card{border-radius:17px;padding:22px 18px 18px}}
+</style>
+
 </head>
 
 <body>
+<!-- ToraBook Version 1.0 -->
 <div class="overlay">
 
 <div class="header-bar">
     <img class="header-brand" src="./torabook-header-v41.png" alt="ToraBook - powered by Andrea ZOLLET">
+    <button type="button" class="torabook-version-hotspot" id="torabook-version-hotspot" aria-label="Informazioni e versione ToraBook" title="Versione ToraBook"></button>
+</div>
+
+
+<div class="torabook-version-overlay" id="torabook-version-overlay" aria-hidden="true">
+  <div class="torabook-version-card" role="dialog" aria-modal="true" aria-labelledby="torabook-version-title">
+    <button type="button" class="torabook-version-close" id="torabook-version-close" aria-label="Chiudi">×</button>
+    <div class="torabook-version-logo" id="torabook-version-title">ToraBook</div>
+    <div class="torabook-version-number">Versione 1.0</div>
+    <p class="torabook-version-sub">Diario di viaggio / logbook per camionisti<br>Powered by Andrea ZOLLET</p>
+    <button type="button" class="primary torabook-version-ok" id="torabook-version-ok">OK</button>
+  </div>
 </div>
 
 <div class="tabs">
@@ -3605,7 +3681,7 @@ enableFullscreenGraph(graficoImpegno);
   });
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("./service-worker.js?v=41", {
+      const registration = await navigator.serviceWorker.register("./service-worker.js?v=1.0", {
         scope: "./",
         updateViaCache: "none"
       });
@@ -3623,6 +3699,36 @@ enableFullscreenGraph(graficoImpegno);
     } catch (err) {
       console.warn("Registrazione PWA non riuscita:", err);
     }
+  });
+})();
+</script>
+
+
+<script id="torabook-version-script-v1">
+(() => {
+  const APP_VERSION = "1.0";
+  window.TORABOOK_VERSION = APP_VERSION;
+  const hotspot = document.getElementById("torabook-version-hotspot");
+  const overlay = document.getElementById("torabook-version-overlay");
+  const closeBtn = document.getElementById("torabook-version-close");
+  const okBtn = document.getElementById("torabook-version-ok");
+  if (!hotspot || !overlay) return;
+  const open = () => {
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden", "false");
+    setTimeout(() => okBtn?.focus(), 0);
+  };
+  const close = () => {
+    overlay.classList.remove("open");
+    overlay.setAttribute("aria-hidden", "true");
+    hotspot.focus({preventScroll:true});
+  };
+  hotspot.addEventListener("click", open);
+  closeBtn?.addEventListener("click", close);
+  okBtn?.addEventListener("click", close);
+  overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && overlay.classList.contains("open")) close();
   });
 })();
 </script>

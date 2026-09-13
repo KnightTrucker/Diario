@@ -1,7 +1,7 @@
 {
   "name": "ToraBook - Diario di viaggio",
   "short_name": "ToraBook",
-  "description": "Diario di viaggio / logbook per camionisti.",
+  "description": "Diario di viaggio / logbook per camionisti. Versione 1.0.",
   "start_url": "./?source=pwa",
   "scope": "./",
   "display": "standalone",
