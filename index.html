@@ -258,13 +258,27 @@ table thead th {
 .rapportino-warning-card{width:min(520px,100%);background:linear-gradient(160deg,#1d1608,#0b1722 68%);border:2px solid #ffad21;border-radius:18px;box-shadow:0 20px 65px rgba(0,0,0,.7),0 0 26px rgba(255,173,33,.16);padding:22px;color:#fff;text-align:left}
 .rapportino-warning-icon{font-size:42px;line-height:1;margin-bottom:10px}.rapportino-warning-title{font-size:22px;font-weight:900;margin:0 0 10px;color:#ffd27a}.rapportino-warning-text{font-size:15px;line-height:1.5;color:#e8edf2;margin:0 0 17px}.rapportino-warning-count{font-size:28px;font-weight:900;color:#ffb52f}.rapportino-warning-ok{width:100%;min-height:48px;font-size:16px;font-weight:850}
 </style>
+
+<style id="header-compact-v41">
+.header-bar{
+  line-height:0;
+  margin-bottom:12px;
+}
+.header-brand{
+  display:block;
+  width:100%;
+  height:auto;
+  margin:0;
+}
+</style>
+
 </head>
 
 <body>
 <div class="overlay">
 
 <div class="header-bar">
-    <img class="header-brand" src="./torabook-header.png" alt="ToraBook - powered by Andrea ZOLLET">
+    <img class="header-brand" src="./torabook-header-v41.png" alt="ToraBook - powered by Andrea ZOLLET">
 </div>
 
 <div class="tabs">
@@ -3591,7 +3605,7 @@ enableFullscreenGraph(graficoImpegno);
   });
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("./service-worker.js?v=40", {
+      const registration = await navigator.serviceWorker.register("./service-worker.js?v=41", {
         scope: "./",
         updateViaCache: "none"
       });

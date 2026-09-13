@@ -1,4 +1,4 @@
-const CACHE_NAME = "diario-autista-v40-rapportino-esterno-password";
+const CACHE_NAME = "diario-autista-v41-header-compatto";
 const PRECACHE = [
   "./",
   "./index.html",
@@ -6,7 +6,7 @@ const PRECACHE = [
   "./icon-192-v37.png",
   "./icon-512-v37.png",
   "./apple-touch-icon.png",
-  "./torabook-header.png",
+  "./torabook-header-v41.png",
   "./RAPPORTINO_SETTIMANALE.xlsx"
 ];
 const HGV_DB = "./hgv_europe.json";
