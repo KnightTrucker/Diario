@@ -335,10 +335,25 @@ table thead th {
 @media(max-width:430px){.torabook-version-hotspot{width:27%}.torabook-version-card{border-radius:17px;padding:22px 18px 18px}}
 </style>
 
+
+<style id="documenti-viaggi-v11">
+.doc-trip-btn,.doc-trip-ok{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:48px;min-height:42px;margin:4px 4px 4px 0;border-radius:10px;font-weight:900}
+.doc-trip-btn{background:linear-gradient(135deg,#1687ff,#1055d6);color:#fff;border:1px solid #4aa8ff;font-size:22px}
+.doc-trip-ok{background:linear-gradient(135deg,#12a94b,#078235);color:#fff;border:1px solid #32cf69;font-size:22px}
+.doc-trip-btn:disabled{opacity:.5}
+.doc-quality-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:16px;z-index:10050}
+.doc-quality-overlay.open{display:flex}
+.doc-quality-card{width:min(560px,100%);max-height:94vh;overflow:auto;background:#071725;border:1px solid #2b6f9f;border-radius:18px;padding:16px;box-shadow:0 20px 70px rgba(0,0,0,.55)}
+.doc-quality-card h3{margin:0 0 10px;font-size:22px}.doc-quality-preview{display:block;width:100%;max-height:54vh;object-fit:contain;background:#000;border-radius:12px;border:1px solid #2c536e}
+.doc-quality-summary{margin:12px 0;padding:10px;border-radius:10px;background:#0b2234;border:1px solid #315873;line-height:1.45}
+.doc-quality-summary.ok{border-color:#188d46;color:#aef5c3}.doc-quality-summary.err{border-color:#bf3a46;color:#ffc0c7}.doc-quality-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.doc-quality-actions button{flex:1 1 180px}
+.doc-upload-progress{margin-top:10px;color:#a9bfd3;font-size:13px;min-height:20px}
+</style>
+
 </head>
 
 <body>
-<!-- ToraBook Version 1.0 -->
+<!-- ToraBook Version 1.1 -->
 <div class="overlay">
 
 <div class="header-bar">
@@ -351,7 +366,7 @@ table thead th {
   <div class="torabook-version-card" role="dialog" aria-modal="true" aria-labelledby="torabook-version-title">
     <button type="button" class="torabook-version-close" id="torabook-version-close" aria-label="Chiudi">×</button>
     <div class="torabook-version-logo" id="torabook-version-title">ToraBook</div>
-    <div class="torabook-version-number">Versione 1.0</div>
+    <div class="torabook-version-number">Versione 1.1</div>
     <p class="torabook-version-sub">Diario di viaggio / logbook per camionisti<br>Powered by Andrea ZOLLET</p>
     <button type="button" class="primary torabook-version-ok" id="torabook-version-ok">OK</button>
   </div>
@@ -675,7 +690,7 @@ table thead th {
             <button type="button" class="secondary" id="btn-drive-sync" disabled>🔄 Sincronizza ora</button>
         </div>
         <div id="drive-status" class="drive-status">Drive non collegato.</div>
-        <div id="drive-sync-meta" class="drive-sync-meta">Backup storico: ogni 7 giorni in KnightTrucker/Backup.</div>
+        <div id="drive-sync-meta" class="drive-sync-meta">Backup storico: ogni 7 giorni in KnightTrucker/Backup. Documenti viaggio: KnightTrucker/DocumentiViaggi.</div>
     </div>
 
     <div class="trash-card">
@@ -712,6 +727,21 @@ table thead th {
         </thead>
         <tbody></tbody>
     </table>
+    <input id="doc-trip-camera" type="file" accept="image/*" capture="environment" hidden>
+</div>
+
+<div class="doc-quality-overlay" id="doc-quality-overlay" aria-hidden="true">
+  <div class="doc-quality-card" role="dialog" aria-modal="true">
+    <h3>📄 Documento viaggio</h3>
+    <img id="doc-quality-preview" class="doc-quality-preview" alt="Anteprima documento">
+    <div id="doc-quality-summary" class="doc-quality-summary"></div>
+    <div id="doc-upload-progress" class="doc-upload-progress"></div>
+    <div class="doc-quality-actions">
+      <button type="button" class="secondary" id="doc-quality-retake">📷 Rifai foto</button>
+      <button type="button" class="primary" id="doc-quality-confirm">✓ Salva su Drive e condividi</button>
+      <button type="button" class="secondary" id="doc-quality-cancel">Annulla</button>
+    </div>
+  </div>
 </div>
 
 <!-- TAB STIPENDI -->
@@ -1715,6 +1745,9 @@ function renderViaggiTable() {
             <td>
                 ${v.scarico ? `` : `<button class="primary" onclick="popupAbbina(${index})">Abbina</button>`}
                 ${v.scarico ? `<button class="secondary" onclick="popupModifica(${index})">Modifica</button>` : ""}
+                ${v.scarico ? (v.documentoViaggio?.driveId
+                    ? `<button class="doc-trip-ok" title="Documento salvato su Drive" onclick="apriDocumentoViaggio('${escapeHtml(String(v.id||""))}')">✅</button>`
+                    : `<button class="doc-trip-btn" title="Fotografa documento" onclick="avviaDocumentoViaggio('${escapeHtml(String(v.id||""))}')">📷</button>`) : ""}
             </td>
         `;
         tbody.appendChild(tr);
@@ -1739,6 +1772,120 @@ function resetRapportinoFlag(i) {
     renderViaggiTable();
     alert("Il viaggio è di nuovo disponibile per il prossimo rapportino.");
 }
+
+
+/* ============================================================
+   VIAGGI — DOCUMENTI FOTO / DRIVE / CONDIVISIONE
+   ============================================================ */
+let docTripActiveId="";
+let docTripProcessed=null;
+let docTripObjectUrl="";
+
+function findViaggioById(id){ return (DIARIO.viaggi||[]).find(v=>String(v.id||"")===String(id||"")); }
+function safeFilePart(v){
+    return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9_-]+/g,"_").replace(/^_+|_+$/g,"").slice(0,48)||"ND";
+}
+function formatDocTimestamp(d=new Date()){
+    const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),da=String(d.getDate()).padStart(2,"0"),h=String(d.getHours()).padStart(2,"0"),mi=String(d.getMinutes()).padStart(2,"0");
+    return `${y}-${m}-${da}_${h}-${mi}`;
+}
+function buildDocumentFileName(v, ext){
+    return `${formatDocTimestamp()}_${safeFilePart(v?.carico?.cliente)}_${safeFilePart(v?.scarico?.cliente)}.${ext}`;
+}
+function avviaDocumentoViaggio(id){
+    const v=findViaggioById(id); if(!v||!v.scarico){alert("Completa prima il viaggio con lo scarico.");return;}
+    if(!isDriveConfigured()){alert("Configura Google Drive nella sezione Import/Export prima di acquisire il documento.");return;}
+    if(!isDriveTokenValid()){alert("Collega Google Drive dalla sezione Import/Export e poi riprova. Serve una connessione Drive attiva per salvare il documento.");return;}
+    docTripActiveId=String(id); const input=document.getElementById("doc-trip-camera"); if(input){input.value="";input.click();}
+}
+function apriDocumentoViaggio(id){
+    const v=findViaggioById(id), doc=v?.documentoViaggio;
+    if(!doc?.driveId){return;}
+    window.open(`https://drive.google.com/file/d/${encodeURIComponent(doc.driveId)}/view`,"_blank","noopener");
+}
+
+async function imageFileToCanvas(file,maxDim=1800){
+    const bmp=await createImageBitmap(file); let w=bmp.width,h=bmp.height;
+    const scale=Math.min(1,maxDim/Math.max(w,h)); w=Math.max(1,Math.round(w*scale));h=Math.max(1,Math.round(h*scale));
+    const c=document.createElement("canvas");c.width=w;c.height=h;const ctx=c.getContext("2d",{alpha:false});ctx.drawImage(bmp,0,0,w,h);bmp.close?.();return c;
+}
+function canvasToBlobAsync(canvas,type,quality){ return new Promise(resolve=>canvas.toBlob(resolve,type,quality)); }
+async function compressDocumentImage(file){
+    const canvas=await imageFileToCanvas(file,1800);
+    let blob=await canvasToBlobAsync(canvas,"image/webp",0.78), mime="image/webp", ext="webp";
+    if(!blob||blob.size<1000){blob=await canvasToBlobAsync(canvas,"image/jpeg",0.80);mime="image/jpeg";ext="jpg";}
+    return {blob,mime,ext,width:canvas.width,height:canvas.height,canvas};
+}
+function analyzeDocumentQuality(canvas){
+    const max=640, scale=Math.min(1,max/Math.max(canvas.width,canvas.height));
+    const w=Math.max(1,Math.round(canvas.width*scale)),h=Math.max(1,Math.round(canvas.height*scale));
+    const c=document.createElement("canvas");c.width=w;c.height=h;const ctx=c.getContext("2d",{willReadFrequently:true,alpha:false});ctx.drawImage(canvas,0,0,w,h);
+    const d=ctx.getImageData(0,0,w,h).data; const n=w*h; const gray=new Float32Array(n); let sum=0,sum2=0;
+    for(let i=0,p=0;i<d.length;i+=4,p++){const g=.299*d[i]+.587*d[i+1]+.114*d[i+2];gray[p]=g;sum+=g;sum2+=g*g;}
+    const mean=sum/n, contrast=Math.sqrt(Math.max(0,sum2/n-mean*mean));
+    let lapSum=0,lapSum2=0,count=0,edgeCount=0;
+    for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+      const i=y*w+x; const lap=4*gray[i]-gray[i-1]-gray[i+1]-gray[i-w]-gray[i+w]; lapSum+=lap;lapSum2+=lap*lap;count++; if(Math.abs(lap)>28)edgeCount++;
+    }
+    const lm=count?lapSum/count:0; const sharpness=count?Math.max(0,lapSum2/count-lm*lm):0; const edgeDensity=count?edgeCount/count:0;
+    const problems=[];
+    if(mean<48) problems.push("foto troppo scura");
+    if(mean>222) problems.push("foto troppo chiara");
+    if(contrast<24) problems.push("contrasto insufficiente");
+    if(sharpness<85) problems.push("foto probabilmente sfocata o mossa");
+    if(edgeDensity<0.018) problems.push("testo/dettagli poco leggibili");
+    return {ok:problems.length===0,problems,mean,contrast,sharpness,edgeDensity};
+}
+function closeDocumentPreview(){
+    const ov=document.getElementById("doc-quality-overlay");ov?.classList.remove("open");ov?.setAttribute("aria-hidden","true");
+    if(docTripObjectUrl){URL.revokeObjectURL(docTripObjectUrl);docTripObjectUrl="";} docTripProcessed=null;
+}
+function showDocumentPreview(proc,quality){
+    docTripProcessed={...proc,quality};
+    const ov=document.getElementById("doc-quality-overlay"),img=document.getElementById("doc-quality-preview"),sum=document.getElementById("doc-quality-summary"),confirmBtn=document.getElementById("doc-quality-confirm"),progress=document.getElementById("doc-upload-progress");
+    if(docTripObjectUrl)URL.revokeObjectURL(docTripObjectUrl); docTripObjectUrl=URL.createObjectURL(proc.blob); if(img)img.src=docTripObjectUrl;
+    if(sum){sum.className="doc-quality-summary "+(quality.ok?"ok":"err");sum.innerHTML=quality.ok?`✅ Foto valida: nitidezza, luminosità e contrasto sufficienti.<br><small>${proc.width}×${proc.height} · ${(proc.blob.size/1024).toFixed(0)} KB · ${proc.mime}</small>`:`⚠️ Foto da rifare: ${quality.problems.join(", ")}.`;}
+    if(confirmBtn)confirmBtn.disabled=!quality.ok; if(progress)progress.textContent=""; ov?.classList.add("open");ov?.setAttribute("aria-hidden","false");
+}
+async function handleDocumentCapture(file){
+    try{const proc=await compressDocumentImage(file), quality=analyzeDocumentQuality(proc.canvas); delete proc.canvas; showDocumentPreview(proc,quality);}catch(err){console.error(err);alert("Impossibile analizzare la foto. Rifai lo scatto.");}
+}
+async function uploadDocumentToDrive(v,proc){
+    if(!isDriveTokenValid())throw new Error("Google Drive non è più collegato. Ricollegalo e riprova.");
+    const folder=await ensureDriveDocumentsFolder(); const name=buildDocumentFileName(v,proc.ext);
+    const boundary="torabook_"+Date.now().toString(36)+Math.random().toString(36).slice(2);
+    const metadata={name,mimeType:proc.mime,parents:[folder.id],appProperties:{torabook_documento_viaggio:"1",viaggio_id:String(v.id||"")}};
+    const pre=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: ${proc.mime}\r\n\r\n`;
+    const post=`\r\n--${boundary}--`;
+    const body=new Blob([pre,proc.blob,post],{type:`multipart/related; boundary=${boundary}`});
+    const r=await driveFetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,size,createdTime,webViewLink",{method:"POST",headers:{"Content-Type":`multipart/related; boundary=${boundary}`},body});
+    return await r.json();
+}
+async function shareDocument(proc,name){
+    try{
+      const file=new File([proc.blob],name,{type:proc.mime,lastModified:Date.now()});
+      if(navigator.canShare?.({files:[file]}) && navigator.share){await navigator.share({files:[file],title:"Documento viaggio ToraBook",text:"Documento viaggio ToraBook"});return true;}
+      if(navigator.share){await navigator.share({title:"Documento viaggio ToraBook",text:"Documento salvato su Google Drive."});return true;}
+      alert("Documento salvato su Drive. La condivisione diretta non è disponibile su questo browser.");return false;
+    }catch(err){ if(err?.name!=="AbortError") console.warn("Condivisione documento",err); return false; }
+}
+async function confirmDocumentUpload(){
+    const v=findViaggioById(docTripActiveId),proc=docTripProcessed; if(!v||!proc||!proc.quality?.ok)return;
+    const progress=document.getElementById("doc-upload-progress"),btn=document.getElementById("doc-quality-confirm"); if(btn)btn.disabled=true;
+    try{
+      if(progress)progress.textContent="Salvataggio in KnightTrucker/DocumentiViaggi…";
+      const uploaded=await uploadDocumentToDrive(v,proc); const name=uploaded.name||buildDocumentFileName(v,proc.ext);
+      v.documentoViaggio={driveId:uploaded.id,name,mimeType:uploaded.mimeType||proc.mime,size:Number(uploaded.size||proc.blob.size),capturedAt:syncNow(),folder:"KnightTrucker/DocumentiViaggi",webViewLink:uploaded.webViewLink||""};
+      touchRecord(v);saveToLocalStorage();renderViaggiTable();
+      if(progress)progress.textContent="✅ Salvato su Drive. Apro la condivisione…";
+      const shareProc={...proc}; closeDocumentPreview(); await shareDocument(shareProc,name);
+    }catch(err){console.error(err);if(progress)progress.textContent="Errore: "+(err.message||err);if(btn)btn.disabled=false;}
+}
+
+document.getElementById("doc-trip-camera")?.addEventListener("change",e=>{const f=e.target.files?.[0];if(f)handleDocumentCapture(f);});
+document.getElementById("doc-quality-retake")?.addEventListener("click",()=>{closeDocumentPreview();document.getElementById("doc-trip-camera")?.click();});
+document.getElementById("doc-quality-cancel")?.addEventListener("click",closeDocumentPreview);
+document.getElementById("doc-quality-confirm")?.addEventListener("click",confirmDocumentUpload);
 
 /* ============================================================
    VIAGGI — POPUP ABBINAMENTO
@@ -2281,6 +2428,10 @@ const GOOGLE_DRIVE_BACKUP_FOLDER_ID_KEY = "DIARIO_DRIVE_BACKUP_FOLDER_ID";
 const GOOGLE_DRIVE_BACKUP_FOLDER_NAME = "Backup";
 const GOOGLE_DRIVE_BACKUP_APP_KEY = "toradiario_backup_folder";
 const GOOGLE_DRIVE_BACKUP_APP_VALUE = "weekly";
+const GOOGLE_DRIVE_DOCS_FOLDER_ID_KEY = "DIARIO_DRIVE_DOCS_FOLDER_ID";
+const GOOGLE_DRIVE_DOCS_FOLDER_NAME = "DocumentiViaggi";
+const GOOGLE_DRIVE_DOCS_APP_KEY = "toradiario_docs_folder";
+const GOOGLE_DRIVE_DOCS_APP_VALUE = "viaggi";
 const GOOGLE_DRIVE_LAST_REMOTE_MODIFIED_KEY = "DIARIO_DRIVE_LAST_REMOTE_MODIFIED";
 const GOOGLE_DRIVE_LAST_SYNC_AT_KEY = "DIARIO_DRIVE_LAST_SYNC_AT";
 const GOOGLE_DRIVE_LAST_LOCAL_CHANGE_KEY = "DIARIO_LAST_LOCAL_CHANGE_AT";
@@ -2292,6 +2443,7 @@ let driveTokenExpiresAt = 0;
 let driveFileId = localStorage.getItem(GOOGLE_DRIVE_FILE_ID_KEY) || "";
 let driveFolderId = localStorage.getItem(GOOGLE_DRIVE_FOLDER_ID_KEY) || "";
 let driveBackupFolderId = localStorage.getItem(GOOGLE_DRIVE_BACKUP_FOLDER_ID_KEY) || "";
+let driveDocsFolderId = localStorage.getItem(GOOGLE_DRIVE_DOCS_FOLDER_ID_KEY) || "";
 let drivePendingAction = null;
 let driveAutoSyncEnabled = false;
 let driveAutoSyncTimer = null;
@@ -2331,7 +2483,7 @@ function updateDriveSyncMeta(){
     let state;
     if(!driveRemoteVerifiedThisSession && isDriveConfigured()) state=s.pending?"🟠 Modifiche locali presenti · Drive da verificare":"🟡 Drive da verificare su questo dispositivo";
     else state=s.pending?"🟠 Modifiche locali non ancora sincronizzate":(s.lastSync?`🟢 Ultima sincronizzazione: ${s.lastSync.toLocaleString("it-IT")}`:"⚪ Nessuna sincronizzazione registrata");
-    el.textContent=`${state} · Backup storico ogni 7 giorni in KnightTrucker/Backup.`;
+    el.textContent=`${state} · Backup storico ogni 7 giorni in KnightTrucker/Backup · Documenti viaggio in KnightTrucker/DocumentiViaggi.`;
 }
 function remoteChangedSinceKnown(file){
     const known=Date.parse(localStorage.getItem(GOOGLE_DRIVE_LAST_REMOTE_MODIFIED_KEY)||"")||0;
@@ -2590,6 +2742,32 @@ async function ensureDriveBackupFolder(){
     const r=await driveFetch("https://www.googleapis.com/drive/v3/files?fields=id,name,mimeType,modifiedTime,parents",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:GOOGLE_DRIVE_BACKUP_FOLDER_NAME,mimeType:GOOGLE_DRIVE_FOLDER_MIME,parents:[root.id],appProperties:{[GOOGLE_DRIVE_BACKUP_APP_KEY]:GOOGLE_DRIVE_BACKUP_APP_VALUE}})});
     const f=await r.json();driveBackupFolderId=f.id;localStorage.setItem(GOOGLE_DRIVE_BACKUP_FOLDER_ID_KEY,driveBackupFolderId);return f;
 }
+
+async function ensureDriveDocumentsFolder(){
+    const root=await ensureDriveFolder();
+    if(driveDocsFolderId){
+        try{
+            const f=await getDriveMetadata(driveDocsFolderId,"id,name,mimeType,trashed,parents");
+            if(f&&!f.trashed&&f.mimeType===GOOGLE_DRIVE_FOLDER_MIME&&f.name===GOOGLE_DRIVE_DOCS_FOLDER_NAME&&(f.parents||[]).includes(root.id)) return f;
+        }catch{}
+        driveDocsFolderId=""; localStorage.removeItem(GOOGLE_DRIVE_DOCS_FOLDER_ID_KEY);
+    }
+    const rid=escapeDriveQueryValue(root.id), name=escapeDriveQueryValue(GOOGLE_DRIVE_DOCS_FOLDER_NAME);
+    const qs=[
+      `'${rid}' in parents and mimeType = '${GOOGLE_DRIVE_FOLDER_MIME}' and trashed = false and appProperties has { key='${GOOGLE_DRIVE_DOCS_APP_KEY}' and value='${GOOGLE_DRIVE_DOCS_APP_VALUE}' }`,
+      `'${rid}' in parents and name = '${name}' and mimeType = '${GOOGLE_DRIVE_FOLDER_MIME}' and trashed = false`
+    ];
+    for(const q of qs){
+      const f=await searchDriveFiles(q,"files(id,name,mimeType,modifiedTime,trashed,parents)");
+      if(f.length){driveDocsFolderId=f[0].id;localStorage.setItem(GOOGLE_DRIVE_DOCS_FOLDER_ID_KEY,driveDocsFolderId);return f[0];}
+    }
+    const r=await driveFetch("https://www.googleapis.com/drive/v3/files?fields=id,name,mimeType,modifiedTime,parents",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({name:GOOGLE_DRIVE_DOCS_FOLDER_NAME,mimeType:GOOGLE_DRIVE_FOLDER_MIME,parents:[root.id],appProperties:{[GOOGLE_DRIVE_DOCS_APP_KEY]:GOOGLE_DRIVE_DOCS_APP_VALUE}})
+    });
+    const f=await r.json(); driveDocsFolderId=f.id; localStorage.setItem(GOOGLE_DRIVE_DOCS_FOLDER_ID_KEY,driveDocsFolderId); return f;
+}
+
 async function maybeCreateWeeklyDriveBackup(){
     const folder=await ensureDriveBackupFolder(); const fid=escapeDriveQueryValue(folder.id);
     const files=await searchDriveFiles(`'${fid}' in parents and name contains 'DIARIO_BACKUP_' and trashed = false`);
@@ -2812,6 +2990,7 @@ async function reconcileDriveData({reason="manual"}={}) {
         }
 
         let backup=false;try{backup=await maybeCreateWeeklyDriveBackup();}catch(err){console.warn("Backup settimanale Drive non riuscito",err);}
+        try{await ensureDriveDocumentsFolder();}catch(err){console.warn("Cartella DocumentiViaggi non disponibile",err);}
         driveAutoSyncEnabled=true;driveRemoteVerifiedThisSession=true;setDriveConnectedUI(true);
         const labels={download:"Drive era più recente: dati aggiornati automaticamente su questo dispositivo.",merge:"Modifiche di più dispositivi unite e risalvate su Drive.",upload:"Modifiche di questo dispositivo inviate a Drive.",none:"Questo dispositivo e Drive erano già allineati."};
         setDriveStatus(`✅ ${labels[mode]}${backup?" Backup settimanale creato.":""} Sincronizzazione multi-dispositivo attiva.`,"ok");
@@ -3706,7 +3885,7 @@ enableFullscreenGraph(graficoImpegno);
 
 <script id="torabook-version-script-v1">
 (() => {
-  const APP_VERSION = "1.0";
+  const APP_VERSION = "1.1";
   window.TORABOOK_VERSION = APP_VERSION;
   const hotspot = document.getElementById("torabook-version-hotspot");
   const overlay = document.getElementById("torabook-version-overlay");

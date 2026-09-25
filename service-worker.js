@@ -1,4 +1,4 @@
-const CACHE_NAME = "torabook-v1.0";
+const CACHE_NAME = "torabook-v1.1-documenti-viaggi";
 const PRECACHE = [
   "./",
   "./index.html",
