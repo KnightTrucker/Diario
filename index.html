@@ -401,7 +401,7 @@ table thead th {
   <div class="torabook-version-card" role="dialog" aria-modal="true" aria-labelledby="torabook-version-title">
     <button type="button" class="torabook-version-close" id="torabook-version-close" aria-label="Chiudi">×</button>
     <div class="torabook-version-logo" id="torabook-version-title">ToraBook</div>
-    <div class="torabook-version-number">Versione 1.5</div>
+    <div class="torabook-version-number">Versione 1.6</div>
     <p class="torabook-version-sub">Diario di viaggio / logbook per camionisti<br>Powered by Andrea ZOLLET</p>
     <button type="button" class="primary torabook-version-ok" id="torabook-version-ok">OK</button>
   </div>
@@ -1755,20 +1755,17 @@ function renderViaggiTable() {
         if (typeof v.rapportino_esporta !== "boolean") v.rapportino_esporta = true;
 
         const tr = document.createElement("tr");
-        const scaricoRapportino = resolveScaricoViaggio(v);
-        const statoRapportino = !scaricoRapportino
-            ? `<span style="opacity:.65;">—</span>`
-            : (v.rapportino_esportato === true
-                ? `<div style="display:flex;flex-direction:column;gap:8px;min-width:130px;">
-                     <span>✓ Esportato</span>
-                     <button class="secondary" onclick="resetRapportinoFlag(${index})">Rendi riesportabile</button>
-                   </div>`
-                : `<label style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
-                     <input type="checkbox" ${v.rapportino_esporta !== false ? "checked" : ""}
-                            onchange="setRapportinoEsporta(${index}, this.checked)"
-                            style="width:auto;margin:0;">
-                     <span>Esporta</span>
-                   </label>`);
+        const statoRapportino = v.rapportino_esportato === true
+            ? `<div style="display:flex;flex-direction:column;gap:8px;min-width:130px;">
+                 <span>✓ Esportato</span>
+                 <button class="secondary" onclick="resetRapportinoFlag(${index})">Rendi riesportabile</button>
+               </div>`
+            : `<label style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
+                 <input type="checkbox" ${v.rapportino_esporta !== false ? "checked" : ""}
+                        onchange="setRapportinoEsporta(${index}, this.checked)"
+                        style="width:auto;margin:0;">
+                 <span>Esporta</span>
+               </label>`;
 
         tr.innerHTML = `
             <td>${formatTableDateIT(v.carico?.data || "")}</td>
@@ -1809,6 +1806,7 @@ function resetRapportinoFlag(i) {
     touchRecord(v);
     saveToLocalStorage();
     renderViaggiTable();
+    renderDashboard();
     alert("Il viaggio è di nuovo disponibile per il prossimo rapportino.");
 }
 
@@ -3133,7 +3131,7 @@ function renderDashboard(){
  const dayState=todayRec?(todayRec.ora_chiusura?'CHIUSA':'APERTA'):'NON INIZIATA';
  const tripText=lastOpen?(lastOpen.carico?.cliente||lastOpen.carico?.luogo||'APERTO'):'NESSUNO';
  const salCentesimi=(DIARIO.stipendi||[]).filter(r=>((r.mese_riferimento||r.data||'').startsWith(ym))).reduce((s,r)=>s+euroToCentesimi(r.importo),0);
- const viaggiDaEsportare=getViaggiDaEsportareRapportino().length;
+ const viaggiDaEsportare=getViaggiInCodaRapportino().length;
  document.getElementById('dashboard-output').innerHTML=[
    actionCard('Oggi',formatDateIT(today),'Apri Giornaliero','tab-giornaliero'),
    actionCard('Giornata',dayState,todayRec?`${todayRec.ora_apertura||'--:--'} → ${todayRec.ora_chiusura||'--:--'}`:'Tocca per iniziare','tab-giornaliero'),
@@ -3803,11 +3801,17 @@ function resolveScaricoViaggio(v) {
     return null;
 }
 
-function getViaggiDaEsportareRapportino() {
+function getViaggiInCodaRapportino() {
     return (DIARIO.viaggi || []).filter(v =>
-        v && v.carico && resolveScaricoViaggio(v) &&
+        v &&
         v.rapportino_esportato !== true &&
         v.rapportino_esporta !== false
+    );
+}
+
+function getViaggiDaEsportareRapportino() {
+    return getViaggiInCodaRapportino().filter(v =>
+        v.carico && resolveScaricoViaggio(v)
     );
 }
 
@@ -3816,7 +3820,7 @@ function checkRapportinoStartupWarning() {
         if (sessionStorage.getItem(RAPPORTINO_WARNING_SESSION_KEY) === "1") return;
     } catch (_) {}
 
-    const count = getViaggiDaEsportareRapportino().length;
+    const count = getViaggiInCodaRapportino().length;
     if (count < 24) return;
 
     try { sessionStorage.setItem(RAPPORTINO_WARNING_SESSION_KEY, "1"); } catch (_) {}
@@ -3918,7 +3922,7 @@ enableFullscreenGraph(graficoImpegno);
   });
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("./service-worker.js?v=15", {
+      const registration = await navigator.serviceWorker.register("./service-worker.js?v=16", {
         scope: "./",
         updateViaCache: "none"
       });
