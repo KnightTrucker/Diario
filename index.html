@@ -385,6 +385,31 @@ table thead th {
 }
 </style>
 
+
+<style id="torabook-v17-toranavy-clienti">
+.toranavy-client-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:7px;
+}
+.toranavy-client-refresh{
+  width:auto !important;
+  min-height:36px !important;
+  padding:7px 10px !important;
+  font-size:12px !important;
+}
+.toranavy-client-status{
+  color:#93afc4;
+  font-size:11px;
+  line-height:1.3;
+}
+.toranavy-client-status.ok{color:#70db9a}
+.toranavy-client-status.warn{color:#ffc46c}
+.toranavy-client-status.err{color:#ff8b95}
+</style>
+
 </head>
 
 <body>
@@ -401,7 +426,7 @@ table thead th {
   <div class="torabook-version-card" role="dialog" aria-modal="true" aria-labelledby="torabook-version-title">
     <button type="button" class="torabook-version-close" id="torabook-version-close" aria-label="Chiudi">×</button>
     <div class="torabook-version-logo" id="torabook-version-title">ToraBook</div>
-    <div class="torabook-version-number">Versione 1.6</div>
+    <div class="torabook-version-number">Versione 1.7</div>
     <p class="torabook-version-sub">Diario di viaggio / logbook per camionisti<br>Powered by Andrea ZOLLET</p>
     <button type="button" class="primary torabook-version-ok" id="torabook-version-ok">OK</button>
   </div>
@@ -546,6 +571,10 @@ table thead th {
                 <label>Cliente</label>
                 <input type="text" id="c_cliente" list="lista-clienti-carichi" autocomplete="off">
                 <datalist id="lista-clienti-carichi"></datalist>
+                <div class="toranavy-client-row">
+                    <button type="button" class="secondary toranavy-client-refresh" id="btn-refresh-toranavy-clienti">🔄 Clienti ToraNavy</button>
+                    <span id="toranavy-client-status" class="toranavy-client-status">Rubrica ToraNavy: non caricata</span>
+                </div>
 
                 <label>Semirimorchio</label>
                 <input type="text" id="c_semirimorchio" list="lista-semirimorchi-carichi" autocomplete="off">
@@ -1440,11 +1469,14 @@ function aggiornaSuggerimentiCarichi() {
     const listaSemirimorchi = document.getElementById("lista-semirimorchi-carichi");
     if (!listaClienti || !listaLuoghi || !listaSemirimorchi) return;
 
-    const clienti = [...new Set(
-        (DIARIO.carichi_scarichi || [])
-            .map(r => (r.cliente || "").trim())
-            .filter(Boolean)
-    )].sort((a,b) => a.localeCompare(b, "it", {sensitivity:"base"}));
+    const clientiLocali = (DIARIO.carichi_scarichi || [])
+        .map(r => (r.cliente || "").trim())
+        .filter(Boolean);
+    const clientiToraNavy = (toraNavyClients || [])
+        .map(r => (r.cliente || "").trim())
+        .filter(Boolean);
+    const clienti = [...new Set(clientiLocali.concat(clientiToraNavy))]
+        .sort((a,b) => a.localeCompare(b, "it", {sensitivity:"base"}));
 
     const luoghi = [...new Set(
         (DIARIO.carichi_scarichi || [])
@@ -1459,7 +1491,11 @@ function aggiornaSuggerimentiCarichi() {
     )].sort((a,b) => a.localeCompare(b, "it", {sensitivity:"base"}));
 
     listaClienti.innerHTML = clienti
-        .map(v => `<option value="${escapeHtml(v)}"></option>`)
+        .map(v => {
+            const d = (toraNavyClients || []).find(x => normalizeClientKey(x.cliente) === normalizeClientKey(v));
+            const label = d ? [d.citta, d.nazione].filter(Boolean).join(" · ") : "";
+            return `<option value="${escapeHtml(v)}"${label ? ` label="${escapeHtml(label)}"` : ""}></option>`;
+        })
         .join("");
 
     listaLuoghi.innerHTML = luoghi
@@ -1470,6 +1506,18 @@ function aggiornaSuggerimentiCarichi() {
         .map(v => `<option value="${escapeHtml(v)}"></option>`)
         .join("");
 }
+
+
+document.getElementById("c_cliente")?.addEventListener("change", applyToraNavyClientSelection);
+document.getElementById("c_cliente")?.addEventListener("input", () => {
+    // Su Android il datalist può valorizzare direttamente il campo:
+    // se c'è una corrispondenza esatta, compila subito il luogo.
+    applyToraNavyClientSelection();
+});
+document.getElementById("btn-refresh-toranavy-clienti")?.addEventListener("click", () => {
+    if (isDriveTokenValid()) downloadToraNavyClientsFromDrive();
+    else requestDriveAccess("toranavy_clients");
+});
 
 /* ============================================================
    CARICHI / SCARICHI — RENDER TABELLA
@@ -2457,6 +2505,9 @@ const GOOGLE_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 const GOOGLE_DRIVE_FOLDER_NAME = "KnightTrucker";
 const GOOGLE_DRIVE_FOLDER_MIME = "application/vnd.google-apps.folder";
 const GOOGLE_DRIVE_FILENAME = "DIARIO.json";
+const TORANAVY_DRIVE_FILENAME = "Torakike_Navy.json";
+const TORANAVY_CLIENTS_CACHE_KEY = "TORABOOK_TORANAVY_CLIENTS_CACHE_V1";
+let toraNavyClients = [];
 const GOOGLE_DRIVE_APP_KEY = "toradiario";
 const GOOGLE_DRIVE_APP_VALUE = "main";
 const GOOGLE_DRIVE_FOLDER_APP_KEY = "toradiario_folder";
@@ -2668,6 +2719,7 @@ function initDriveTokenClient() {
             drivePendingAction = null;
             try {
                 if (action === "sync") await syncDiarioToDrive();
+                else if (action === "toranavy_clients") await downloadToraNavyClientsFromDrive();
                 else await connectAndLoadDrive();
             } catch (err) {
                 console.error("Drive action error", err);
@@ -2703,6 +2755,112 @@ async function driveFetch(url, options={}) {
 function escapeDriveQueryValue(value) {
     return String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
+
+function normalizeToraNavyClientRow(d) {
+    if (!d || typeof d !== "object") return null;
+    const cliente = String(d.cliente || d.name || "").trim();
+    if (!cliente) return null;
+    return {
+        id: String(d.id || "").trim(),
+        cliente,
+        citta: String(d.citta || "").trim(),
+        nazione: String(d.nazione || "").trim(),
+        indirizzo: String(d.indirizzo || "").trim(),
+        gps: String(d.gps || "").trim()
+    };
+}
+
+function loadCachedToraNavyClients() {
+    try {
+        const raw = JSON.parse(localStorage.getItem(TORANAVY_CLIENTS_CACHE_KEY) || "[]");
+        toraNavyClients = (Array.isArray(raw) ? raw : [])
+            .map(normalizeToraNavyClientRow)
+            .filter(Boolean);
+    } catch {
+        toraNavyClients = [];
+    }
+    updateToraNavyClientStatus(
+        toraNavyClients.length
+            ? `${toraNavyClients.length} clienti ToraNavy disponibili`
+            : "Rubrica ToraNavy: non caricata",
+        toraNavyClients.length ? "ok" : ""
+    );
+}
+
+function saveCachedToraNavyClients(rows) {
+    toraNavyClients = (Array.isArray(rows) ? rows : [])
+        .map(normalizeToraNavyClientRow)
+        .filter(Boolean);
+    localStorage.setItem(TORANAVY_CLIENTS_CACHE_KEY, JSON.stringify(toraNavyClients));
+    aggiornaSuggerimentiCarichi();
+    updateToraNavyClientStatus(`${toraNavyClients.length} clienti ToraNavy disponibili`, "ok");
+}
+
+function updateToraNavyClientStatus(message, type="") {
+    const el = document.getElementById("toranavy-client-status");
+    if (!el) return;
+    el.textContent = message;
+    el.className = "toranavy-client-status" + (type ? " " + type : "");
+}
+
+async function findToraNavyDriveFile() {
+    const folder = await ensureDriveFolder();
+    const folderId = escapeDriveQueryValue(folder.id);
+    const fileName = escapeDriveQueryValue(TORANAVY_DRIVE_FILENAME);
+    const files = await searchDriveFiles(
+        `'${folderId}' in parents and name = '${fileName}' and trashed = false`,
+        "files(id,name,mimeType,modifiedTime,size,trashed,parents)"
+    );
+    return files[0] || null;
+}
+
+async function downloadToraNavyClientsFromDrive({silent=false}={}) {
+    if (!isDriveTokenValid()) {
+        if (!silent) requestDriveAccess("toranavy_clients");
+        return false;
+    }
+    try {
+        if (!silent) updateToraNavyClientStatus("Leggo la rubrica ToraNavy da Drive…", "warn");
+        const file = await findToraNavyDriveFile();
+        if (!file) {
+            updateToraNavyClientStatus("Torakike_Navy.json non trovato in KnightTrucker", "err");
+            return false;
+        }
+        const r = await driveFetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.id)}?alt=media`);
+        const data = await r.json();
+        const rows = Array.isArray(data) ? data : (data && Array.isArray(data.db) ? data.db : []);
+        saveCachedToraNavyClients(rows);
+        return true;
+    } catch (err) {
+        console.warn("Rubrica ToraNavy non caricata", err);
+        updateToraNavyClientStatus("Impossibile leggere la rubrica ToraNavy", "err");
+        return false;
+    }
+}
+
+function normalizeClientKey(s) {
+    return String(s || "").trim().toLocaleLowerCase("it-IT");
+}
+
+function findToraNavyClientByName(name) {
+    const key = normalizeClientKey(name);
+    if (!key) return null;
+    const matches = (toraNavyClients || []).filter(d => normalizeClientKey(d.cliente) === key);
+    if (!matches.length) return null;
+    const luogoCorrente = normalizeClientKey(document.getElementById("c_luogo")?.value || "");
+    return matches.find(d => normalizeClientKey(d.citta) === luogoCorrente) || matches[0];
+}
+
+function applyToraNavyClientSelection() {
+    const input = document.getElementById("c_cliente");
+    const luogo = document.getElementById("c_luogo");
+    if (!input || !luogo) return;
+    const d = findToraNavyClientByName(input.value);
+    if (!d) return;
+    // Requisito: Luogo = città/località del cliente ToraNavy.
+    if (d.citta) luogo.value = d.citta;
+}
+
 
 async function getDriveMetadata(fileId, fields="id,name,mimeType,modifiedTime,trashed,parents") {
     const url = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=${encodeURIComponent(fields)}`;
@@ -3042,6 +3200,7 @@ async function reconcileDriveData({reason="manual"}={}) {
 async function connectAndLoadDrive() {
     if(!isDriveTokenValid()){requestDriveAccess("connect");return;}
     await reconcileDriveData({reason:"connect"});
+    try { await downloadToraNavyClientsFromDrive({silent:true}); } catch {}
 }
 
 async function syncDiarioToDrive() {
@@ -3862,6 +4021,7 @@ function preparaGraficaTabelle() {
 }
 
 function initApp() {
+    loadCachedToraNavyClients();
     loadFromLocalStorage();
     normalizeDiarioData();
     purgeExpiredTrash(false);
@@ -3922,7 +4082,7 @@ enableFullscreenGraph(graficoImpegno);
   });
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("./service-worker.js?v=16", {
+      const registration = await navigator.serviceWorker.register("./service-worker.js?v=17", {
         scope: "./",
         updateViaCache: "none"
       });
