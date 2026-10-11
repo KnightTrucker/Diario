@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "database_version": "2026.10.11-1002Z",
+  "database_version": "2026.10.11-1020Z",
   "year": 2026,
   "verified_at": "2026-10-11",
   "timezone": "Europe/Paris",
@@ -38836,7 +38836,7 @@
       "source": "CH_ASTRA"
     }
   ],
-  "checked_at": "2026-10-11T10:02:53Z",
+  "checked_at": "2026-10-11T10:20:25Z",
   "years_available": [
     2026,
     2027
@@ -38844,42 +38844,42 @@
   "coverage_through": "2027-12-31",
   "source_status": {
     "IT-2026": {
-      "checked_at": "2026-10-11T10:02:43Z",
+      "checked_at": "2026-10-11T10:20:17Z",
       "status": "not_found",
       "url": null
     },
     "IT-2027": {
-      "checked_at": "2026-10-11T10:02:50Z",
+      "checked_at": "2026-10-11T10:20:21Z",
       "status": "not_found",
       "url": null
     },
     "FR-2026": {
-      "checked_at": "2026-10-11T10:02:52Z",
+      "checked_at": "2026-10-11T10:20:24Z",
       "status": "not_found",
       "url": null
     },
     "FR-2027": {
-      "checked_at": "2026-10-11T10:02:52Z",
+      "checked_at": "2026-10-11T10:20:24Z",
       "status": "not_found",
       "url": null
     },
     "AT-2026": {
-      "checked_at": "2026-10-11T10:02:53Z",
+      "checked_at": "2026-10-11T10:20:24Z",
       "status": "not_found",
       "url": null
     },
     "AT-2027": {
-      "checked_at": "2026-10-11T10:02:53Z",
+      "checked_at": "2026-10-11T10:20:25Z",
       "status": "not_found",
       "url": null
     },
     "ES-2026": {
-      "checked_at": "2026-10-11T10:02:53Z",
+      "checked_at": "2026-10-11T10:20:25Z",
       "status": "not_found",
       "url": null
     },
     "ES-2027": {
-      "checked_at": "2026-10-11T10:02:53Z",
+      "checked_at": "2026-10-11T10:20:25Z",
       "status": "not_found",
       "url": null
     }
