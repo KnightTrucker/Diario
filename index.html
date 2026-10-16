@@ -410,6 +410,56 @@ table thead th {
 .toranavy-client-status.err{color:#ff8b95}
 </style>
 
+
+<style id="torabook-v18-scadenzario">
+/* Disposizione tasti v1.8: Home su tutta la riga, poi 3 righe da 3 (tutte le orientazioni) */
+.tabs{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;max-width:720px !important;width:100% !important;margin:0 auto 16px !important;gap:10px !important;justify-content:stretch !important}
+.tabs > .tab-btn{width:100% !important;min-width:0 !important;margin:0 !important}
+.tabs > [data-tab="tab-dashboard"]   {grid-row:1 !important;grid-column:1 / span 3 !important;flex-direction:row !important;min-height:60px !important;gap:10px !important}
+.tabs > [data-tab="tab-giornaliero"]{grid-row:2 !important;grid-column:1 !important}
+.tabs > [data-tab="tab-carichi"]     {grid-row:2 !important;grid-column:2 !important}
+.tabs > [data-tab="tab-viaggi"]      {grid-row:2 !important;grid-column:3 !important}
+.tabs > [data-tab="tab-stipendi"]    {grid-row:3 !important;grid-column:1 !important}
+.tabs > [data-tab="tab-scadenze"]    {grid-row:3 !important;grid-column:2 !important}
+.tabs > [data-tab="tab-hgv"]         {grid-row:3 !important;grid-column:3 !important}
+.tabs > [data-tab="tab-riassunto"]   {grid-row:4 !important;grid-column:1 !important}
+.tabs > [data-tab="tab-ricerca"]     {grid-row:4 !important;grid-column:2 !important}
+.tabs > [data-tab="tab-impexp"]      {grid-row:4 !important;grid-column:3 !important}
+@media(max-width:430px){.tabs{gap:8px !important}.tabs > [data-tab="tab-dashboard"]{min-height:54px !important}}
+.sc-type-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 14px}
+.sc-type-btn{padding:12px 10px;border-radius:12px;border:1px solid #31516d;background:#081827;color:#cfe0ee;font-weight:800;font-size:15px;cursor:pointer}
+.sc-type-btn.active{background:linear-gradient(135deg,#1678e8,#0c4fab);border-color:#3d97ff;color:#fff}
+.sc-only-lav{display:none}
+#form-scadenze.sc-lav .sc-only-doc{display:none}
+#form-scadenze.sc-lav .sc-only-lav{display:block}
+.sc-sub{margin:4px 0 8px;color:#8fb8d8;font-size:13px;font-weight:700}
+.sc-form-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.sc-form-actions button{font-size:16px;padding:12px 18px!important}
+.sc-list{display:grid;gap:10px;margin-top:10px}
+.sc-item{background:linear-gradient(145deg,#0b1d2d,#07131f);border:1px solid #31516d;border-left:5px solid #4a6378;border-radius:14px;padding:12px 14px}
+.sc-item.sc-scaduto{border-left-color:var(--red)}
+.sc-item.sc-warn{border-left-color:var(--orange)}
+.sc-item.sc-ok{border-left-color:var(--green)}
+.sc-item.sc-arch{opacity:.6}
+.sc-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sc-head b{font-size:16px}
+.sc-pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.02em;background:#2a3b4a;color:#cfdbe6}
+.sc-pill-scaduto{background:rgba(229,42,53,.2);color:#ff9aa2;border:1px solid var(--red)}
+.sc-pill-warn{background:rgba(240,128,0,.18);color:#ffc46c;border:1px solid var(--orange)}
+.sc-pill-ok{background:rgba(18,201,75,.15);color:#7ff0a4;border:1px solid var(--green)}
+.sc-meta{color:#9fb0c2;font-size:13px;margin-top:5px}
+.sc-line{font-size:14px;margin-top:6px;color:#e3edf6}
+.sc-line span{color:#9fb0c2}
+.sc-note{font-size:13px;color:#b9c8d4;margin-top:6px;white-space:pre-wrap}
+.sc-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.sc-actions button{padding:7px 11px!important;font-size:13px}
+.sc-filter-check{display:flex;align-items:center;gap:8px;color:#cfe0ee;font-size:14px;margin-bottom:10px}
+.sc-filter-check input{width:auto;margin:0}
+.sc-alert-list{text-align:left;margin:10px 0 0;padding:0;list-style:none}
+.sc-alert-list li{padding:7px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:14px}
+@media(max-width:430px){#sc-stats{grid-template-columns:repeat(2,minmax(0,1fr))}#sc-stats .dash-value{font-size:22px}}
+.sc-alert-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+</style>
 </head>
 
 <body>
@@ -426,7 +476,7 @@ table thead th {
   <div class="torabook-version-card" role="dialog" aria-modal="true" aria-labelledby="torabook-version-title">
     <button type="button" class="torabook-version-close" id="torabook-version-close" aria-label="Chiudi">×</button>
     <div class="torabook-version-logo" id="torabook-version-title">ToraBook</div>
-    <div class="torabook-version-number">Versione 1.7</div>
+    <div class="torabook-version-number">Versione 1.8</div>
     <p class="torabook-version-sub">Diario di viaggio / logbook per camionisti<br>Powered by Andrea ZOLLET</p>
     <button type="button" class="primary torabook-version-ok" id="torabook-version-ok">OK</button>
   </div>
@@ -443,6 +493,7 @@ table thead th {
     <button class="tab-btn" data-tab="tab-stipendi"><span class="tab-icon">💶</span><span>Stipendi</span></button>
     <button class="tab-btn" data-tab="tab-ricerca"><span class="tab-icon">🔎</span><span>Ricerca</span></button>
     <button class="tab-btn active" data-tab="tab-impexp"><span class="tab-icon">☁️</span><span>Import/Export</span></button>
+    <button class="tab-btn" data-tab="tab-scadenze"><span class="tab-icon">⏰</span><span>Scadenzario</span></button>
 </div>
 
 
@@ -854,6 +905,74 @@ table thead th {
     </table>
 </div>
 
+<!-- TAB SCADENZARIO (v1.8) -->
+<div id="tab-scadenze" class="tab-content">
+    <h2>Scadenzario</h2>
+    <div id="sc-stats" class="stats-grid"></div>
+
+    <form id="form-scadenze" onsubmit="return false">
+        <div id="sc-edit-banner" class="edit-banner"></div>
+        <div class="sc-type-switch">
+            <button type="button" class="sc-type-btn active" data-sc-tipo="DOCUMENTO">📄 Documento / scadenza</button>
+            <button type="button" class="sc-type-btn" data-sc-tipo="LAVORO">🔧 Lavoro sul camion</button>
+        </div>
+        <div class="row">
+            <div class="col">
+                <label>Categoria</label>
+                <select id="sc_categoria"></select>
+            </div>
+            <div class="col">
+                <label>Descrizione</label>
+                <input type="text" id="sc_descrizione" placeholder="es. Patente C+E, Cambio olio motore">
+            </div>
+            <div class="col">
+                <label>Mezzo / intestatario</label>
+                <input type="text" id="sc_mezzo" list="sc-mezzi-list" placeholder="Targa, oppure PERSONALE">
+                <datalist id="sc-mezzi-list"></datalist>
+            </div>
+        </div>
+
+        <div class="sc-only-doc">
+            <div class="row">
+                <div class="col"><label>Numero documento</label><input type="text" id="sc_numero"></div>
+                <div class="col"><label>Data di rilascio</label><input type="date" id="sc_data_rilascio"></div>
+                <div class="col"><label>Data di scadenza</label><input type="date" id="sc_data_scadenza"></div>
+            </div>
+        </div>
+
+        <div class="sc-only-lav">
+            <div class="row">
+                <div class="col"><label>Data del lavoro</label><input type="date" id="sc_data_lavoro"></div>
+                <div class="col"><label>Km al momento del lavoro</label><input type="number" id="sc_km_lavoro" min="0" step="1" inputmode="numeric"></div>
+                <div class="col"><label>Officina</label><input type="text" id="sc_officina"></div>
+                <div class="col"><label>Costo (€)</label><input type="number" id="sc_costo" min="0" step="0.01" inputmode="decimal"></div>
+            </div>
+            <div class="sc-sub">Prossimo intervento (facoltativo): a una data, a un chilometraggio, o entrambi</div>
+            <div class="row">
+                <div class="col"><label>Prossimo entro il</label><input type="date" id="sc_prossima_data"></div>
+                <div class="col"><label>Prossimo a km</label><input type="number" id="sc_prossimi_km" min="0" step="1" inputmode="numeric"></div>
+                <div class="col"><label>Avvisami a km di anticipo</label><input type="number" id="sc_preavviso_km" min="0" step="100" inputmode="numeric" placeholder="2000"></div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col"><label>Avvisami a giorni di anticipo</label><input type="number" id="sc_preavviso_giorni" min="0" step="1" inputmode="numeric" placeholder="30"></div>
+            <div class="col" style="flex:2 1 300px"><label>Note</label><input type="text" id="sc_note"></div>
+        </div>
+        <div class="sc-form-actions">
+            <button type="button" class="primary" id="btn-sc-save">Salva</button>
+            <button type="button" class="secondary" id="btn-sc-cancel" style="display:none">Annulla</button>
+        </div>
+    </form>
+
+    <div class="filter-bar">
+        <div><label>Mostra</label><select id="sc-f-tipo"><option value="TUTTI">Tutto</option><option value="DOCUMENTO">Solo documenti</option><option value="LAVORO">Solo lavori</option><option value="URGENTI">Solo scaduti e in scadenza</option></select></div>
+        <div><label>Mezzo</label><input type="text" id="sc-f-mezzo" list="sc-mezzi-list" placeholder="Tutti"></div>
+        <div><label class="sc-filter-check"><input type="checkbox" id="sc-f-arch"> Mostra archiviati</label></div>
+    </div>
+    <div id="sc-list" class="sc-list"></div>
+</div>
+
 <!-- TAB RICERCA -->
 <div id="tab-ricerca" class="tab-content">
     <h2>Ricerca</h2>
@@ -1043,6 +1162,7 @@ let DIARIO = {
     viaggi: [],
     security: { pinSalt: "", pinHash: "" },
     stipendi: [],
+    scadenze: [],
     cestino: []
 };
 
@@ -1088,6 +1208,7 @@ function normalizeDiarioSnapshot(input){
     if (!Array.isArray(d.carichi_scarichi)) d.carichi_scarichi=[];
     if (!Array.isArray(d.viaggi)) d.viaggi=[];
     if (!Array.isArray(d.stipendi)) d.stipendi=[];
+    if (!Array.isArray(d.scadenze)) d.scadenze=[];
     if (!Array.isArray(d.cestino)) d.cestino=[];
     if (!Array.isArray(d.sync_deleted)) d.sync_deleted=[];
     if (!d.sync_meta || typeof d.sync_meta!=="object") d.sync_meta={modifiedAt:SYNC_LEGACY_TIME,securityUpdatedAt:SYNC_LEGACY_TIME};
@@ -1098,6 +1219,8 @@ function normalizeDiarioSnapshot(input){
     d.giornaliero.forEach(r=>{ if(r&&!r.id) r.id=newRecordId("G"); ensureRecordMeta(r); });
     d.carichi_scarichi.forEach(r=>{ if(r&&!r.id) r.id=newRecordId("C"); ensureRecordMeta(r); });
     d.stipendi.forEach(r=>{ if(r&&!r.id) r.id=newRecordId("S"); ensureRecordMeta(r); });
+    d.scadenze=d.scadenze.filter(r=>r&&typeof r==="object");
+    d.scadenze.forEach(r=>{ if(!r.id) r.id=newRecordId("SC"); ensureRecordMeta(r); });
 
     d.viaggi.forEach(v=>{
         if(!v.id) v.id=newRecordId("V"); ensureRecordMeta(v);
@@ -1160,6 +1283,7 @@ function saveToLocalStorage(options={}) {
         if(document.getElementById("client-stats")) renderClientStats();
         if(document.getElementById("dashboard-output")) renderDashboard();
         if(document.getElementById("trash-list")) renderTrash();
+        if(document.getElementById("sc-list") && typeof renderScadenze==="function") renderScadenze();
         if(document.getElementById("c_trip_link")) renderOpenTripOptions();
     },0);
     if (!options.fromDrive && !options.skipDriveSync && typeof scheduleDriveAutoSync === "function") scheduleDriveAutoSync();
@@ -2581,7 +2705,7 @@ function remoteChangedSinceKnown(file){
     return !known || remote>known+1000;
 }
 function hasLocalPayload(d=DIARIO){
-    return ["giornaliero","carichi_scarichi","viaggi","stipendi","cestino"].some(k=>Array.isArray(d?.[k])&&d[k].length>0);
+    return ["giornaliero","carichi_scarichi","viaggi","stipendi","scadenze","cestino"].some(k=>Array.isArray(d?.[k])&&d[k].length>0);
 }
 function mergeSyncTombstones(a=[],b=[]){
     const map=new Map();
@@ -2634,6 +2758,7 @@ function mergeDiarioSnapshots(localInput,remoteInput){
         carichi_scarichi:mergeRecordArray("carico",l.carichi_scarichi,r.carichi_scarichi,tombMap),
         viaggi:mergeRecordArray("viaggio",l.viaggi,r.viaggi,tombMap),
         stipendi:mergeRecordArray("stipendio",l.stipendi,r.stipendi,tombMap),
+        scadenze:mergeRecordArray("scadenza",l.scadenze,r.scadenze,tombMap),
         cestino:[],sync_deleted:[],security:{pinSalt:"",pinHash:""},sync_meta:{}
     };
     const ls=Date.parse(l.sync_meta?.securityUpdatedAt||"")||0, rs=Date.parse(r.sync_meta?.securityUpdatedAt||"")||0;
@@ -2648,6 +2773,7 @@ function mergeDiarioSnapshots(localInput,remoteInput){
     out.carichi_scarichi.forEach(x=>activeMap.set(tombstoneKey("carico",x.id),x));
     out.viaggi.forEach(x=>activeMap.set(tombstoneKey("viaggio",x.id),x));
     out.stipendi.forEach(x=>activeMap.set(tombstoneKey("stipendio",x.id),x));
+    out.scadenze.forEach(x=>activeMap.set(tombstoneKey("scadenza",x.id),x));
     out.sync_deleted=[...tombMap.values()].filter(t=>{
         const a=activeMap.get(tombstoneKey(t.type,t.id));
         return !a || (Date.parse(t.deletedAt||"")||0)>=recordUpdatedTime(a);
@@ -3298,6 +3424,7 @@ function renderDashboard(){
    actionCard('Google Drive',driveValue,sync.lastSync?sync.lastSync.toLocaleString('it-IT'):'Apri Import/Export','tab-impexp'),
    actionCard('Viaggio aperto',escapeHtml(tripText),`${openTrips.length} viaggio/i aperto/i`,'tab-viaggi'),
    actionCard('Viaggi da esportare',viaggiDaEsportare,'rapportino Excel','tab-impexp'),
+   (typeof scDashboardCard==="function"?scDashboardCard():''),
    actionCard('Km del mese',formatKmDaDecimi(kmDecimi),'km','tab-riassunto'),
    actionCard('Ore guida',minutiToOre(guida),'mese selezionato','tab-riassunto'),
    actionCard('Ultima sosta',escapeHtml(lastRest?.luogo_sosta||'—'),lastRest?formatDateIT(lastRest.data):'Nessun dato','tab-giornaliero'),
@@ -3357,7 +3484,7 @@ function renderClientStats(){
 }
 function buildGlobalSearch(raw){
  const q=raw.toLowerCase(), blocks=[];
- const groups=[['Giornaliero',DIARIO.giornaliero,r=>[r.data,r.trattore,r.semirimorchio,r.luogo_sosta,r.note,r.km,r.ore_guida]],['Carichi / Scarichi',DIARIO.carichi_scarichi,r=>[r.data,r.operazione,r.luogo,r.cliente,r.semirimorchio,r.peso]],['Stipendi',DIARIO.stipendi,r=>[r.mese_riferimento,r.data_ricezione,r.data,r.causale,r.importo]],['Viaggi',DIARIO.viaggi,v=>[v.carico?.data,v.carico?.cliente,v.carico?.luogo,v.scarico?.data,v.scarico?.cliente,v.scarico?.luogo]]];
+ const groups=[['Giornaliero',DIARIO.giornaliero,r=>[r.data,r.trattore,r.semirimorchio,r.luogo_sosta,r.note,r.km,r.ore_guida]],['Carichi / Scarichi',DIARIO.carichi_scarichi,r=>[r.data,r.operazione,r.luogo,r.cliente,r.semirimorchio,r.peso]],['Stipendi',DIARIO.stipendi,r=>[r.mese_riferimento,r.data_ricezione,r.data,r.causale,r.importo]],['Scadenzario',DIARIO.scadenze||[],r=>[r.categoria,r.descrizione,r.mezzo,r.numero,formatDateIT(r.data_scadenza),formatDateIT(r.data_lavoro),r.km_lavoro,r.officina,r.note]],['Viaggi',DIARIO.viaggi,v=>[v.carico?.data,v.carico?.cliente,v.carico?.luogo,v.scarico?.data,v.scarico?.cliente,v.scarico?.luogo]]];
  let total=0; groups.forEach(([name,arr,get])=>{const found=arr.filter(r=>containsQuery(get(r),q)); total+=found.length;if(found.length)blocks.push(`<div class="stat-card"><b>${name}</b><div>${found.length} risultato/i</div><div style="margin-top:8px;color:#b9c8d4">${found.slice(0,8).map(r=>escapeHtml(get(r).filter(Boolean).join(' · '))).join('<br>')}</div></div>`)}); return {total,html:blocks.join('')};
 }
 const oldSearch=renderSearchResults; renderSearchResults=function(){if(document.getElementById('search-tab').value!=='tutto')return oldSearch();const raw=document.getElementById('search-string').value.trim(),area=document.getElementById('search-results'),summary=document.getElementById('search-summary');if(!raw){summary.textContent='Inserisci una stringa da cercare.';area.innerHTML='';return}const r=buildGlobalSearch(raw);summary.textContent=`${r.total} risultato/i in tutto il diario per “${raw}”.`;area.innerHTML=r.html||'<div class="empty-result">Nessun risultato trovato.</div>';};
@@ -3601,7 +3728,8 @@ document.getElementById("c_operazione")?.addEventListener("change", ()=>{aggiorn
 function trashLabel(x){
  const r=x.record||{}; if(x.type==="giornaliero")return `${formatDateIT(r.data)} · ${r.trattore||"Giornata"}`;
  if(x.type==="carico")return `${r.operazione||"Operazione"} · ${formatDateIT(r.data)} · ${r.cliente||r.luogo||""}`;
- if(x.type==="stipendio")return `${r.causale||"Stipendio"} · ${r.mese_riferimento||r.data||""}`; return x.type||"Elemento";
+ if(x.type==="stipendio")return `${r.causale||"Stipendio"} · ${r.mese_riferimento||r.data||""}`;
+ if(x.type==="scadenza")return `Scadenzario · ${r.descrizione||r.categoria||""}${r.mezzo?" · "+r.mezzo:""}`; return x.type||"Elemento";
 }
 function renderTrash(){
  purgeExpiredTrash(false); const list=document.getElementById("trash-list"),sum=document.getElementById("trash-summary");if(!list||!sum)return;
@@ -3612,6 +3740,7 @@ function restoreTrash(id){
  const idx=DIARIO.cestino.findIndex(x=>x.trashId===id);if(idx<0)return;const x=DIARIO.cestino[idx],r=deepClone(x.record);touchRecord(r);removeSyncTombstone(x.type,r.id);
  if(x.type==="giornaliero"){if(!DIARIO.giornaliero.some(a=>a.id===r.id))DIARIO.giornaliero.push(r);}
  else if(x.type==="stipendio"){if(!DIARIO.stipendi.some(a=>a.id===r.id))DIARIO.stipendi.push(r);}
+ else if(x.type==="scadenza"){if(!DIARIO.scadenze.some(a=>a.id===r.id))DIARIO.scadenze.push(r);}
  else if(x.type==="carico"){
    if(!DIARIO.carichi_scarichi.some(a=>a.id===r.id))DIARIO.carichi_scarichi.push(r);
    (x.linkedViaggi||[]).forEach(v=>{removeSyncTombstone("viaggio",v.id);touchRecord(v);const existing=DIARIO.viaggi.find(a=>a.id===v.id);if(existing)Object.assign(existing,deepClone(v));else DIARIO.viaggi.push(deepClone(v));});
@@ -4041,10 +4170,12 @@ function initApp() {
     renderTrash();
     updateDriveSyncMeta();
     initHgvModule();
+    if (typeof initScadenzario === "function") initScadenzario();
 }
 
 initApp();
 setTimeout(checkRapportinoStartupWarning, 350);
+setTimeout(() => { if (typeof checkScadenzeStartupWarning === "function") checkScadenzeStartupWarning(); }, 700);
 
 function enableFullscreenGraph(canvas) {
     let isFull = false;
@@ -4107,7 +4238,7 @@ enableFullscreenGraph(graficoImpegno);
 
 <script id="torabook-version-script-v1">
 (() => {
-  const APP_VERSION = "1.1";
+  const APP_VERSION = "1.8";
   window.TORABOOK_VERSION = APP_VERSION;
   const hotspot = document.getElementById("torabook-version-hotspot");
   const overlay = document.getElementById("torabook-version-overlay");
@@ -4132,6 +4263,351 @@ enableFullscreenGraph(graficoImpegno);
     if (e.key === "Escape" && overlay.classList.contains("open")) close();
   });
 })();
+</script>
+<script id="torabook-v18-scadenzario-js">
+/* ============================================================
+   SCADENZARIO (v1.8) — documenti con data di rilascio/scadenza
+   e lavori sul camion con data, km e prossimo intervento.
+   by Andrea Zollet
+   ============================================================ */
+const SC_CATEGORIE = {
+  DOCUMENTO: ["Patente","CQC","Carta tachigrafica","ADR","Carta d'identità","Passaporto","Visita medica","Revisione mezzo","Assicurazione","Bollo","Taratura tachigrafo","Estintori","ATP / Frigo","Licenza / Autorizzazione","Altro"],
+  LAVORO: ["Tagliando","Cambio olio","Filtri","Pneumatici","Freni","Batterie","Ingrassaggio","Riparazione","Carrozzeria","Lavaggio","Lettura contachilometri","Altro"]
+};
+const SC_DEF_PREAVVISO_GIORNI = 30;
+const SC_DEF_PREAVVISO_KM = 2000;
+const SC_WARNING_SESSION_KEY = "TORABOOK_SCADENZE_WARNING_SHOWN";
+let scTipo = "DOCUMENTO", scEditId = null, scRenewFromId = null;
+
+function scNormMezzo(v){ return String(v || "").toUpperCase().replace(/[\s\-.]/g, ""); }
+function scNum(v){ if (v === "" || v === null || v === undefined) return null; const n = parseNumeroIT(v); return Number.isFinite(n) ? n : null; }
+function scFmtKm(n){ return Math.round(n).toLocaleString("it-IT"); }
+function scDaysUntil(iso){
+  if (!iso) return null;
+  const t = Date.parse(iso + "T00:00:00"), today = Date.parse(isoToday() + "T00:00:00");
+  return Number.isFinite(t) ? Math.round((t - today) / 86400000) : null;
+}
+function scHumanDays(n){
+  if (n < 60) return `${n} ${n === 1 ? "giorno" : "giorni"}`;
+  if (n < 730) return `circa ${Math.round(n / 30.4)} mesi`;
+  return `circa ${Math.round(n / 365.25)} anni`;
+}
+function scFind(id){ return (DIARIO.scadenze || []).find(r => r.id === id); }
+function scTitle(r){ return r.descrizione || r.categoria || "Voce"; }
+
+/* Km attuali stimati: ultima lettura km registrata per quel mezzo
+   + km giornalieri del Giornaliero dei giorni successivi (trattore o semirimorchio). */
+function scKmStimati(mezzo){
+  const key = scNormMezzo(mezzo); if (!key) return null;
+  const letture = (DIARIO.scadenze || [])
+    .filter(r => r.tipo === "LAVORO" && scNormMezzo(r.mezzo) === key && r.data_lavoro && scNum(r.km_lavoro) !== null)
+    .sort((a, b) => b.data_lavoro.localeCompare(a.data_lavoro) || scNum(b.km_lavoro) - scNum(a.km_lavoro));
+  if (!letture.length) return null;
+  const base = letture[0];
+  let km = scNum(base.km_lavoro);
+  (DIARIO.giornaliero || []).forEach(g => {
+    if ((g.data || "") > base.data_lavoro && (scNormMezzo(g.trattore) === key || scNormMezzo(g.semirimorchio) === key)) {
+      const k = scNum(g.km); if (k) km += k;
+    }
+  });
+  return { km: Math.round(km), da: base.data_lavoro };
+}
+
+function scStatus(r){
+  if (r.archiviato) return { code: "arch", label: "Archiviato", detail: "", rank: 5, key: 0 };
+  const pre = scNum(r.preavviso_giorni) ?? SC_DEF_PREAVVISO_GIORNI;
+  const preKm = scNum(r.preavviso_km) ?? SC_DEF_PREAVVISO_KM;
+  let days = null, kmLeft = null;
+  const dueKm = r.tipo === "LAVORO" ? scNum(r.prossimi_km) : null;
+  if (r.tipo === "DOCUMENTO") days = scDaysUntil(r.data_scadenza);
+  else {
+    days = scDaysUntil(r.prossima_data);
+    if (dueKm !== null) { const est = scKmStimati(r.mezzo); if (est) kmLeft = dueKm - est.km; }
+  }
+  if (days === null && dueKm === null) return { code: "none", label: r.tipo === "LAVORO" ? "Eseguito" : "Senza scadenza", detail: "", rank: 4, key: 0 };
+  const parts = [];
+  if (days !== null) parts.push(days < 0 ? `scaduto da ${scHumanDays(-days)}` : days === 0 ? "scade oggi" : `tra ${scHumanDays(days)}`);
+  if (kmLeft !== null) parts.push(kmLeft < 0 ? `superato di ${scFmtKm(-kmLeft)} km` : `mancano ${scFmtKm(kmLeft)} km`);
+  else if (dueKm !== null) parts.push("km attuali non noti");
+  const key = Math.min(days ?? 1e9, kmLeft !== null ? kmLeft / 500 : 1e9);
+  const detail = parts.join(" · ");
+  if ((days !== null && days < 0) || (kmLeft !== null && kmLeft < 0)) return { code: "scaduto", label: "Scaduto", detail, rank: 0, key };
+  if ((days !== null && days <= pre) || (kmLeft !== null && kmLeft <= preKm)) return { code: "warn", label: "In scadenza", detail, rank: 1, key };
+  return { code: "ok", label: "In regola", detail, rank: 2, key };
+}
+
+function scCounts(){
+  const c = { scaduto: 0, warn: 0, ok: 0 };
+  (DIARIO.scadenze || []).forEach(r => { const s = scStatus(r); if (c[s.code] !== undefined) c[s.code]++; });
+  return c;
+}
+function scUrgenti(){
+  return (DIARIO.scadenze || []).map(r => ({ r, s: scStatus(r) }))
+    .filter(x => x.s.code === "scaduto" || x.s.code === "warn")
+    .sort((a, b) => a.s.rank - b.s.rank || a.s.key - b.s.key);
+}
+
+/* ---------- Form ---------- */
+function scFillCategorie(selected){
+  const sel = document.getElementById("sc_categoria"); if (!sel) return;
+  const list = SC_CATEGORIE[scTipo];
+  sel.innerHTML = list.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  if (selected && !list.includes(selected)) sel.insertAdjacentHTML("afterbegin", `<option value="${escapeHtml(selected)}">${escapeHtml(selected)}</option>`);
+  if (selected) sel.value = selected;
+}
+function scSetTipo(t, keepCategoria){
+  scTipo = t === "LAVORO" ? "LAVORO" : "DOCUMENTO";
+  document.querySelectorAll(".sc-type-btn").forEach(b => b.classList.toggle("active", b.dataset.scTipo === scTipo));
+  document.getElementById("form-scadenze")?.classList.toggle("sc-lav", scTipo === "LAVORO");
+  scFillCategorie(keepCategoria);
+}
+const SC_FIELDS = ["categoria","descrizione","mezzo","numero","data_rilascio","data_scadenza","data_lavoro","km_lavoro","officina","costo","prossima_data","prossimi_km","preavviso_km","preavviso_giorni","note"];
+function scFieldEl(f){ return document.getElementById("sc_" + f); }
+function scFillForm(r){
+  scSetTipo(r.tipo, r.categoria);
+  SC_FIELDS.forEach(f => { const el = scFieldEl(f); if (el && f !== "categoria") el.value = r[f] ?? ""; });
+}
+function scResetForm(){
+  document.getElementById("form-scadenze")?.reset();
+  scEditId = null; scRenewFromId = null;
+  scSetTipo(scTipo);
+  const b = document.getElementById("sc-edit-banner"); if (b) { b.classList.remove("show"); b.textContent = ""; }
+  document.getElementById("btn-sc-save").textContent = "Salva";
+  document.getElementById("btn-sc-cancel").style.display = "none";
+}
+function scShowBanner(text, btnText){
+  const b = document.getElementById("sc-edit-banner");
+  b.textContent = text; b.classList.add("show");
+  document.getElementById("btn-sc-save").textContent = btnText;
+  document.getElementById("btn-sc-cancel").style.display = "";
+  document.getElementById("form-scadenze")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function scReadForm(){
+  const o = { tipo: scTipo };
+  SC_FIELDS.forEach(f => { const el = scFieldEl(f); o[f] = el ? String(el.value || "").trim() : ""; });
+  o.mezzo = o.mezzo.toUpperCase();
+  if (scTipo === "DOCUMENTO") ["data_lavoro","km_lavoro","officina","costo","prossima_data","prossimi_km","preavviso_km"].forEach(f => o[f] = "");
+  else ["numero","data_rilascio","data_scadenza"].forEach(f => o[f] = "");
+  return o;
+}
+function scSave(){
+  const o = scReadForm();
+  if (!o.categoria && !o.descrizione) { alert("Indica almeno la categoria o una descrizione."); return; }
+  if (o.tipo === "DOCUMENTO") {
+    if (!o.data_scadenza && !confirm("Non hai inserito la data di scadenza: la voce verrà salvata senza avvisi. Continuare?")) return;
+    if (o.data_rilascio && o.data_scadenza && o.data_scadenza < o.data_rilascio) { alert("La data di scadenza è precedente alla data di rilascio."); return; }
+  } else {
+    if (!o.data_lavoro) { alert("Indica la data del lavoro."); return; }
+    if (o.prossima_data && o.prossima_data < o.data_lavoro) { alert("La data del prossimo intervento è precedente alla data del lavoro."); return; }
+    const km = scNum(o.km_lavoro), next = scNum(o.prossimi_km);
+    if (km !== null && next !== null && next <= km) { alert("I km del prossimo intervento devono essere superiori ai km del lavoro."); return; }
+  }
+  if (!Array.isArray(DIARIO.scadenze)) DIARIO.scadenze = [];
+  let rec;
+  if (scEditId) {
+    rec = scFind(scEditId);
+    if (!rec) { alert("La voce da modificare non esiste più."); scResetForm(); return; }
+    Object.assign(rec, o);
+  } else {
+    rec = { id: newRecordId("SC"), ...o, archiviato: false };
+    DIARIO.scadenze.push(rec);
+  }
+  touchRecord(rec);
+  if (scRenewFromId) {
+    const old = scFind(scRenewFromId);
+    if (old && old.id !== rec.id) { old.archiviato = true; old.sostituito_da = rec.id; touchRecord(old); }
+  }
+  saveToLocalStorage();
+  scResetForm();
+  renderScadenze();
+}
+function scEdit(id){
+  const r = scFind(id); if (!r) return;
+  scResetForm(); scEditId = id; scFillForm(r);
+  scShowBanner(`✏️ Modifica di “${scTitle(r)}”: la voce originale resta salvata finché non premi “Salva modifiche”.`, "Salva modifiche");
+}
+function scRenew(id){
+  const r = scFind(id); if (!r) return;
+  scResetForm(); scRenewFromId = id;
+  const copy = { tipo: r.tipo, categoria: r.categoria, descrizione: r.descrizione, mezzo: r.mezzo, preavviso_giorni: r.preavviso_giorni, preavviso_km: r.preavviso_km, officina: r.officina };
+  if (r.tipo === "DOCUMENTO") { copy.numero = r.numero; copy.data_rilascio = isoToday(); }
+  else { copy.data_lavoro = isoToday(); const est = scKmStimati(r.mezzo); if (est) copy.km_lavoro = String(est.km); }
+  scFillForm(copy);
+  scShowBanner(r.tipo === "DOCUMENTO"
+    ? `🔄 Rinnovo di “${scTitle(r)}”: inserisci le nuove date. Al salvataggio la voce precedente verrà archiviata.`
+    : `🔄 Nuovo intervento “${scTitle(r)}”: controlla data e km${copy.km_lavoro ? " (stimati)" : ""}. Al salvataggio la voce precedente verrà archiviata.`,
+    r.tipo === "DOCUMENTO" ? "Salva rinnovo" : "Salva intervento");
+}
+function scToggleArchive(id){
+  const r = scFind(id); if (!r) return;
+  r.archiviato = !r.archiviato; touchRecord(r);
+  saveToLocalStorage(); renderScadenze();
+}
+function scDelete(id){
+  const i = (DIARIO.scadenze || []).findIndex(r => r.id === id); if (i < 0) return;
+  const r = DIARIO.scadenze[i];
+  if (!confirm(`Spostare “${scTitle(r)}” nel Cestino? Potrai recuperarla per 30 giorni.`)) return;
+  addTrashEntry("scadenza", r);
+  DIARIO.scadenze.splice(i, 1);
+  if (scEditId === id || scRenewFromId === id) scResetForm();
+  saveToLocalStorage(); renderScadenze();
+}
+
+/* ---------- Calendario (.ics con promemoria) ---------- */
+function scIcsEscape(t){ return String(t || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n"); }
+function scCalendar(id){
+  const r = scFind(id); if (!r) return;
+  const date = r.tipo === "DOCUMENTO" ? r.data_scadenza : r.prossima_data;
+  if (!date) { alert("Questa voce non ha una data di scadenza da aggiungere al calendario."); return; }
+  const d0 = date.replace(/-/g, "");
+  const next = new Date(date + "T00:00:00"); next.setDate(next.getDate() + 1);
+  const d1 = `${next.getFullYear()}${String(next.getMonth() + 1).padStart(2, "0")}${String(next.getDate()).padStart(2, "0")}`;
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const pre = scNum(r.preavviso_giorni) ?? SC_DEF_PREAVVISO_GIORNI;
+  const title = (r.tipo === "DOCUMENTO" ? "Scadenza: " : "Prossimo intervento: ") + scTitle(r) + (r.mezzo ? ` (${r.mezzo})` : "");
+  const desc = [r.categoria, r.numero ? "N. " + r.numero : "", r.prossimi_km ? "Oppure a " + scFmtKm(scNum(r.prossimi_km)) + " km" : "", r.note, "ToraBook – Scadenzario"].filter(Boolean).join("\n");
+  const ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//ToraBook//Scadenzario//IT","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+    `UID:${r.id}@torabook`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${d0}`, `DTEND;VALUE=DATE:${d1}`,
+    `SUMMARY:${scIcsEscape(title)}`, `DESCRIPTION:${scIcsEscape(desc)}`,
+    "BEGIN:VALARM", `TRIGGER:-P${Math.max(0, Math.round(pre))}D`, "ACTION:DISPLAY", `DESCRIPTION:${scIcsEscape(title)}`, "END:VALARM",
+    "BEGIN:VALARM", "TRIGGER:-PT0M", "ACTION:DISPLAY", `DESCRIPTION:${scIcsEscape(title)}`, "END:VALARM",
+    "END:VEVENT","END:VCALENDAR",""].join("\r\n");
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `ToraBook_${safeFilePart ? safeFilePart(scTitle(r)) : "scadenza"}_${d0}.ics`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+/* ---------- Render ---------- */
+function scItemHtml({ r, s }){
+  const icon = r.tipo === "LAVORO" ? "🔧" : "📄";
+  const meta = [r.tipo === "LAVORO" ? "Lavoro" : "Documento", r.categoria && r.categoria !== r.descrizione ? r.categoria : "", r.mezzo].filter(Boolean).map(escapeHtml).join(" · ");
+  const lines = [];
+  if (r.tipo === "DOCUMENTO") {
+    const parts = [];
+    if (r.numero) parts.push(`<span>N.</span> ${escapeHtml(r.numero)}`);
+    if (r.data_rilascio) parts.push(`<span>Rilascio</span> ${formatDateIT(r.data_rilascio)}`);
+    if (r.data_scadenza) parts.push(`<span>Scadenza</span> <b>${formatDateIT(r.data_scadenza)}</b>`);
+    if (parts.length) lines.push(parts.join(" &nbsp;·&nbsp; "));
+  } else {
+    const parts = [`<span>Eseguito</span> ${formatDateIT(r.data_lavoro)}`];
+    if (scNum(r.km_lavoro) !== null) parts.push(`<span>a</span> ${scFmtKm(scNum(r.km_lavoro))} km`);
+    if (r.officina) parts.push(`<span>presso</span> ${escapeHtml(r.officina)}`);
+    if (scNum(r.costo) !== null) parts.push(`<span>costo</span> ${formatEuro(scNum(r.costo))}`);
+    lines.push(parts.join(" &nbsp;·&nbsp; "));
+    const nxt = [];
+    if (r.prossima_data) nxt.push(`entro il <b>${formatDateIT(r.prossima_data)}</b>`);
+    if (scNum(r.prossimi_km) !== null) nxt.push(`a <b>${scFmtKm(scNum(r.prossimi_km))} km</b>`);
+    if (nxt.length) lines.push(`<span>Prossimo</span> ${nxt.join(" oppure ")}`);
+  }
+  if (s.detail) lines.push(`<span>Stato</span> ${escapeHtml(s.detail)}`);
+  const canRenew = !r.archiviato;
+  const renewLabel = r.tipo === "DOCUMENTO" ? "🔄 Rinnova" : "🔧 Rifatto";
+  const hasDate = r.tipo === "DOCUMENTO" ? !!r.data_scadenza : !!r.prossima_data;
+  return `<div class="sc-item sc-${s.code}">
+    <div class="sc-head">${s.code !== "none" ? `<span class="sc-pill sc-pill-${s.code}">${s.label}</span>` : `<span class="sc-pill">${s.label}</span>`}<b>${icon} ${escapeHtml(scTitle(r))}</b></div>
+    ${meta ? `<div class="sc-meta">${meta}</div>` : ""}
+    ${lines.map(l => `<div class="sc-line">${l}</div>`).join("")}
+    ${r.note ? `<div class="sc-note">${escapeHtml(r.note)}</div>` : ""}
+    <div class="sc-actions">
+      <button type="button" class="secondary" onclick="scEdit('${r.id}')">Modifica</button>
+      ${canRenew ? `<button type="button" class="primary" onclick="scRenew('${r.id}')">${renewLabel}</button>` : ""}
+      ${hasDate && !r.archiviato ? `<button type="button" class="secondary" onclick="scCalendar('${r.id}')">📅 Calendario</button>` : ""}
+      <button type="button" class="secondary" onclick="scToggleArchive('${r.id}')">${r.archiviato ? "Riattiva" : "Archivia"}</button>
+      <button type="button" class="danger" onclick="scDelete('${r.id}')">Cancella</button>
+    </div>
+  </div>`;
+}
+function scUpdateMezziList(){
+  const dl = document.getElementById("sc-mezzi-list"); if (!dl) return;
+  const set = new Set(["PERSONALE"]);
+  (DIARIO.giornaliero || []).forEach(g => { if (g.trattore) set.add(String(g.trattore).toUpperCase().trim()); if (g.semirimorchio) set.add(String(g.semirimorchio).toUpperCase().trim()); });
+  (DIARIO.scadenze || []).forEach(r => { if (r.mezzo) set.add(String(r.mezzo).toUpperCase().trim()); });
+  dl.innerHTML = [...set].filter(Boolean).sort().map(m => `<option value="${escapeHtml(m)}">`).join("");
+}
+function renderScStats(){
+  const el = document.getElementById("sc-stats"); if (!el) return;
+  const c = scCounts();
+  const cards = [
+    card("Scaduti", c.scaduto, c.scaduto ? "da gestire subito" : "nessuno"),
+    card("In scadenza", c.warn, "entro il preavviso"),
+    card("In regola", c.ok, "con scadenza futura")
+  ];
+  const mezzi = new Set((DIARIO.scadenze || []).filter(r => r.tipo === "LAVORO" && r.mezzo && scNum(r.km_lavoro) !== null).map(r => scNormMezzo(r.mezzo)));
+  [...mezzi].slice(0, 3).forEach(k => {
+    const any = (DIARIO.scadenze || []).find(r => scNormMezzo(r.mezzo) === k);
+    const est = scKmStimati(any.mezzo);
+    if (est) cards.push(card(`Km ${escapeHtml(any.mezzo)}`, scFmtKm(est.km), `stimati · lettura del ${formatDateIT(est.da)}`));
+  });
+  el.innerHTML = cards.join("");
+}
+function renderScadenze(){
+  const list = document.getElementById("sc-list"); if (!list) return;
+  const fTipo = document.getElementById("sc-f-tipo")?.value || "TUTTI";
+  const fMezzo = scNormMezzo(document.getElementById("sc-f-mezzo")?.value);
+  const showArch = !!document.getElementById("sc-f-arch")?.checked;
+  const items = (DIARIO.scadenze || []).map(r => ({ r, s: scStatus(r) })).filter(({ r, s }) => {
+    if (!showArch && s.code === "arch") return false;
+    if (fTipo === "DOCUMENTO" || fTipo === "LAVORO") { if (r.tipo !== fTipo) return false; }
+    else if (fTipo === "URGENTI" && s.code !== "scaduto" && s.code !== "warn") return false;
+    if (fMezzo && !scNormMezzo(r.mezzo).includes(fMezzo)) return false;
+    return true;
+  }).sort((a, b) => a.s.rank - b.s.rank || a.s.key - b.s.key ||
+    (b.r.data_lavoro || b.r.data_scadenza || "").localeCompare(a.r.data_lavoro || a.r.data_scadenza || ""));
+  list.innerHTML = items.length ? items.map(scItemHtml).join("")
+    : `<div class="empty-result">${(DIARIO.scadenze || []).length ? "Nessuna voce corrisponde al filtro." : "Nessuna voce ancora. Aggiungi un documento con la sua scadenza o un lavoro fatto sul camion."}</div>`;
+  renderScStats();
+  scUpdateMezziList();
+}
+
+/* ---------- Home e avviso all'avvio ---------- */
+function scDashboardCard(){
+  const c = scCounts(), first = scUrgenti()[0];
+  const value = c.scaduto ? `${c.scaduto} SCADUT${c.scaduto === 1 ? "O" : "I"}` : c.warn ? `${c.warn} IN SCADENZA` : ((DIARIO.scadenze || []).length ? "IN REGOLA" : "NESSUNA VOCE");
+  const unit = first ? `${escapeHtml(scTitle(first.r))} · ${escapeHtml(first.s.detail)}` : "Apri Scadenzario";
+  return actionCard("⏰ Scadenzario", value, unit, "tab-scadenze");
+}
+function checkScadenzeStartupWarning(){
+  try { if (sessionStorage.getItem(SC_WARNING_SESSION_KEY) === "1") return; } catch (_) {}
+  if (document.querySelector(".rapportino-warning-overlay")) { setTimeout(checkScadenzeStartupWarning, 800); return; }
+  const urg = scUrgenti(); if (!urg.length) return;
+  try { sessionStorage.setItem(SC_WARNING_SESSION_KEY, "1"); } catch (_) {}
+  const overlay = document.createElement("div");
+  overlay.className = "rapportino-warning-overlay";
+  overlay.setAttribute("role", "dialog"); overlay.setAttribute("aria-modal", "true");
+  overlay.innerHTML = `<div class="rapportino-warning-card">
+      <div class="rapportino-warning-icon">⏰</div>
+      <div class="rapportino-warning-title">Scadenzario</div>
+      <ul class="sc-alert-list">${urg.slice(0, 6).map(({ r, s }) => `<li>${s.code === "scaduto" ? "🔴" : "🟠"} <b>${escapeHtml(scTitle(r))}</b>${r.mezzo ? " · " + escapeHtml(r.mezzo) : ""}<br><span style="color:#9fb0c2">${escapeHtml(s.detail)}</span></li>`).join("")}</ul>
+      ${urg.length > 6 ? `<p class="rapportino-warning-text">…e altre ${urg.length - 6} voci.</p>` : ""}
+      <div class="sc-alert-actions"><button type="button" class="primary sc-open">Apri Scadenzario</button><button type="button" class="secondary sc-close">OK</button></div>
+    </div>`;
+  const close = () => overlay.remove();
+  overlay.querySelector(".sc-close").addEventListener("click", close, { once: true });
+  overlay.querySelector(".sc-open").addEventListener("click", () => { close(); openAppTab("tab-scadenze"); }, { once: true });
+  document.body.appendChild(overlay);
+  overlay.querySelector(".sc-open")?.focus();
+}
+
+function initScadenzario(){
+  if (initScadenzario.done) return; initScadenzario.done = true;
+  document.querySelectorAll(".sc-type-btn").forEach(b => b.addEventListener("click", () => {
+    if (scEditId || scRenewFromId) { if (!confirm("Cambiando tipo, la modifica in corso verrà annullata. Continuare?")) return; scResetForm(); }
+    scSetTipo(b.dataset.scTipo);
+  }));
+  document.getElementById("btn-sc-save")?.addEventListener("click", scSave);
+  document.getElementById("btn-sc-cancel")?.addEventListener("click", scResetForm);
+  ["sc-f-tipo", "sc-f-arch"].forEach(id => document.getElementById(id)?.addEventListener("change", renderScadenze));
+  document.getElementById("sc-f-mezzo")?.addEventListener("input", renderScadenze);
+  document.getElementById("sc_mezzo")?.addEventListener("input", e => { const el = e.target, p = el.selectionStart; el.value = el.value.toUpperCase(); try { el.setSelectionRange(p, p); } catch (_) {} });
+  document.querySelector('.tab-btn[data-tab="tab-scadenze"]')?.addEventListener("click", renderScadenze);
+  scSetTipo("DOCUMENTO");
+  renderScadenze();
+  if (document.getElementById("dashboard-output")) renderDashboard();
+}
+initScadenzario();
 </script>
 
 </body>

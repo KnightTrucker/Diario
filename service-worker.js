@@ -1,4 +1,4 @@
-const CACHE_NAME = "torabook-v1.7-clienti-toranavy";
+const CACHE_NAME = "torabook-v1.8-scadenzario";
 const PRECACHE = [
   "./",
   "./index.html",
@@ -28,7 +28,7 @@ self.addEventListener("activate", event => {
     const keys = await caches.keys();
     await Promise.all(
       keys
-        .filter(key => key.startsWith("diario-autista-") && key !== CACHE_NAME)
+        .filter(key => (key.startsWith("diario-autista-") || key.startsWith("torabook-")) && key !== CACHE_NAME)
         .map(key => caches.delete(key))
     );
     await self.clients.claim();
