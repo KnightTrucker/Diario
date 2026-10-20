@@ -179,6 +179,12 @@ table thead th {
 .drive-sync-meta{margin-top:8px;color:#9fb0c2;font-size:12px;line-height:1.45}
 .excel-report-panel{margin-top:16px;padding:16px;border:1px solid #31516c;border-radius:14px;background:linear-gradient(145deg,#0b1d2d,#07131f)}
 .excel-report-panel h3{margin:0 0 10px}.excel-report-panel button{width:100%;font-size:16px;padding:14px!important}.excel-report-panel .drive-note{margin-top:8px;color:#9fb0c2;font-size:12px;line-height:1.45}
+.years-card{margin-top:16px!important;background:linear-gradient(145deg,rgba(70,48,10,.55),rgba(30,20,6,.85))!important;border:1px solid rgba(230,160,40,.55)!important;border-radius:14px;padding:14px!important}
+.years-title{font-size:18px;font-weight:800;margin-bottom:7px}.years-help{font-size:13px;color:#d8c9a8;margin-bottom:10px;line-height:1.45}
+.years-list{display:grid;gap:8px;margin-bottom:12px}.years-item{display:flex;gap:10px;align-items:center;background:#0b1722;border:1px solid #4a4434;border-radius:10px;padding:10px;cursor:pointer}
+.years-item input{width:22px;height:22px;min-height:22px!important;margin:0!important;flex:0 0 auto}.years-item b{font-size:17px}.years-item span{display:block;color:#9fb0c2;font-size:12px;margin-top:3px;white-space:normal}
+.years-item.locked{opacity:.55;cursor:default}.years-actions{display:grid;gap:8px}.years-actions button{width:100%;font-size:15px}
+.years-restore{margin-top:12px;padding-top:12px;border-top:1px solid rgba(230,160,40,.3)}
 .trash-card{margin-top:16px;background:linear-gradient(145deg,rgba(69,23,27,.55),rgba(28,10,14,.8));border:1px solid rgba(229,42,53,.5);border-radius:14px;padding:14px}
 .trash-title{font-size:18px;font-weight:800;margin-bottom:7px}.trash-help{font-size:13px;color:#c7b1b5;margin-bottom:10px}
 .trash-list{display:grid;gap:8px}.trash-item{display:flex;gap:10px;align-items:center;justify-content:space-between;background:#0b1722;border:1px solid #3c4650;border-radius:10px;padding:10px}
@@ -476,7 +482,7 @@ table thead th {
   <div class="torabook-version-card" role="dialog" aria-modal="true" aria-labelledby="torabook-version-title">
     <button type="button" class="torabook-version-close" id="torabook-version-close" aria-label="Chiudi">×</button>
     <div class="torabook-version-logo" id="torabook-version-title">ToraBook</div>
-    <div class="torabook-version-number">Versione 1.8</div>
+    <div class="torabook-version-number">Versione 1.9</div>
     <p class="torabook-version-sub">Diario di viaggio / logbook per camionisti<br>Powered by Andrea ZOLLET</p>
     <button type="button" class="primary torabook-version-ok" id="torabook-version-ok">OK</button>
   </div>
@@ -806,6 +812,20 @@ table thead th {
         </div>
         <div id="drive-status" class="drive-status">Drive non collegato.</div>
         <div id="drive-sync-meta" class="drive-sync-meta">Backup storico: ogni 7 giorni in KnightTrucker/Backup. Documenti viaggio: KnightTrucker/DocumentiViaggi.</div>
+    </div>
+
+    <div class="years-card">
+        <div class="years-title">📅 Gestione annate</div>
+        <div class="years-help">Per alleggerire l'app puoi eliminare annate intere (giornate, carichi/scarichi, viaggi e stipendi). Prima dell'eliminazione viene scaricato un backup dell'annata, da conservare: con <b>Ripristina annate</b> potrai ricaricarla quando vuoi. Le scadenze e l'anno in corso non vengono toccati. L'eliminazione vale anche per Google Drive e per gli altri dispositivi.</div>
+        <div id="years-list" class="years-list"></div>
+        <div class="years-actions">
+            <button type="button" class="danger" id="btn-years-delete">🗑️ Elimina annate selezionate</button>
+        </div>
+        <div class="years-restore">
+            <label for="file-years-restore">Ripristina annate da un backup</label>
+            <input type="file" id="file-years-restore" accept=".json">
+            <div class="years-actions"><button type="button" class="secondary" id="btn-years-restore">♻️ Ripristina annate</button></div>
+        </div>
     </div>
 
     <div class="trash-card">
@@ -1202,6 +1222,61 @@ function removeSyncTombstone(type,id){
     if(!Array.isArray(DIARIO.sync_deleted)) return;
     DIARIO.sync_deleted=DIARIO.sync_deleted.filter(x=>!(x.type===type && x.id===id));
 }
+/* ---- Eliminazione annate (v1.9): un solo marcatore per anno, valido anche in sincronizzazione ---- */
+function purgedYearMap(list){
+    const m=new Map();
+    (Array.isArray(list)?list:[]).forEach(x=>{
+        const y=String(x?.year??"");
+        if(!/^\d{4}$/.test(y))return;
+        const t=Date.parse(x.purgedAt||"")||0;
+        if(!t)return;
+        if(!m.has(y)||t>m.get(y))m.set(y,t);
+    });
+    return m;
+}
+function mergePurgedYears(a,b){
+    return [...purgedYearMap([...(Array.isArray(a)?a:[]),...(Array.isArray(b)?b:[])]).entries()]
+        .map(([year,t])=>({year:Number(year),purgedAt:new Date(t).toISOString()}))
+        .sort((x,y)=>x.year-y.year);
+}
+function recordYear(type,r){
+    if(!r||typeof r!=="object")return "";
+    let v="";
+    if(type==="giornaliero"||type==="carico")v=r.data;
+    else if(type==="viaggio")v=r.carico?.data||r.scarico?.data;
+    else if(type==="stipendio")v=r.mese_riferimento||r.data_ricezione||r.data;
+    v=String(v||"").slice(0,4);
+    return /^\d{4}$/.test(v)?v:"";
+}
+function isRecordPurged(m,type,r){
+    const y=recordYear(type,r);
+    if(!y||!m.has(y))return false;
+    return recordUpdatedTime(r)<=m.get(y);
+}
+function applyYearPurges(d){
+    d.sync_purged_years=mergePurgedYears(d.sync_purged_years,[]);
+    const m=purgedYearMap(d.sync_purged_years);
+    if(!m.size)return d;
+    const linked=new Map();
+    d.viaggi=d.viaggi.filter(v=>{
+        if(!isRecordPurged(m,"viaggio",v))return true;
+        const t=m.get(recordYear("viaggio",v));
+        [v.caricoId,v.scaricoId].forEach(id=>{if(id)linked.set(id,Math.max(linked.get(id)||0,t));});
+        return false;
+    });
+    const keep=new Set();
+    d.viaggi.forEach(v=>{if(v.caricoId)keep.add(v.caricoId);if(v.scaricoId)keep.add(v.scaricoId);});
+    d.carichi_scarichi=d.carichi_scarichi.filter(r=>{
+        if(!r?.id||keep.has(r.id))return true;
+        if(linked.has(r.id)&&recordUpdatedTime(r)<=linked.get(r.id))return false;
+        return !isRecordPurged(m,"carico",r);
+    });
+    d.giornaliero=d.giornaliero.filter(r=>!isRecordPurged(m,"giornaliero",r));
+    d.stipendi=d.stipendi.filter(r=>!isRecordPurged(m,"stipendio",r));
+    d.cestino=d.cestino.filter(x=>!isRecordPurged(m,x?.type,x?.record));
+    return d;
+}
+
 function normalizeDiarioSnapshot(input){
     const d=(input && typeof input==="object") ? deepClone(input) : {};
     if (!Array.isArray(d.giornaliero)) d.giornaliero=[];
@@ -1239,6 +1314,7 @@ function normalizeDiarioSnapshot(input){
     });
     d.cestino.forEach(x=>{ if(x&&!x.trashId)x.trashId=newRecordId("T"); if(x&&!x.deletedAt)x.deletedAt=SYNC_LEGACY_TIME; });
     d.sync_deleted=d.sync_deleted.filter(x=>x&&x.type&&x.id).map(x=>({type:x.type,id:x.id,deletedAt:x.deletedAt||SYNC_LEGACY_TIME,permanent:!!x.permanent}));
+    applyYearPurges(d);
     return d;
 }
 function normalizeDiarioData(){ DIARIO = normalizeDiarioSnapshot(DIARIO); purgeExpiredTrash(false); }
@@ -1283,6 +1359,7 @@ function saveToLocalStorage(options={}) {
         if(document.getElementById("client-stats")) renderClientStats();
         if(document.getElementById("dashboard-output")) renderDashboard();
         if(document.getElementById("trash-list")) renderTrash();
+        if(document.getElementById("years-list")) renderYearsManager();
         if(document.getElementById("sc-list") && typeof renderScadenze==="function") renderScadenze();
         if(document.getElementById("c_trip_link")) renderOpenTripOptions();
     },0);
@@ -2584,6 +2661,7 @@ document.getElementById("btn-import-json").addEventListener("click", () => {
         try {
             const parsed = JSON.parse(e.target.result);
             if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.giornaliero) || !Array.isArray(parsed.carichi_scarichi)) throw new Error("Struttura non valida");
+            if (parsed.torabook_backup_annate) { alert("Questo file è un backup di annate eliminate.\nPer ricaricarlo senza perdere i dati attuali usa “Ripristina annate” nella sezione Gestione annate."); return; }
             if (!confirm("Il backup è valido. Importarlo e sostituire i dati attuali?")) return;
             DIARIO = parsed;
             normalizeDiarioData();
@@ -2759,7 +2837,8 @@ function mergeDiarioSnapshots(localInput,remoteInput){
         viaggi:mergeRecordArray("viaggio",l.viaggi,r.viaggi,tombMap),
         stipendi:mergeRecordArray("stipendio",l.stipendi,r.stipendi,tombMap),
         scadenze:mergeRecordArray("scadenza",l.scadenze,r.scadenze,tombMap),
-        cestino:[],sync_deleted:[],security:{pinSalt:"",pinHash:""},sync_meta:{}
+        cestino:[],sync_deleted:[],security:{pinSalt:"",pinHash:""},sync_meta:{},
+        sync_purged_years:mergePurgedYears(l.sync_purged_years,r.sync_purged_years)
     };
     const ls=Date.parse(l.sync_meta?.securityUpdatedAt||"")||0, rs=Date.parse(r.sync_meta?.securityUpdatedAt||"")||0;
     if(rs>ls || (rs===ls && (r.security?.pinHash||""))) out.security=deepClone(r.security||{});
@@ -3751,6 +3830,128 @@ function deleteTrashForever(id){if(!confirm("Eliminare definitivamente questo el
 
 
 /* ============================================================
+   GESTIONE ANNATE (v1.9)
+   ============================================================ */
+function yearsStats(d=DIARIO){
+    const st=new Map();
+    const get=y=>{if(!st.has(y))st.set(y,{giornate:0,carichi:0,viaggi:0,stipendi:0});return st.get(y);};
+    d.giornaliero.forEach(r=>{const y=recordYear("giornaliero",r);if(y)get(y).giornate++;});
+    d.carichi_scarichi.forEach(r=>{const y=recordYear("carico",r);if(y)get(y).carichi++;});
+    d.viaggi.forEach(r=>{const y=recordYear("viaggio",r);if(y)get(y).viaggi++;});
+    d.stipendi.forEach(r=>{const y=recordYear("stipendio",r);if(y)get(y).stipendi++;});
+    return st;
+}
+function renderYearsManager(){
+    const list=document.getElementById("years-list");if(!list)return;
+    const cur=String(new Date().getFullYear());
+    const checked=new Set([...list.querySelectorAll("input[type=checkbox]:checked")].map(x=>x.value));
+    const st=yearsStats();
+    const years=[...st.keys()].sort();
+    if(!years.length){list.innerHTML='<div class="years-help">Nessun dato presente.</div>';return;}
+    list.innerHTML=years.map(y=>{
+        const s=st.get(y), locked=y>=cur;
+        const det=`${s.giornate} giornate · ${s.viaggi} viaggi · ${s.carichi} carichi/scarichi · ${s.stipendi} stipendi`;
+        return `<label class="years-item${locked?" locked":""}"><input type="checkbox" value="${y}" ${locked?"disabled":""} ${checked.has(y)&&!locked?"checked":""}><div><b>${y}</b><span>${locked?"Anno in corso, non eliminabile · ":""}${det}</span></div></label>`;
+    }).join("");
+}
+function askPinForYears(){
+    if(!pinIsConfigured()) return verifyPersonalPin();
+    const pin=prompt("Operazione protetta: inserisci il PIN personale per confermare.");
+    if(pin===null)return false;
+    if(hashPin(pin,DIARIO.security.pinSalt)!==DIARIO.security.pinHash){alert("PIN errato. Nessun dato è stato eliminato.");return false;}
+    return true;
+}
+function buildYearsBackup(years){
+    const ys=new Set(years.map(String));
+    const viaggi=DIARIO.viaggi.filter(v=>ys.has(recordYear("viaggio",v)));
+    const ids=new Set();viaggi.forEach(v=>{if(v.caricoId)ids.add(v.caricoId);if(v.scaricoId)ids.add(v.scaricoId);});
+    return {
+        torabook_backup_annate:true,
+        anni:[...ys].sort().map(Number),
+        creato:syncNow(),
+        giornaliero:deepClone(DIARIO.giornaliero.filter(r=>ys.has(recordYear("giornaliero",r)))),
+        carichi_scarichi:deepClone(DIARIO.carichi_scarichi.filter(r=>ids.has(r.id)||ys.has(recordYear("carico",r)))),
+        viaggi:deepClone(viaggi),
+        stipendi:deepClone(DIARIO.stipendi.filter(r=>ys.has(recordYear("stipendio",r))))
+    };
+}
+function downloadJsonFile(obj,name){
+    const blob=new Blob([JSON.stringify(obj)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);const a=document.createElement("a");
+    a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+}
+function rerenderAfterYears(){
+    renderGiornalieroTable();renderCarichiTable();renderViaggiTable();renderStipendiTable();
+    aggiornaSuggerimentiGiornaliero();aggiornaSuggerimentiCarichi();
+    if(typeof renderOpenTripOptions==="function")renderOpenTripOptions();
+    renderTrash();renderYearsManager();
+}
+function deleteSelectedYears(){
+    const list=document.getElementById("years-list");
+    const cur=String(new Date().getFullYear());
+    const years=[...list.querySelectorAll("input[type=checkbox]:checked")].map(x=>x.value).filter(y=>/^\d{4}$/.test(y)&&y<cur).sort();
+    if(!years.length){alert("Seleziona almeno un'annata da eliminare.");return;}
+    const backup=buildYearsBackup(years);
+    const tot=backup.giornaliero.length+backup.carichi_scarichi.length+backup.viaggi.length+backup.stipendi.length;
+    if(!confirm(`Eliminare le annate ${years.join(", ")}?\n\n${backup.giornaliero.length} giornate\n${backup.viaggi.length} viaggi\n${backup.carichi_scarichi.length} carichi/scarichi\n${backup.stipendi.length} stipendi\n\nPrima verrà scaricato il backup di queste annate.`))return;
+    if(!askPinForYears())return;
+    const d=new Date();const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    const name=`TORABOOK_ANNATE_${years[0]}${years.length>1?"-"+years[years.length-1]:""}_${ds}.json`;
+    downloadJsonFile(backup,name);
+    setTimeout(()=>{
+        if(!confirm(`Il backup "${name}" è stato scaricato?\n\nControlla nei Download che il file ci sia e conservalo (per esempio su Drive).\n\nPremi OK per eliminare definitivamente ${tot} record, Annulla per fermarti.`)){alert("Operazione annullata. Nessun dato è stato eliminato.");return;}
+        const now=syncNow();
+        DIARIO.sync_purged_years=mergePurgedYears(DIARIO.sync_purged_years,years.map(y=>({year:Number(y),purgedAt:now})));
+        saveToLocalStorage();
+        rerenderAfterYears();
+        const driveOn=(typeof driveAutoSyncEnabled!=="undefined"&&driveAutoSyncEnabled);
+        alert(`Annate ${years.join(", ")} eliminate.${driveOn?"\nLa modifica viene inviata anche a Google Drive.":"\nAlla prossima sincronizzazione con Google Drive verranno eliminate anche lì."}`);
+    },700);
+}
+function restoreYearsFromFile(){
+    const file=document.getElementById("file-years-restore").files[0];
+    if(!file){alert("Seleziona il file di backup.");return;}
+    const reader=new FileReader();
+    reader.onload=e=>{
+        let p;
+        try{p=JSON.parse(e.target.result);}catch{alert("Errore nel file JSON.");return;}
+        if(!p||typeof p!=="object"){alert("File non valido.");return;}
+        ["giornaliero","carichi_scarichi","viaggi","stipendi"].forEach(k=>{if(!Array.isArray(p[k]))p[k]=[];});
+        const cur=String(new Date().getFullYear());
+        const st=yearsStats(p);
+        const avail=[...st.keys()].filter(y=>y<cur).sort();
+        if(!avail.length){alert("Nel file non ci sono annate precedenti all'anno in corso.");return;}
+        const ans=prompt(`Annate presenti nel file: ${avail.join(", ")}\n\nQuali vuoi ripristinare? (separa con la virgola)`,avail.join(", "));
+        if(ans===null)return;
+        const ys=new Set(ans.split(/[^0-9]+/).filter(y=>avail.includes(y)));
+        if(!ys.size){alert("Nessuna annata valida indicata.");return;}
+        const now=syncNow();
+        const have={g:new Set(DIARIO.giornaliero.map(r=>r.id)),c:new Set(DIARIO.carichi_scarichi.map(r=>r.id)),v:new Set(DIARIO.viaggi.map(r=>r.id)),s:new Set(DIARIO.stipendi.map(r=>r.id))};
+        const n={g:0,c:0,v:0,s:0};
+        const add=(arr,set,rec,type,key)=>{if(!rec?.id||set.has(rec.id))return;const r=deepClone(rec);r._updatedAt=now;removeSyncTombstone(type,r.id);arr.push(r);set.add(r.id);n[key]++;};
+        const tripIds=new Set();
+        p.viaggi.filter(v=>ys.has(recordYear("viaggio",v))).forEach(v=>{
+            if(v.caricoId)tripIds.add(v.caricoId);if(v.scaricoId)tripIds.add(v.scaricoId);
+            const vv=deepClone(v);if(vv.carico)vv.carico._updatedAt=now;if(vv.scarico)vv.scarico._updatedAt=now;
+            add(DIARIO.viaggi,have.v,vv,"viaggio","v");
+        });
+        p.carichi_scarichi.filter(r=>tripIds.has(r.id)||ys.has(recordYear("carico",r))).forEach(r=>add(DIARIO.carichi_scarichi,have.c,r,"carico","c"));
+        p.giornaliero.filter(r=>ys.has(recordYear("giornaliero",r))).forEach(r=>add(DIARIO.giornaliero,have.g,r,"giornaliero","g"));
+        p.stipendi.filter(r=>ys.has(recordYear("stipendio",r))).forEach(r=>add(DIARIO.stipendi,have.s,r,"stipendio","s"));
+        const tot=n.g+n.c+n.v+n.s;
+        if(!tot){alert("Queste annate sono già presenti: nulla da ripristinare.");return;}
+        saveToLocalStorage();
+        rerenderAfterYears();
+        document.getElementById("file-years-restore").value="";
+        alert(`Ripristinate le annate ${[...ys].sort().join(", ")}:\n${n.g} giornate\n${n.v} viaggi\n${n.c} carichi/scarichi\n${n.s} stipendi`);
+    };
+    reader.readAsText(file);
+}
+document.getElementById("btn-years-delete")?.addEventListener("click",deleteSelectedYears);
+document.getElementById("btn-years-restore")?.addEventListener("click",restoreYearsFromFile);
+
+/* ============================================================
    DIVIETI HGV EUROPA — DATABASE ESTERNO MULTI-ANNO AGGIORNABILE (PWA v23)
    ============================================================ */
 const HGV_DB_URL = "./hgv_europe.json";
@@ -4168,6 +4369,7 @@ function initApp() {
     renderOpenTripOptions();
     updateTripLinkUI();
     renderTrash();
+    renderYearsManager();
     updateDriveSyncMeta();
     initHgvModule();
     if (typeof initScadenzario === "function") initScadenzario();
@@ -4238,7 +4440,7 @@ enableFullscreenGraph(graficoImpegno);
 
 <script id="torabook-version-script-v1">
 (() => {
-  const APP_VERSION = "1.8";
+  const APP_VERSION = "1.9";
   window.TORABOOK_VERSION = APP_VERSION;
   const hotspot = document.getElementById("torabook-version-hotspot");
   const overlay = document.getElementById("torabook-version-overlay");
