@@ -179,6 +179,13 @@ table thead th {
 .drive-sync-meta{margin-top:8px;color:#9fb0c2;font-size:12px;line-height:1.45}
 .excel-report-panel{margin-top:16px;padding:16px;border:1px solid #31516c;border-radius:14px;background:linear-gradient(145deg,#0b1d2d,#07131f)}
 .excel-report-panel h3{margin:0 0 10px}.excel-report-panel button{width:100%;font-size:16px;padding:14px!important}.excel-report-panel .drive-note{margin-top:8px;color:#9fb0c2;font-size:12px;line-height:1.45}
+.tb-secret-overlay{position:fixed;inset:0;z-index:100000;background:rgba(0,8,16,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:18px}
+.tb-secret-box{width:100%;max-width:380px;background:linear-gradient(180deg,#0c2030,#07131e);border:1px solid #31516c;border-radius:16px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.55);color:#fff}
+.tb-secret-title{font-size:18px;font-weight:800;margin-bottom:6px}.tb-secret-msg{font-size:13px;color:#b8c7d6;margin-bottom:10px;line-height:1.45;white-space:pre-line}
+.tb-secret-field{display:flex;align-items:center;gap:8px}.tb-secret-field input{flex:1;min-width:0;margin:0!important;font-size:20px!important;letter-spacing:3px}
+.tb-secret-eye{flex:0 0 auto;width:48px;height:48px;min-height:48px!important;padding:0!important;border-radius:10px!important;background:#20364a!important;border:1px solid #40576c!important;color:#fff;font-size:22px;cursor:pointer}
+.tb-secret-err{min-height:18px;color:#ff6b6b;font-size:13px;margin-top:8px;font-weight:700}
+.tb-secret-actions{display:flex;gap:8px;margin-top:12px}.tb-secret-actions button{flex:1}
 .years-card{margin-top:16px!important;background:linear-gradient(145deg,rgba(70,48,10,.55),rgba(30,20,6,.85))!important;border:1px solid rgba(230,160,40,.55)!important;border-radius:14px;padding:14px!important}
 .years-title{font-size:18px;font-weight:800;margin-bottom:7px}.years-help{font-size:13px;color:#d8c9a8;margin-bottom:10px;line-height:1.45}
 .years-list{display:grid;gap:8px;margin-bottom:12px}.years-item{display:flex;gap:10px;align-items:center;background:#0b1722;border:1px solid #4a4434;border-radius:10px;padding:10px;cursor:pointer}
@@ -482,7 +489,7 @@ table thead th {
   <div class="torabook-version-card" role="dialog" aria-modal="true" aria-labelledby="torabook-version-title">
     <button type="button" class="torabook-version-close" id="torabook-version-close" aria-label="Chiudi">×</button>
     <div class="torabook-version-logo" id="torabook-version-title">ToraBook</div>
-    <div class="torabook-version-number">Versione 1.9</div>
+    <div class="torabook-version-number">Versione 1.9.2</div>
     <p class="torabook-version-sub">Diario di viaggio / logbook per camionisti<br>Powered by Andrea ZOLLET</p>
     <button type="button" class="primary torabook-version-ok" id="torabook-version-ok">OK</button>
   </div>
@@ -2258,7 +2265,7 @@ function selezionaScarico(indexViaggio, indexScarico) {
    Funzione protetta da password (nel codice resta solo SHA-256)
    ============================================================ */
 const RAPPORTINO_TEMPLATE_URL = "./RAPPORTINO_SETTIMANALE.xlsx";
-const RAPPORTINO_PASSWORD_SHA256 = "594953225eef9eaec4c1c7e24b04511844d8ff3b7a16c84ed99746d7050eb284";
+const RAPPORTINO_PASSWORD_SHA256 = "d2b01a428cb138e34875e4038cf583393e1ca981bcc4d9376880632a595dff9e";
 const RAPPORTINO_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 const XLSX_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
 
@@ -2269,10 +2276,10 @@ async function rapportinoSha256Hex(text) {
 }
 
 async function rapportinoVerificaPassword() {
-    const password = window.prompt("Inserisci la password per generare il Rapportino Excel:");
+    const password = await askSecret("Rapportino Excel", "Inserisci la password per generare il rapportino.");
     if (password === null) return false;
     try {
-        const hash = await rapportinoSha256Hex(password);
+        const hash = await rapportinoSha256Hex(String(password).trim());
         if (hash === RAPPORTINO_PASSWORD_SHA256) return true;
     } catch (err) {
         console.error("Verifica password Rapportino:", err);
@@ -3686,21 +3693,64 @@ function hashPin(pin, salt) {
     return sha256(`${salt}|${pin}|DIARIO_AUTISTA`);
 }
 
+/* Finestra password (v1.9.2): caratteri nascosti con pulsante occhio per mostrarli */
+function askSecret(title, message="", options={}) {
+    return new Promise(resolve => {
+        const ov=document.createElement("div");
+        ov.className="tb-secret-overlay";
+        ov.innerHTML=`<div class="tb-secret-box" role="dialog" aria-modal="true">
+            <div class="tb-secret-title"></div>
+            <div class="tb-secret-msg"></div>
+            <div class="tb-secret-field">
+                <input type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" ${options.numeric===false?"":'inputmode="numeric"'}>
+                <button type="button" class="tb-secret-eye" aria-label="Mostra password" title="Mostra password">👁️</button>
+            </div>
+            <div class="tb-secret-err"></div>
+            <div class="tb-secret-actions">
+                <button type="button" class="secondary tb-secret-cancel">Annulla</button>
+                <button type="button" class="primary tb-secret-ok">Conferma</button>
+            </div>
+        </div>`;
+        ov.querySelector(".tb-secret-title").textContent=title;
+        const msg=ov.querySelector(".tb-secret-msg"); msg.textContent=message; if(!message) msg.style.display="none";
+        const input=ov.querySelector("input"), eye=ov.querySelector(".tb-secret-eye");
+        document.body.appendChild(ov);
+        let done=false;
+        const finish=v=>{ if(done)return; done=true; document.removeEventListener("keydown",onKey,true); ov.remove(); resolve(v); };
+        const onKey=e=>{ if(e.key==="Escape"){e.preventDefault();finish(null);} };
+        eye.addEventListener("click",()=>{
+            const show=input.type==="password";
+            input.type=show?"text":"password";
+            eye.textContent=show?"🙈":"👁️";
+            eye.setAttribute("aria-label",show?"Nascondi password":"Mostra password");
+            input.focus();
+        });
+        input.addEventListener("keydown",e=>{ if(e.key==="Enter"){e.preventDefault();finish(input.value);} });
+        ov.querySelector(".tb-secret-ok").addEventListener("click",()=>finish(input.value));
+        ov.querySelector(".tb-secret-cancel").addEventListener("click",()=>finish(null));
+        ov.addEventListener("click",e=>{ if(e.target===ov) finish(null); });
+        document.addEventListener("keydown",onKey,true);
+        setTimeout(()=>input.focus(),50);
+    });
+}
+
 function pinIsConfigured() {
     return !!(DIARIO.security && DIARIO.security.pinSalt && DIARIO.security.pinHash);
 }
 
-function createPersonalPin() {
-    const pin1 = prompt("Crea un PIN personale di almeno 6 cifre:");
+async function createPersonalPin() {
+    let pin1 = await askSecret("Crea il PIN personale", "Almeno 6 cifre.");
     if (pin1 === null) return false;
+    pin1 = String(pin1).trim();
 
     if (!/^\d{6,12}$/.test(pin1)) {
         alert("Il PIN deve contenere da 6 a 12 cifre.");
         return false;
     }
 
-    const pin2 = prompt("Conferma il nuovo PIN:");
+    let pin2 = await askSecret("Conferma il PIN", "Scrivi di nuovo lo stesso PIN.");
     if (pin2 === null) return false;
+    pin2 = String(pin2).trim();
 
     if (pin1 !== pin2) {
         alert("I due PIN non coincidono.");
@@ -3722,11 +3772,11 @@ function createPersonalPin() {
     return true;
 }
 
-function verifyPersonalPin() {
+async function verifyPersonalPin() {
     if (securitySessionUnlocked) return true;
 
     if (!pinIsConfigured()) {
-        const created = createPersonalPin();
+        const created = await createPersonalPin();
         if (!created) return false;
         securitySessionUnlocked = true;
         stipendiUnlocked = true;
@@ -3734,10 +3784,10 @@ function verifyPersonalPin() {
         return true;
     }
 
-    const pin = prompt("Inserisci il PIN personale:");
+    const pin = await askSecret("Password", "Inserisci la password personale.");
     if (pin === null) return false;
 
-    const testHash = hashPin(pin, DIARIO.security.pinSalt);
+    const testHash = hashPin(String(pin).trim(), DIARIO.security.pinSalt);
 
     if (testHash !== DIARIO.security.pinHash) {
         alert("PIN errato.");
@@ -3750,8 +3800,8 @@ function verifyPersonalPin() {
     return true;
 }
 
-function unlockHomeMoney() {
-    if (!verifyPersonalPin()) return;
+async function unlockHomeMoney() {
+    if (!(await verifyPersonalPin())) return;
     homeMoneyUnlocked = true;
     renderDashboard();
 }
@@ -3777,7 +3827,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
             ev.stopImmediatePropagation();
 
-            if (!verifyPersonalPin()) return;
+            verifyPersonalPin().then(ok => {
+            if (!ok) return;
 
             document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
             document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
@@ -3785,6 +3836,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             document.getElementById("tab-stipendi").classList.add("active");
             renderStipendiTable();
             renderSalaryStats();
+            });
         }, true);
     }
 });
@@ -3854,11 +3906,11 @@ function renderYearsManager(){
         return `<label class="years-item${locked?" locked":""}"><input type="checkbox" value="${y}" ${locked?"disabled":""} ${checked.has(y)&&!locked?"checked":""}><div><b>${y}</b><span>${locked?"Anno in corso, non eliminabile · ":""}${det}</span></div></label>`;
     }).join("");
 }
-function askPinForYears(){
-    if(!pinIsConfigured()) return verifyPersonalPin();
-    const pin=prompt("Operazione protetta: inserisci il PIN personale per confermare.");
+async function askPinForYears(){
+    if(!pinIsConfigured()) return await verifyPersonalPin();
+    const pin=await askSecret("Operazione protetta","Inserisci la password personale per confermare l'eliminazione.");
     if(pin===null)return false;
-    if(hashPin(pin,DIARIO.security.pinSalt)!==DIARIO.security.pinHash){alert("PIN errato. Nessun dato è stato eliminato.");return false;}
+    if(hashPin(String(pin).trim(),DIARIO.security.pinSalt)!==DIARIO.security.pinHash){alert("Password errata. Nessun dato è stato eliminato.");return false;}
     return true;
 }
 function buildYearsBackup(years){
@@ -3887,7 +3939,7 @@ function rerenderAfterYears(){
     if(typeof renderOpenTripOptions==="function")renderOpenTripOptions();
     renderTrash();renderYearsManager();
 }
-function deleteSelectedYears(){
+async function deleteSelectedYears(){
     const list=document.getElementById("years-list");
     const cur=String(new Date().getFullYear());
     const years=[...list.querySelectorAll("input[type=checkbox]:checked")].map(x=>x.value).filter(y=>/^\d{4}$/.test(y)&&y<cur).sort();
@@ -3895,7 +3947,7 @@ function deleteSelectedYears(){
     const backup=buildYearsBackup(years);
     const tot=backup.giornaliero.length+backup.carichi_scarichi.length+backup.viaggi.length+backup.stipendi.length;
     if(!confirm(`Eliminare le annate ${years.join(", ")}?\n\n${backup.giornaliero.length} giornate\n${backup.viaggi.length} viaggi\n${backup.carichi_scarichi.length} carichi/scarichi\n${backup.stipendi.length} stipendi\n\nPrima verrà scaricato il backup di queste annate.`))return;
-    if(!askPinForYears())return;
+    if(!(await askPinForYears()))return;
     const d=new Date();const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
     const name=`TORABOOK_ANNATE_${years[0]}${years.length>1?"-"+years[years.length-1]:""}_${ds}.json`;
     downloadJsonFile(backup,name);
@@ -4440,7 +4492,7 @@ enableFullscreenGraph(graficoImpegno);
 
 <script id="torabook-version-script-v1">
 (() => {
-  const APP_VERSION = "1.9";
+  const APP_VERSION = "1.9.2";
   window.TORABOOK_VERSION = APP_VERSION;
   const hotspot = document.getElementById("torabook-version-hotspot");
   const overlay = document.getElementById("torabook-version-overlay");

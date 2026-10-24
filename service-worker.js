@@ -1,4 +1,4 @@
-const CACHE_NAME = "torabook-v1.9-annate";
+const CACHE_NAME = "torabook-v1.9.2-password";
 const PRECACHE = [
   "./",
   "./index.html",
