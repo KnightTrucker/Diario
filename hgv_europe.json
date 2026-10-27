@@ -1,8 +1,8 @@
 {
   "schema_version": 3,
-  "database_version": "2026.10.25-0844Z",
+  "database_version": "2026.10.27-0922Z",
   "year": 2026,
-  "verified_at": "2026-10-25",
+  "verified_at": "2026-10-27",
   "timezone": "Europe/Paris",
   "disclaimer": "Supporto alla pianificazione. Le restrizioni possono essere modificate, sospese o integrate da provvedimenti locali/temporanei. Verificare sempre la fonte ufficiale prima del viaggio.",
   "countries": {
@@ -38836,7 +38836,7 @@
       "source": "CH_ASTRA"
     }
   ],
-  "checked_at": "2026-10-25T08:44:36Z",
+  "checked_at": "2026-10-27T09:22:01Z",
   "years_available": [
     2026,
     2027
@@ -38844,42 +38844,42 @@
   "coverage_through": "2027-12-31",
   "source_status": {
     "IT-2026": {
-      "checked_at": "2026-10-25T08:44:24Z",
+      "checked_at": "2026-10-27T09:21:52Z",
       "status": "not_found",
       "url": null
     },
     "IT-2027": {
-      "checked_at": "2026-10-25T08:44:32Z",
+      "checked_at": "2026-10-27T09:21:56Z",
       "status": "not_found",
       "url": null
     },
     "FR-2026": {
-      "checked_at": "2026-10-25T08:44:35Z",
+      "checked_at": "2026-10-27T09:21:59Z",
       "status": "not_found",
       "url": null
     },
     "FR-2027": {
-      "checked_at": "2026-10-25T08:44:35Z",
+      "checked_at": "2026-10-27T09:22:00Z",
       "status": "not_found",
       "url": null
     },
     "AT-2026": {
-      "checked_at": "2026-10-25T08:44:35Z",
+      "checked_at": "2026-10-27T09:22:00Z",
       "status": "not_found",
       "url": null
     },
     "AT-2027": {
-      "checked_at": "2026-10-25T08:44:35Z",
+      "checked_at": "2026-10-27T09:22:00Z",
       "status": "not_found",
       "url": null
     },
     "ES-2026": {
-      "checked_at": "2026-10-25T08:44:36Z",
+      "checked_at": "2026-10-27T09:22:00Z",
       "status": "not_found",
       "url": null
     },
     "ES-2027": {
-      "checked_at": "2026-10-25T08:44:36Z",
+      "checked_at": "2026-10-27T09:22:00Z",
       "status": "not_found",
       "url": null
     }
