@@ -354,6 +354,17 @@ table thead th {
 .doc-trip-btn{background:linear-gradient(135deg,#1687ff,#1055d6);color:#fff;border:1px solid #4aa8ff;font-size:22px}
 .doc-trip-ok{background:linear-gradient(135deg,#12a94b,#078235);color:#fff;border:1px solid #32cf69;font-size:22px}
 .doc-trip-btn:disabled{opacity:.5}
+.cargo-photo-btn,.cargo-photo-ok{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:48px;min-height:42px;margin:4px 4px 4px 0;border-radius:10px;font-weight:900;font-size:20px;color:#fff}
+.cargo-photo-btn{background:linear-gradient(135deg,#d98a12,#a95f05);border:1px solid #f0b04a}
+.cargo-photo-ok{background:linear-gradient(135deg,#12a94b,#078235);border:1px solid #32cf69}
+.cargo-photo-ok small{font-size:13px}
+.cargo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.cargo-thumb{position:relative;aspect-ratio:3/4;background:#000;border:1px solid #2c536e;border-radius:10px;overflow:hidden}
+.cargo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.cargo-thumb .cargo-del{position:absolute;top:4px;right:4px;width:34px;height:34px;min-height:34px!important;padding:0!important;border-radius:50%!important;background:rgba(150,20,30,.9)!important;border:1px solid #ff8a95!important;font-size:16px}
+.cargo-thumb .cargo-warn{position:absolute;left:0;right:0;bottom:0;background:rgba(160,90,0,.9);font-size:11px;padding:3px 4px;text-align:center}
+.cargo-empty{grid-column:1/-1;padding:22px 10px;text-align:center;color:#9fb0c2;border:1px dashed #315873;border-radius:10px}
+.cargo-saved{display:grid;gap:6px;margin:10px 0}.cargo-saved a{display:block;padding:10px;border-radius:10px;background:#0b2234;border:1px solid #315873;color:#cfe6ff;text-decoration:none;font-size:14px;word-break:break-all}
 .doc-quality-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:16px;z-index:10050}
 .doc-quality-overlay.open{display:flex}
 .doc-quality-card{width:min(560px,100%);max-height:94vh;overflow:auto;background:#071725;border:1px solid #2b6f9f;border-radius:18px;padding:16px;box-shadow:0 20px 70px rgba(0,0,0,.55)}
@@ -489,7 +500,7 @@ table thead th {
   <div class="torabook-version-card" role="dialog" aria-modal="true" aria-labelledby="torabook-version-title">
     <button type="button" class="torabook-version-close" id="torabook-version-close" aria-label="Chiudi">×</button>
     <div class="torabook-version-logo" id="torabook-version-title">ToraBook</div>
-    <div class="torabook-version-number">Versione 1.9.2</div>
+    <div class="torabook-version-number">Versione 1.10</div>
     <p class="torabook-version-sub">Diario di viaggio / logbook per camionisti<br>Powered by Andrea ZOLLET</p>
     <button type="button" class="primary torabook-version-ok" id="torabook-version-ok">OK</button>
   </div>
@@ -883,8 +894,34 @@ table thead th {
       <button type="button" class="primary" id="doc-quality-confirm">✓ Salva su Drive e condividi</button>
       <button type="button" class="secondary" id="doc-quality-cancel">Annulla</button>
     </div>
+    <div class="doc-quality-actions" id="doc-share-actions" style="display:none">
+      <button type="button" class="primary" id="doc-share-btn">📤 Condividi documento</button>
+      <button type="button" class="secondary" id="doc-share-close">Chiudi</button>
+    </div>
   </div>
 </div>
+
+<div class="doc-quality-overlay" id="cargo-photo-overlay" aria-hidden="true">
+  <div class="doc-quality-card" role="dialog" aria-modal="true">
+    <h3>📦 Foto del carico</h3>
+    <div id="cargo-photo-trip" class="years-help" style="color:#b8c7d6"></div>
+    <div id="cargo-photo-saved" class="cargo-saved"></div>
+    <div id="cargo-photo-grid" class="cargo-grid"></div>
+    <div id="cargo-photo-progress" class="doc-upload-progress"></div>
+    <div class="doc-quality-actions" id="cargo-photo-actions">
+      <button type="button" class="secondary" id="cargo-photo-camera-btn">📷 Scatta foto</button>
+      <button type="button" class="secondary" id="cargo-photo-gallery-btn">🖼️ Dalla galleria</button>
+      <button type="button" class="primary" id="cargo-photo-confirm">✓ Salva su Drive e condividi</button>
+      <button type="button" class="secondary" id="cargo-photo-cancel">Annulla</button>
+    </div>
+    <div class="doc-quality-actions" id="cargo-photo-done" style="display:none">
+      <button type="button" class="primary" id="cargo-photo-share">📤 Condividi foto</button>
+      <button type="button" class="secondary" id="cargo-photo-close">Chiudi</button>
+    </div>
+  </div>
+</div>
+<input id="cargo-photo-camera" type="file" accept="image/*" capture="environment" hidden>
+<input id="cargo-photo-gallery" type="file" accept="image/*" multiple hidden>
 
 <!-- TAB STIPENDI -->
 <div id="tab-stipendi" class="tab-content"><div style="margin-bottom:12px;color:#8fb8d8;font-size:13px;">🔐 Area protetta con PIN personale protetto da hash.</div>
@@ -2039,6 +2076,9 @@ function renderViaggiTable() {
                 ${v.scarico ? (v.documentoViaggio?.driveId
                     ? `<button class="doc-trip-ok" title="Documento salvato su Drive" onclick="apriDocumentoViaggio('${escapeHtml(String(v.id||""))}')">✅</button>`
                     : `<button class="doc-trip-btn" title="Fotografa documento" onclick="avviaDocumentoViaggio('${escapeHtml(String(v.id||""))}')">📷</button>`) : ""}
+                ${(Array.isArray(v.fotoCarico)&&v.fotoCarico.length)
+                    ? `<button class="cargo-photo-ok" title="Foto del carico salvate su Drive" onclick="apriFotoCarico('${escapeHtml(String(v.id||""))}')">📦<small>${v.fotoCarico.length}</small></button>`
+                    : `<button class="cargo-photo-btn" title="Foto del carico" onclick="apriFotoCarico('${escapeHtml(String(v.id||""))}')">📦</button>`}
             </td>
         `;
         tbody.appendChild(tr);
@@ -2073,6 +2113,7 @@ function resetRapportinoFlag(i) {
 let docTripActiveId="";
 let docTripProcessed=null;
 let docTripObjectUrl="";
+let docShareReady=null;
 
 function findViaggioById(id){ return (DIARIO.viaggi||[]).find(v=>String(v.id||"")===String(id||"")); }
 function safeFilePart(v){
@@ -2131,6 +2172,9 @@ function analyzeDocumentQuality(canvas){
 }
 function closeDocumentPreview(){
     const ov=document.getElementById("doc-quality-overlay");ov?.classList.remove("open");ov?.setAttribute("aria-hidden","true");
+    docShareReady=null;
+    const a=document.querySelector("#doc-quality-overlay .doc-quality-actions"); if(a)a.style.display="";
+    const sa=document.getElementById("doc-share-actions"); if(sa)sa.style.display="none";
     if(docTripObjectUrl){URL.revokeObjectURL(docTripObjectUrl);docTripObjectUrl="";} docTripProcessed=null;
 }
 function showDocumentPreview(proc,quality){
@@ -2154,7 +2198,8 @@ async function uploadDocumentToDrive(v,proc){
     const r=await driveFetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,size,createdTime,webViewLink",{method:"POST",headers:{"Content-Type":`multipart/related; boundary=${boundary}`},body});
     return await r.json();
 }
-async function shareDocument(proc,name,v){
+function shareErrorIsActivation(err){ return err?.name==="NotAllowedError"; }
+async function shareDocument(proc,name,v,silent=false){
     try{
       const partenza=String(v?.carico?.cliente||"").trim();
       const destinazione=String(v?.scarico?.cliente||"").trim();
@@ -2163,7 +2208,12 @@ async function shareDocument(proc,name,v){
       if(navigator.canShare?.({files:[file]}) && navigator.share){await navigator.share({files:[file],title:"Documento di viaggio ToraBook",text:testo});return true;}
       if(navigator.share){await navigator.share({title:"Documento di viaggio ToraBook",text:testo});return true;}
       alert("Documento salvato su Drive. La condivisione diretta non è disponibile su questo browser.");return false;
-    }catch(err){ if(err?.name!=="AbortError") console.warn("Condivisione documento",err); return false; }
+    }catch(err){
+      if(err?.name==="AbortError") return true;
+      console.warn("Condivisione documento",err);
+      if(!silent) alert("Condivisione non riuscita: "+(err?.message||err));
+      return false;
+    }
 }
 async function confirmDocumentUpload(){
     const v=findViaggioById(docTripActiveId),proc=docTripProcessed; if(!v||!proc||!proc.quality?.ok)return;
@@ -2174,7 +2224,12 @@ async function confirmDocumentUpload(){
       v.documentoViaggio={driveId:uploaded.id,name,mimeType:uploaded.mimeType||proc.mime,size:Number(uploaded.size||proc.blob.size),capturedAt:syncNow(),folder:"KnightTrucker/DocumentiViaggi",webViewLink:uploaded.webViewLink||""};
       touchRecord(v);saveToLocalStorage();renderViaggiTable();
       if(progress)progress.textContent="✅ Salvato su Drive. Apro la condivisione…";
-      const shareProc={...proc}; closeDocumentPreview(); await shareDocument(shareProc,name,v);
+      docShareReady={proc:{...proc},name,v};
+      document.querySelector("#doc-quality-overlay .doc-quality-actions").style.display="none";
+      document.getElementById("doc-share-actions").style.display="flex";
+      const ok=await shareDocument(docShareReady.proc,name,v,true);
+      if(ok){ closeDocumentPreview(); }
+      else if(progress){ progress.textContent="✅ Salvato su Drive. Tocca “Condividi documento” per inviarlo."; }
     }catch(err){console.error(err);if(progress)progress.textContent="Errore: "+(err.message||err);if(btn)btn.disabled=false;}
 }
 
@@ -2182,6 +2237,160 @@ document.getElementById("doc-trip-camera")?.addEventListener("change",e=>{const 
 document.getElementById("doc-quality-retake")?.addEventListener("click",()=>{closeDocumentPreview();document.getElementById("doc-trip-camera")?.click();});
 document.getElementById("doc-quality-cancel")?.addEventListener("click",closeDocumentPreview);
 document.getElementById("doc-quality-confirm")?.addEventListener("click",confirmDocumentUpload);
+document.getElementById("doc-share-btn")?.addEventListener("click",async()=>{
+    if(!docShareReady)return;
+    const ok=await shareDocument(docShareReady.proc,docShareReady.name,docShareReady.v);
+    if(ok)closeDocumentPreview();
+});
+document.getElementById("doc-share-close")?.addEventListener("click",closeDocumentPreview);
+
+/* ============================================================
+   VIAGGI — FOTO DEL CARICO (fino a 3 per viaggio, su Drive)
+   ============================================================ */
+const CARGO_PHOTO_MAX=3;
+const GOOGLE_DRIVE_CARGO_FOLDER_NAME="FotoCarichi";
+const GOOGLE_DRIVE_CARGO_FOLDER_ID_KEY="DIARIO_DRIVE_CARGO_FOLDER_ID";
+let cargoTripId="", cargoPhotos=[], cargoShareFiles=null;
+
+function cargoSavedList(v){ return Array.isArray(v?.fotoCarico)?v.fotoCarico:[]; }
+function cargoFreeSlots(){ const v=findViaggioById(cargoTripId); return Math.max(0,CARGO_PHOTO_MAX-cargoSavedList(v).length-cargoPhotos.length); }
+function apriFotoCarico(id){
+    const v=findViaggioById(id); if(!v){return;}
+    cargoTripId=String(id); cargoPhotos=[]; cargoShareFiles=null;
+    const t=document.getElementById("cargo-photo-trip");
+    if(t)t.innerHTML=`${formatTableDateIT(v.carico?.data||"")} · ${escapeHtml(v.carico?.cliente||"")} ${v.carico?.luogo?("– "+escapeHtml(v.carico.luogo)):""}${v.scarico?(" → "+escapeHtml(v.scarico.cliente||"")):""}`;
+    document.getElementById("cargo-photo-actions").style.display="flex";
+    document.getElementById("cargo-photo-done").style.display="none";
+    document.getElementById("cargo-photo-progress").textContent="";
+    renderCargoPhotos();
+    const ov=document.getElementById("cargo-photo-overlay"); ov.classList.add("open"); ov.setAttribute("aria-hidden","false");
+}
+function closeCargoPhotos(){
+    cargoPhotos.forEach(p=>{ if(p.url)URL.revokeObjectURL(p.url); });
+    cargoPhotos=[]; cargoShareFiles=null; cargoTripId="";
+    const ov=document.getElementById("cargo-photo-overlay"); ov?.classList.remove("open"); ov?.setAttribute("aria-hidden","true");
+}
+function renderCargoPhotos(){
+    const v=findViaggioById(cargoTripId), saved=cargoSavedList(v);
+    const sv=document.getElementById("cargo-photo-saved");
+    sv.innerHTML=saved.length?saved.map((f,i)=>`<a href="https://drive.google.com/file/d/${encodeURIComponent(f.driveId)}/view" target="_blank" rel="noopener">✅ Foto ${i+1} su Drive · ${escapeHtml(f.name||"")}</a>`).join(""):"";
+    const grid=document.getElementById("cargo-photo-grid");
+    const free=cargoFreeSlots();
+    grid.innerHTML=cargoPhotos.length?cargoPhotos.map((p,i)=>`<div class="cargo-thumb"><img src="${p.url}" alt="Foto ${i+1}"><button type="button" class="cargo-del" data-i="${i}" aria-label="Elimina foto">✕</button>${p.warn?`<div class="cargo-warn">${escapeHtml(p.warn)}</div>`:""}</div>`).join("")
+        :`<div class="cargo-empty">${free?`Puoi aggiungere ${free===1?"ancora 1 foto":`fino a ${free} foto`}.`:`Hai già salvato ${CARGO_PHOTO_MAX} foto per questo viaggio.`}</div>`;
+    grid.querySelectorAll(".cargo-del").forEach(b=>b.addEventListener("click",()=>{const i=Number(b.dataset.i);const p=cargoPhotos[i];if(p?.url)URL.revokeObjectURL(p.url);cargoPhotos.splice(i,1);renderCargoPhotos();}));
+    document.getElementById("cargo-photo-camera-btn").disabled=!free;
+    document.getElementById("cargo-photo-gallery-btn").disabled=!free;
+    document.getElementById("cargo-photo-confirm").disabled=!cargoPhotos.length;
+}
+async function addCargoFiles(files){
+    const list=[...files].filter(f=>/^image\//.test(f.type||"image/"));
+    const prog=document.getElementById("cargo-photo-progress");
+    let skipped=0;
+    for(const f of list){
+        if(!cargoFreeSlots()){skipped++;continue;}
+        try{
+            if(prog)prog.textContent="Preparo la foto…";
+            const proc=await compressDocumentImage(f);
+            const q=analyzeDocumentQuality(proc.canvas); delete proc.canvas;
+            let warn="";
+            if(q.mean<48)warn="Foto scura"; else if(q.sharpness<60)warn="Forse mossa";
+            cargoPhotos.push({...proc,url:URL.createObjectURL(proc.blob),warn});
+        }catch(err){console.error(err);alert("Impossibile leggere una delle foto.");}
+    }
+    if(prog)prog.textContent=skipped?`Massimo ${CARGO_PHOTO_MAX} foto per viaggio: ${skipped} non aggiunte.`:"";
+    renderCargoPhotos();
+}
+async function ensureDriveCargoFolder(){
+    const root=await ensureDriveFolder();
+    let id=localStorage.getItem(GOOGLE_DRIVE_CARGO_FOLDER_ID_KEY)||"";
+    if(id){
+        try{ const f=await getDriveMetadata(id,"id,name,mimeType,trashed,parents"); if(f&&!f.trashed&&f.mimeType===GOOGLE_DRIVE_FOLDER_MIME&&(f.parents||[]).includes(root.id)) return f; }catch{}
+        localStorage.removeItem(GOOGLE_DRIVE_CARGO_FOLDER_ID_KEY);
+    }
+    const rid=escapeDriveQueryValue(root.id), name=escapeDriveQueryValue(GOOGLE_DRIVE_CARGO_FOLDER_NAME);
+    const found=await searchDriveFiles(`'${rid}' in parents and name = '${name}' and mimeType = '${GOOGLE_DRIVE_FOLDER_MIME}' and trashed = false`,"files(id,name,mimeType,parents)");
+    if(found.length){ localStorage.setItem(GOOGLE_DRIVE_CARGO_FOLDER_ID_KEY,found[0].id); return found[0]; }
+    const r=await driveFetch("https://www.googleapis.com/drive/v3/files?fields=id,name,mimeType,parents",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:GOOGLE_DRIVE_CARGO_FOLDER_NAME,mimeType:GOOGLE_DRIVE_FOLDER_MIME,parents:[root.id]})});
+    const f=await r.json(); localStorage.setItem(GOOGLE_DRIVE_CARGO_FOLDER_ID_KEY,f.id); return f;
+}
+function buildCargoFileName(v,n,ext){
+    const d=String(v?.carico?.data||"").match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const ds=d?`${d[1].slice(2)}-${d[2]}-${d[3]}`:formatDocDateShort();
+    return `${ds}_CARICO_${safeFilePart(v?.carico?.cliente)}_${safeFilePart(v?.carico?.luogo)}_${n}.${ext}`;
+}
+async function uploadCargoPhoto(v,proc,name,folder){
+    const boundary="torabook_"+Date.now().toString(36)+Math.random().toString(36).slice(2);
+    const metadata={name,mimeType:proc.mime,parents:[folder.id],appProperties:{torabook_foto_carico:"1",viaggio_id:String(v.id||"")}};
+    const pre=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: ${proc.mime}\r\n\r\n`;
+    const body=new Blob([pre,proc.blob,`\r\n--${boundary}--`],{type:`multipart/related; boundary=${boundary}`});
+    const r=await driveFetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,size",{method:"POST",headers:{"Content-Type":`multipart/related; boundary=${boundary}`},body});
+    return await r.json();
+}
+async function shareCargoFiles(silent){
+    if(!cargoShareFiles?.length)return false;
+    const v=findViaggioById(cargoTripId);
+    const testo=`Foto carico ${v?.carico?.cliente||""} ${v?.carico?.luogo||""}`.trim();
+    try{
+        if(navigator.canShare?.({files:cargoShareFiles})&&navigator.share){await navigator.share({files:cargoShareFiles,title:"Foto carico ToraBook",text:testo});return true;}
+        if(!silent)alert("Foto salvate su Drive. La condivisione delle foto non è disponibile su questo browser.");
+        return false;
+    }catch(err){
+        if(err?.name==="AbortError")return true;
+        console.warn("Condivisione foto carico",err);
+        if(!silent)alert("Condivisione non riuscita: "+(err?.message||err));
+        return false;
+    }
+}
+async function confirmCargoUpload(){
+    let v=findViaggioById(cargoTripId); if(!v||!cargoPhotos.length)return;
+    if(!isDriveConfigured()){alert("Configura Google Drive nella sezione Import/Export prima di salvare le foto.");return;}
+    if(!isDriveTokenValid()){alert("Collega Google Drive dalla sezione Import/Export e poi riprova. Le foto restano qui finché non chiudi la finestra.");return;}
+    const prog=document.getElementById("cargo-photo-progress");
+    const btns=["cargo-photo-confirm","cargo-photo-camera-btn","cargo-photo-gallery-btn","cargo-photo-cancel"].map(id=>document.getElementById(id));
+    btns.forEach(b=>b.disabled=true);
+    const files=[];
+    try{
+        const folder=await ensureDriveCargoFolder();
+        if(!Array.isArray(v.fotoCarico))v.fotoCarico=[];
+        while(cargoPhotos.length){
+            v=findViaggioById(cargoTripId); if(!v)throw new Error("Viaggio non trovato.");
+            if(!Array.isArray(v.fotoCarico))v.fotoCarico=[];
+            const p=cargoPhotos[0];
+            const n=v.fotoCarico.length+1;
+            if(prog)prog.textContent=`Salvataggio foto ${n} di ${v.fotoCarico.length+cargoPhotos.length} in KnightTrucker/${GOOGLE_DRIVE_CARGO_FOLDER_NAME}…`;
+            const name=buildCargoFileName(v,n,p.ext);
+            const up=await uploadCargoPhoto(v,p,name,folder);
+            v.fotoCarico.push({driveId:up.id,name:up.name||name,mimeType:up.mimeType||p.mime,size:Number(up.size||p.blob.size),capturedAt:syncNow()});
+            touchRecord(v); saveToLocalStorage();
+            files.push(new File([p.blob],up.name||name,{type:p.mime,lastModified:Date.now()}));
+            if(p.url)URL.revokeObjectURL(p.url);
+            cargoPhotos.shift();
+        }
+        renderViaggiTable(); renderCargoPhotos();
+        cargoShareFiles=files;
+        document.getElementById("cargo-photo-actions").style.display="none";
+        document.getElementById("cargo-photo-done").style.display="flex";
+        if(prog)prog.textContent="✅ Foto salvate su Drive. Apro la condivisione…";
+        const ok=await shareCargoFiles(true);
+        if(ok)closeCargoPhotos();
+        else if(prog)prog.textContent="✅ Foto salvate su Drive. Tocca “Condividi foto” per inviarle.";
+    }catch(err){
+        console.error(err);
+        renderViaggiTable(); renderCargoPhotos();
+        if(prog)prog.textContent="Errore: "+(err.message||err)+(cargoPhotos.length?" — le foto non salvate sono ancora qui, puoi riprovare.":"");
+    }finally{
+        btns.forEach(b=>b.disabled=false); renderCargoPhotos();
+    }
+}
+document.getElementById("cargo-photo-camera-btn")?.addEventListener("click",()=>{const i=document.getElementById("cargo-photo-camera");i.value="";i.click();});
+document.getElementById("cargo-photo-gallery-btn")?.addEventListener("click",()=>{const i=document.getElementById("cargo-photo-gallery");i.value="";i.click();});
+document.getElementById("cargo-photo-camera")?.addEventListener("change",e=>{if(e.target.files?.length)addCargoFiles(e.target.files);});
+document.getElementById("cargo-photo-gallery")?.addEventListener("change",e=>{if(e.target.files?.length)addCargoFiles(e.target.files);});
+document.getElementById("cargo-photo-confirm")?.addEventListener("click",confirmCargoUpload);
+document.getElementById("cargo-photo-cancel")?.addEventListener("click",()=>{ if(cargoPhotos.length&&!confirm("Chiudere senza salvare le foto scattate?"))return; closeCargoPhotos(); });
+document.getElementById("cargo-photo-share")?.addEventListener("click",async()=>{ if(await shareCargoFiles(false)) closeCargoPhotos(); });
+document.getElementById("cargo-photo-close")?.addEventListener("click",closeCargoPhotos);
 
 /* ============================================================
    VIAGGI — POPUP ABBINAMENTO
@@ -4492,7 +4701,7 @@ enableFullscreenGraph(graficoImpegno);
 
 <script id="torabook-version-script-v1">
 (() => {
-  const APP_VERSION = "1.9.2";
+  const APP_VERSION = "1.10";
   window.TORABOOK_VERSION = APP_VERSION;
   const hotspot = document.getElementById("torabook-version-hotspot");
   const overlay = document.getElementById("torabook-version-overlay");
